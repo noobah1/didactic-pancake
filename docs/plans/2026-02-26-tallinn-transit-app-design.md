@@ -37,6 +37,7 @@ A web-based public transport app for Tallinn that helps people get from A to B a
 ```
 
 **Key components:**
+
 - **Next.js app** — serves the UI and acts as a thin API proxy
 - **OpenTripPlanner 2** — self-hosted, loaded with Tallinn GTFS data, handles all route planning
 - **GTFS-Realtime feeds** — polled via Next.js API routes for live vehicle positions, delays, and service alerts
@@ -72,6 +73,7 @@ Single-page layout with two zones:
 ```
 
 **Key interactions:**
+
 - **Search:** Type origin/destination with autocomplete (stop names + addresses via Nominatim). Default origin is user's GPS location.
 - **Filters:** Toggle chips for each transport type (bus, tram, trolleybus, train, ferry). All on by default. Applies to both route results and map vehicles.
 - **Route results:** Sorted by fastest. Each card shows transport types, total time, departure time, and live delay status. Tapping highlights the route on the map.
@@ -83,21 +85,25 @@ Single-page layout with two zones:
 ## Data & Real-time Updates
 
 **GTFS Static Data (schedules):**
+
 - Loaded into OpenTripPlanner on startup
 - Sources: TLT (bus, tram, trolleybus), Elron (trains), ferry operators
 - OTP rebuilds its routing graph when GTFS data is updated (typically weekly)
 
 **GTFS-Realtime Feeds (live data):**
+
 - **Vehicle Positions** — lat/lng of each vehicle, polled every 5-10s, pushed to map
 - **Trip Updates** — delay predictions per stop, merged into route results
 - **Service Alerts** — disruptions, cancellations, detours, shown as banners
 
 **Polling strategy:**
+
 - Foreground: vehicle positions every 5-10s, trip updates every 30s, alerts every 60s
 - Backgrounded tab: stop polling to save resources
 - Simple polling — no WebSockets needed for v1
 
 **Geocoding:**
+
 - Nominatim (open-source, OSM-based) for address autocomplete
 - Stop name search from GTFS stops data in OTP
 
@@ -111,21 +117,25 @@ Single-page layout with two zones:
 ## Tech Stack
 
 **Frontend:**
+
 - Next.js 14+ (App Router)
 - TypeScript
 - MapLibre GL JS (open-source maps)
 - OpenStreetMap tiles
 
 **Backend (minimal):**
+
 - Next.js API Routes — proxy for GTFS-RT, caching, CORS
 - OpenTripPlanner 2 — self-hosted, Docker, loaded with GTFS data
 
 **Infrastructure:**
+
 - Docker Compose (OTP + Next.js)
 - Single VPS deployment (Hetzner / DigitalOcean)
 - No database, no auth, no paid APIs
 
 **Dev tooling:**
+
 - ESLint + Prettier
 - GitHub for source control
 - GitHub Actions for CI (lint, build check)

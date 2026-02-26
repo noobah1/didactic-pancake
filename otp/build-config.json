@@ -1,0 +1,8 @@
+{
+  "transitFeeds": [
+    {
+      "type": "gtfs",
+      "source": "data/gtfs.zip"
+    }
+  ]
+}
