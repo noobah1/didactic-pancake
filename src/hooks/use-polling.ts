@@ -27,9 +27,12 @@ export function usePolling<T>(
       return
     }
 
-    poll()
+    const initialId = setTimeout(poll, 0)
     timerRef.current = setInterval(poll, interval)
-    return () => clearInterval(timerRef.current)
+    return () => {
+      clearTimeout(initialId)
+      clearInterval(timerRef.current)
+    }
   }, [poll, interval, enabled])
 
   // Pause polling when tab is hidden
