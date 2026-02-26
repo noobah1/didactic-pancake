@@ -7,6 +7,7 @@ import { FilterChips } from '@/components/FilterChips'
 import { RouteResults } from '@/components/RouteResults'
 import { AlertBanner } from '@/components/AlertBanner'
 import { MapView } from '@/components/MapView'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TransportMode } from '@/lib/types'
 import { ALL_MODES } from '@/lib/constants'
 import { useVehicles } from '@/hooks/use-vehicles'
@@ -62,18 +63,30 @@ function HomeContent() {
       )}
       <SearchPanel onSearch={handleSearch} modes={activeModes} />
       <FilterChips activeModes={activeModes} onToggle={handleToggle} />
-      <RouteResults
-        routes={routes}
-        loading={loading}
-        error={error}
-        selectedId={selectedRouteId}
-        onSelect={setSelectedRouteId}
-      />
-      <MapView
-        vehicles={vehicleData.data?.vehicles}
-        activeModes={activeModes}
-        routeGeometry={selectedGeometry}
-      />
+      <ErrorBoundary
+        fallback={<div className="p-4 text-center text-gray-500">Route search unavailable</div>}
+      >
+        <RouteResults
+          routes={routes}
+          loading={loading}
+          error={error}
+          selectedId={selectedRouteId}
+          onSelect={setSelectedRouteId}
+        />
+      </ErrorBoundary>
+      <ErrorBoundary
+        fallback={
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            Map unavailable
+          </div>
+        }
+      >
+        <MapView
+          vehicles={vehicleData.data?.vehicles}
+          activeModes={activeModes}
+          routeGeometry={selectedGeometry}
+        />
+      </ErrorBoundary>
     </main>
   )
 }
