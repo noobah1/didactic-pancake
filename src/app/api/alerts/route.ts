@@ -2,18 +2,36 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
 import { ServiceAlert } from '@/lib/types'
 
-interface OtpAlertEntity {
-  route?: string
+const ALERTS_QUERY = `
+{
+  alerts {
+    id
+    alertHeaderText
+    alertDescriptionText
+    alertSeverityLevel
+    effectiveStartDate
+    effectiveEndDate
+    entities {
+      ... on Route {
+        shortName
+      }
+    }
+  }
+}
+`
+
+interface GqlAlertEntity {
+  shortName?: string
 }
 
-interface OtpAlert {
+interface GqlAlert {
   id?: string
   alertHeaderText?: string
   alertDescriptionText?: string
-  severity?: string
-  entities?: OtpAlertEntity[]
+  alertSeverityLevel?: string
   effectiveStartDate?: number
   effectiveEndDate?: number
+  entities?: GqlAlertEntity[]
 }
 
 let cache: { data: ServiceAlert[]; timestamp: number } | null = null
@@ -26,7 +44,10 @@ export async function GET() {
       return NextResponse.json({ alerts: cache.data, timestamp: cache.timestamp })
     }
 
-    const response = await fetch(`${OTP_BASE_URL}/otp/routers/default/alerts`, {
+    const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: ALERTS_QUERY }),
       cache: 'no-store',
     })
 
@@ -35,19 +56,21 @@ export async function GET() {
     }
 
     const data = await response.json()
-    const alerts: ServiceAlert[] = (data || []).map((alert: OtpAlert) => ({
+    const gqlAlerts: GqlAlert[] = data.data?.alerts || []
+
+    const alerts: ServiceAlert[] = gqlAlerts.map((alert) => ({
       id: alert.id || String(Math.random()),
       headerText: alert.alertHeaderText || 'Service alert',
       descriptionText: alert.alertDescriptionText || '',
-      severity: mapSeverity(alert.severity),
+      severity: mapSeverity(alert.alertSeverityLevel),
       affectedRoutes: (alert.entities || [])
-        .filter((e: OtpAlertEntity) => e.route)
-        .map((e: OtpAlertEntity) => e.route),
+        .filter((e) => e.shortName)
+        .map((e) => e.shortName!),
       activePeriodStart: alert.effectiveStartDate
-        ? new Date(alert.effectiveStartDate).toISOString()
+        ? new Date(alert.effectiveStartDate * 1000).toISOString()
         : undefined,
       activePeriodEnd: alert.effectiveEndDate
-        ? new Date(alert.effectiveEndDate).toISOString()
+        ? new Date(alert.effectiveEndDate * 1000).toISOString()
         : undefined,
     }))
 

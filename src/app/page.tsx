@@ -46,15 +46,11 @@ function HomeContent() {
     [searchParams, router],
   )
 
-  const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[]) => {
-    search(fromPlace, toPlace, modes)
+  const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => {
+    search(fromPlace, toPlace, modes, dateTime)
   }
 
-  const selectedRoute = routes.find((r) => r.id === selectedRouteId)
-  const selectedGeometry = selectedRoute?.legs
-    .map((l) => l.legGeometry?.points)
-    .filter(Boolean)
-    .join('')
+  const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 
   return (
     <main className="h-dvh flex flex-col">
@@ -84,7 +80,7 @@ function HomeContent() {
         <MapView
           vehicles={vehicleData.data?.vehicles}
           activeModes={activeModes}
-          routeGeometry={selectedGeometry}
+          selectedRoute={selectedRoute}
         />
       </ErrorBoundary>
     </main>

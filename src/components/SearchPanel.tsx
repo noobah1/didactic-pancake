@@ -5,7 +5,7 @@ import { LocationInput } from './LocationInput'
 import { TransportMode } from '@/lib/types'
 
 interface SearchPanelProps {
-  onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[]) => void
+  onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => void
   modes?: TransportMode[]
 }
 
@@ -14,12 +14,14 @@ export function SearchPanel({ onSearch, modes = [] }: SearchPanelProps = {}) {
   const [toText, setToText] = useState('')
   const [fromCoords, setFromCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [toCoords, setToCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [departureMode, setDepartureMode] = useState<'now' | 'custom'>('now')
+  const [dateTime, setDateTime] = useState('')
 
   const handleSearch = () => {
     if (!fromCoords || !toCoords) return
     const fromPlace = `${fromCoords.lat},${fromCoords.lng}`
     const toPlace = `${toCoords.lat},${toCoords.lng}`
-    onSearch?.(fromPlace, toPlace, modes)
+    onSearch?.(fromPlace, toPlace, modes, departureMode === 'custom' && dateTime ? dateTime : undefined)
   }
 
   return (
@@ -46,6 +48,24 @@ export function SearchPanel({ onSearch, modes = [] }: SearchPanelProps = {}) {
             setToCoords({ lat, lng })
           }}
         />
+      </div>
+      <div className="flex items-center gap-2">
+        <select
+          value={departureMode}
+          onChange={(e) => setDepartureMode(e.target.value as 'now' | 'custom')}
+          className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white"
+        >
+          <option value="now">Depart now</option>
+          <option value="custom">Depart at...</option>
+        </select>
+        {departureMode === 'custom' && (
+          <input
+            type="datetime-local"
+            value={dateTime}
+            onChange={(e) => setDateTime(e.target.value)}
+            className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+          />
+        )}
       </div>
       <button
         onClick={handleSearch}
