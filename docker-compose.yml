@@ -1,0 +1,15 @@
+services:
+  otp:
+    image: opentripplanner/opentripplanner:2.6.0
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./otp/data:/var/opentripplanner/data
+      - ./otp/build-config.json:/var/opentripplanner/build-config.json
+      - ./otp/router-config.json:/var/opentripplanner/router-config.json
+    command: ['--load', '--serve']
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/otp/actuators/health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
