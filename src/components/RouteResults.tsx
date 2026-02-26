@@ -23,7 +23,7 @@ export function RouteResults({ routes, loading, error, selectedId, onSelect }: R
   if (routes.length === 0) return null
 
   return (
-    <div className="flex flex-col gap-2 p-4 overflow-y-auto max-h-64">
+    <div className="flex flex-col gap-2 p-4 overflow-y-auto max-h-96">
       {routes.map((route) => (
         <RouteCard
           key={route.id}
