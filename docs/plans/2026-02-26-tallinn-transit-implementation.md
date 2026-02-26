@@ -9,15 +9,18 @@
 **Tech Stack:** Next.js, TypeScript, MapLibre GL JS, OpenTripPlanner 2, Docker Compose, Tailwind CSS
 
 **Data Sources:**
+
 - Static GTFS (all Estonia): `https://peatus.ee/gtfs/gtfs.zip`
 - Live vehicle GPS: `https://transport.tallinn.ee/gps.txt` (custom CSV format, not GTFS-RT protobuf)
 - Stop departures: `https://transport.tallinn.ee/siri-stop-departures.php?stopid=STOPID`
 - Geocoding: Nominatim (OpenStreetMap)
 
 **Note on GPS format:** The `gps.txt` feed returns lines like:
+
 ```
 3,2,24711780,59448550,,142,96,Z,147,Suur-Paala
 ```
+
 Fields: type (1=tram,2=trolley,3=bus), line, lng*1e6, lat*1e6, _, heading, vehicleId, status, _, destination
 
 ---
@@ -25,11 +28,13 @@ Fields: type (1=tram,2=trolley,3=bus), line, lng*1e6, lat*1e6, _, heading, vehic
 ## Task 1: Project Scaffolding
 
 **Files:**
+
 - Create: `package.json`, `tsconfig.json`, `next.config.ts`, `tailwind.config.ts`, `postcss.config.mjs`, `.eslintrc.json`, `.prettierrc`, `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/globals.css`
 
 **Step 1: Initialize Next.js project**
 
 Run:
+
 ```bash
 npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm
 ```
@@ -39,11 +44,13 @@ Expected: Project scaffolded with Next.js, TypeScript, Tailwind, ESLint, App Rou
 **Step 2: Add Prettier**
 
 Run:
+
 ```bash
 npm install --save-dev prettier eslint-config-prettier
 ```
 
 Create `.prettierrc`:
+
 ```json
 {
   "semi": false,
@@ -58,6 +65,7 @@ Update `.eslintrc.json` to extend `"prettier"`.
 **Step 3: Clean up boilerplate**
 
 Replace `src/app/page.tsx` with:
+
 ```tsx
 export default function Home() {
   return (
@@ -87,11 +95,13 @@ git commit -m "feat: scaffold Next.js project with TypeScript, Tailwind, ESLint,
 ## Task 2: Docker Compose with OpenTripPlanner
 
 **Files:**
+
 - Create: `docker-compose.yml`, `otp/Dockerfile`, `otp/build-config.json`, `otp/router-config.json`, `scripts/download-gtfs.sh`
 
 **Step 1: Create GTFS download script**
 
 Create `scripts/download-gtfs.sh`:
+
 ```bash
 #!/bin/bash
 set -e
@@ -106,6 +116,7 @@ Run: `chmod +x scripts/download-gtfs.sh`
 **Step 2: Create OTP configuration**
 
 Create `otp/build-config.json`:
+
 ```json
 {
   "transitFeeds": [
@@ -118,6 +129,7 @@ Create `otp/build-config.json`:
 ```
 
 Create `otp/router-config.json`:
+
 ```json
 {
   "routingDefaults": {
@@ -133,19 +145,20 @@ Create `otp/router-config.json`:
 **Step 3: Create Docker Compose**
 
 Create `docker-compose.yml`:
+
 ```yaml
 services:
   otp:
     image: opentripplanner/opentripplanner:2.6.0
     ports:
-      - "8080:8080"
+      - '8080:8080'
     volumes:
       - ./otp/data:/var/opentripplanner/data
       - ./otp/build-config.json:/var/opentripplanner/build-config.json
       - ./otp/router-config.json:/var/opentripplanner/router-config.json
-    command: ["--load", "--serve"]
+    command: ['--load', '--serve']
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/otp/actuators/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/otp/actuators/health']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -154,6 +167,7 @@ services:
 **Step 4: Download GTFS and build OTP graph**
 
 Run:
+
 ```bash
 ./scripts/download-gtfs.sh
 docker compose run --rm otp --build --save
@@ -166,6 +180,7 @@ Expected: OTP downloads OSM data and builds a routing graph from the GTFS data. 
 Run: `docker compose up -d otp`
 
 Wait for health check, then:
+
 ```bash
 curl http://localhost:8080/otp/routers/default/index/routes | head -c 500
 ```
@@ -175,6 +190,7 @@ Expected: JSON array of route objects.
 **Step 6: Add .gitignore entries**
 
 Append to `.gitignore`:
+
 ```
 otp/data/
 ```
@@ -191,11 +207,13 @@ git commit -m "feat: add Docker Compose with OpenTripPlanner and GTFS download s
 ## Task 3: Shared Types and Constants
 
 **Files:**
+
 - Create: `src/lib/types.ts`, `src/lib/constants.ts`
 
 **Step 1: Define transport types and shared interfaces**
 
 Create `src/lib/types.ts`:
+
 ```typescript
 export type TransportMode = 'bus' | 'tram' | 'trolleybus' | 'train' | 'ferry'
 
@@ -261,6 +279,7 @@ export interface SearchFilters {
 **Step 2: Define constants**
 
 Create `src/lib/constants.ts`:
+
 ```typescript
 import { TransportMode } from './types'
 
@@ -317,12 +336,14 @@ git commit -m "feat: add shared types and constants"
 ## Task 4: API Route — Vehicle Positions
 
 **Files:**
+
 - Create: `src/lib/parse-gps.ts`, `src/app/api/vehicles/route.ts`
 - Test: `src/lib/__tests__/parse-gps.test.ts`
 
 **Step 1: Install test dependencies**
 
 Run:
+
 ```bash
 npm install --save-dev jest @types/jest ts-jest @jest/globals
 npx ts-jest config:init
@@ -331,6 +352,7 @@ npx ts-jest config:init
 **Step 2: Write the failing test for GPS parser**
 
 Create `src/lib/__tests__/parse-gps.test.ts`:
+
 ```typescript
 import { parseGpsFeed } from '../parse-gps'
 
@@ -381,6 +403,7 @@ Expected: FAIL — module not found.
 **Step 4: Implement GPS parser**
 
 Create `src/lib/parse-gps.ts`:
+
 ```typescript
 import { VehiclePosition } from './types'
 import { GPS_TYPE_MAP } from './constants'
@@ -425,6 +448,7 @@ Expected: PASS — all 4 tests pass.
 **Step 6: Create the API route**
 
 Create `src/app/api/vehicles/route.ts`:
+
 ```typescript
 import { NextResponse } from 'next/server'
 import { GPS_FEED_URL } from '@/lib/constants'
@@ -485,11 +509,13 @@ git commit -m "feat: add vehicle positions API route with GPS feed parser"
 ## Task 5: API Route — Route Planning (OTP Proxy)
 
 **Files:**
+
 - Create: `src/app/api/plan/route.ts`
 
 **Step 1: Create the route planning API route**
 
 Create `src/app/api/plan/route.ts`:
+
 ```typescript
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
@@ -532,10 +558,9 @@ export async function GET(request: Request) {
   })
 
   try {
-    const response = await fetch(
-      `${OTP_BASE_URL}/otp/routers/default/plan?${params}`,
-      { cache: 'no-store' },
-    )
+    const response = await fetch(`${OTP_BASE_URL}/otp/routers/default/plan?${params}`, {
+      cache: 'no-store',
+    })
 
     if (!response.ok) {
       throw new Error(`OTP returned ${response.status}`)
@@ -547,30 +572,28 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: data.error.message || 'No routes found' }, { status: 404 })
     }
 
-    const routes: RouteResult[] = (data.plan?.itineraries || []).map(
-      (it: any, index: number) => ({
-        id: `route-${index}`,
-        duration: it.duration,
-        startTime: new Date(it.startTime).toISOString(),
-        endTime: new Date(it.endTime).toISOString(),
-        walkDistance: it.walkDistance,
-        legs: it.legs.map(
-          (leg: any): RouteLeg => ({
-            mode: leg.mode === 'WALK' ? 'walk' : otpModeToLocal(leg.mode),
-            from: mapPlace(leg.from),
-            to: mapPlace(leg.to),
-            startTime: new Date(leg.startTime).toISOString(),
-            endTime: new Date(leg.endTime).toISOString(),
-            duration: leg.duration,
-            route: leg.route || undefined,
-            tripId: leg.tripId || undefined,
-            legGeometry: leg.legGeometry || undefined,
-            realtime: leg.realTime || false,
-            delay: leg.departureDelay || 0,
-          }),
-        ),
-      }),
-    )
+    const routes: RouteResult[] = (data.plan?.itineraries || []).map((it: any, index: number) => ({
+      id: `route-${index}`,
+      duration: it.duration,
+      startTime: new Date(it.startTime).toISOString(),
+      endTime: new Date(it.endTime).toISOString(),
+      walkDistance: it.walkDistance,
+      legs: it.legs.map(
+        (leg: any): RouteLeg => ({
+          mode: leg.mode === 'WALK' ? 'walk' : otpModeToLocal(leg.mode),
+          from: mapPlace(leg.from),
+          to: mapPlace(leg.to),
+          startTime: new Date(leg.startTime).toISOString(),
+          endTime: new Date(leg.endTime).toISOString(),
+          duration: leg.duration,
+          route: leg.route || undefined,
+          tripId: leg.tripId || undefined,
+          legGeometry: leg.legGeometry || undefined,
+          realtime: leg.realTime || false,
+          delay: leg.departureDelay || 0,
+        }),
+      ),
+    }))
 
     return NextResponse.json({ routes })
   } catch (error) {
@@ -619,11 +642,13 @@ git commit -m "feat: add route planning API route (OTP proxy)"
 ## Task 6: API Route — Geocoding Proxy
 
 **Files:**
+
 - Create: `src/app/api/geocode/route.ts`
 
 **Step 1: Create the geocoding proxy**
 
 Create `src/app/api/geocode/route.ts`:
+
 ```typescript
 import { NextResponse } from 'next/server'
 import { NOMINATIM_URL, TALLINN_CENTER } from '@/lib/constants'
@@ -681,6 +706,7 @@ git commit -m "feat: add geocoding API route (Nominatim proxy)"
 ## Task 7: API Route — Service Alerts
 
 **Files:**
+
 - Create: `src/app/api/alerts/route.ts`
 
 **Step 1: Create the service alerts API route**
@@ -688,6 +714,7 @@ git commit -m "feat: add geocoding API route (Nominatim proxy)"
 The OTP instance exposes alerts from GTFS data. We proxy and normalize them.
 
 Create `src/app/api/alerts/route.ts`:
+
 ```typescript
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
@@ -703,10 +730,9 @@ export async function GET() {
       return NextResponse.json({ alerts: cache.data, timestamp: cache.timestamp })
     }
 
-    const response = await fetch(
-      `${OTP_BASE_URL}/otp/routers/default/alerts`,
-      { cache: 'no-store' },
-    )
+    const response = await fetch(`${OTP_BASE_URL}/otp/routers/default/alerts`, {
+      cache: 'no-store',
+    })
 
     if (!response.ok) {
       throw new Error(`OTP alerts returned ${response.status}`)
@@ -718,9 +744,7 @@ export async function GET() {
       headerText: alert.alertHeaderText || 'Service alert',
       descriptionText: alert.alertDescriptionText || '',
       severity: mapSeverity(alert.severity),
-      affectedRoutes: (alert.entities || [])
-        .filter((e: any) => e.route)
-        .map((e: any) => e.route),
+      affectedRoutes: (alert.entities || []).filter((e: any) => e.route).map((e: any) => e.route),
       activePeriodStart: alert.effectiveStartDate
         ? new Date(alert.effectiveStartDate).toISOString()
         : undefined,
@@ -760,11 +784,13 @@ git commit -m "feat: add service alerts API route"
 ## Task 8: Custom Hooks — Data Fetching
 
 **Files:**
+
 - Create: `src/hooks/use-vehicles.ts`, `src/hooks/use-route-plan.ts`, `src/hooks/use-geocode.ts`, `src/hooks/use-alerts.ts`, `src/hooks/use-polling.ts`
 
 **Step 1: Create polling utility hook**
 
 Create `src/hooks/use-polling.ts`:
+
 ```typescript
 import { useEffect, useRef, useCallback, useState } from 'react'
 
@@ -821,6 +847,7 @@ export function usePolling<T>(
 **Step 2: Create vehicle positions hook**
 
 Create `src/hooks/use-vehicles.ts`:
+
 ```typescript
 import { useCallback } from 'react'
 import { usePolling } from './use-polling'
@@ -848,6 +875,7 @@ export function useVehicles(modes: TransportMode[]) {
 **Step 3: Create route planning hook**
 
 Create `src/hooks/use-route-plan.ts`:
+
 ```typescript
 import { useState, useCallback } from 'react'
 import { RouteResult, TransportMode } from '@/lib/types'
@@ -863,12 +891,7 @@ export function useRoutePlan() {
   const [error, setError] = useState<string | null>(null)
 
   const search = useCallback(
-    async (
-      fromPlace: string,
-      toPlace: string,
-      modes: TransportMode[],
-      dateTime?: string,
-    ) => {
+    async (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => {
       setLoading(true)
       setError(null)
 
@@ -911,6 +934,7 @@ export function useRoutePlan() {
 **Step 4: Create geocode hook**
 
 Create `src/hooks/use-geocode.ts`:
+
 ```typescript
 import { useState, useCallback, useRef } from 'react'
 
@@ -956,6 +980,7 @@ export function useGeocode() {
 **Step 5: Create alerts hook**
 
 Create `src/hooks/use-alerts.ts`:
+
 ```typescript
 import { useCallback } from 'react'
 import { usePolling } from './use-polling'
@@ -991,12 +1016,14 @@ git commit -m "feat: add data fetching hooks (vehicles, route plan, geocode, ale
 ## Task 9: Page Layout Shell
 
 **Files:**
+
 - Modify: `src/app/page.tsx`, `src/app/globals.css`
 - Create: `src/components/SearchPanel.tsx`, `src/components/MapView.tsx`
 
 **Step 1: Create placeholder components**
 
 Create `src/components/SearchPanel.tsx`:
+
 ```tsx
 'use client'
 
@@ -1011,6 +1038,7 @@ export function SearchPanel() {
 ```
 
 Create `src/components/MapView.tsx`:
+
 ```tsx
 'use client'
 
@@ -1026,6 +1054,7 @@ export function MapView() {
 **Step 2: Wire up the main page layout**
 
 Update `src/app/page.tsx`:
+
 ```tsx
 import { SearchPanel } from '@/components/SearchPanel'
 import { MapView } from '@/components/MapView'
@@ -1057,12 +1086,14 @@ git commit -m "feat: add page layout shell with search panel and map placeholder
 ## Task 10: Search Bar with Autocomplete
 
 **Files:**
+
 - Create: `src/components/LocationInput.tsx`
 - Modify: `src/components/SearchPanel.tsx`
 
 **Step 1: Create the location input component**
 
 Create `src/components/LocationInput.tsx`:
+
 ```tsx
 'use client'
 
@@ -1077,7 +1108,13 @@ interface LocationInputProps {
   onChange: (value: string) => void
 }
 
-export function LocationInput({ label, placeholder, value, onSelect, onChange }: LocationInputProps) {
+export function LocationInput({
+  label,
+  placeholder,
+  value,
+  onSelect,
+  onChange,
+}: LocationInputProps) {
   const [showDropdown, setShowDropdown] = useState(false)
   const { results, search, clear } = useGeocode()
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -1138,6 +1175,7 @@ export function LocationInput({ label, placeholder, value, onSelect, onChange }:
 **Step 2: Update SearchPanel with location inputs and search button**
 
 Update `src/components/SearchPanel.tsx`:
+
 ```tsx
 'use client'
 
@@ -1217,12 +1255,14 @@ git commit -m "feat: add search bar with geocoding autocomplete"
 ## Task 11: Transport Filter Chips
 
 **Files:**
+
 - Create: `src/components/FilterChips.tsx`
 - Modify: `src/app/page.tsx`
 
 **Step 1: Create the filter chips component**
 
 Create `src/components/FilterChips.tsx`:
+
 ```tsx
 'use client'
 
@@ -1244,9 +1284,7 @@ export function FilterChips({ activeModes, onToggle }: FilterChipsProps) {
             key={mode}
             onClick={() => onToggle(mode)}
             className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
-              active
-                ? 'text-white border-transparent'
-                : 'text-gray-500 bg-white border-gray-300'
+              active ? 'text-white border-transparent' : 'text-gray-500 bg-white border-gray-300'
             }`}
             style={active ? { backgroundColor: MODE_COLORS[mode] } : undefined}
           >
@@ -1262,6 +1300,7 @@ export function FilterChips({ activeModes, onToggle }: FilterChipsProps) {
 **Step 2: Wire filters into the main page with URL state**
 
 Update `src/app/page.tsx` to manage filter state:
+
 ```tsx
 'use client'
 
@@ -1332,11 +1371,13 @@ git commit -m "feat: add transport mode filter chips with URL state persistence"
 ## Task 12: Live Map with MapLibre
 
 **Files:**
+
 - Modify: `src/components/MapView.tsx`
 
 **Step 1: Install MapLibre**
 
 Run:
+
 ```bash
 npm install maplibre-gl
 ```
@@ -1344,6 +1385,7 @@ npm install maplibre-gl
 **Step 2: Implement the map component**
 
 Update `src/components/MapView.tsx`:
+
 ```tsx
 'use client'
 
@@ -1462,12 +1504,14 @@ git commit -m "feat: add live MapLibre map with vehicle markers"
 ## Task 13: Route Results Component & Full Wiring
 
 **Files:**
+
 - Create: `src/components/RouteResults.tsx`, `src/components/RouteCard.tsx`, `src/components/AlertBanner.tsx`
 - Modify: `src/app/page.tsx`
 
 **Step 1: Create RouteCard component**
 
 Create `src/components/RouteCard.tsx`:
+
 ```tsx
 'use client'
 
@@ -1516,9 +1560,7 @@ export function RouteCard({ route, selected, onSelect }: RouteCardProps) {
       <div className="flex items-center justify-between mt-1">
         <span className="text-xs text-gray-500">Depart {startTime}</span>
         {delayMinutes > 0 ? (
-          <span className="text-xs text-amber-600 font-medium">
-            ⚠ {delayMinutes}min delay
-          </span>
+          <span className="text-xs text-amber-600 font-medium">⚠ {delayMinutes}min delay</span>
         ) : (
           <span className="text-xs text-green-600 font-medium">✓ on time</span>
         )}
@@ -1531,6 +1573,7 @@ export function RouteCard({ route, selected, onSelect }: RouteCardProps) {
 **Step 2: Create RouteResults component**
 
 Create `src/components/RouteResults.tsx`:
+
 ```tsx
 'use client'
 
@@ -1547,19 +1590,11 @@ interface RouteResultsProps {
 
 export function RouteResults({ routes, loading, error, selectedId, onSelect }: RouteResultsProps) {
   if (loading) {
-    return (
-      <div className="p-4 text-center text-gray-500 text-sm">
-        Searching routes...
-      </div>
-    )
+    return <div className="p-4 text-center text-gray-500 text-sm">Searching routes...</div>
   }
 
   if (error) {
-    return (
-      <div className="p-4 text-center text-red-500 text-sm">
-        {error}
-      </div>
-    )
+    return <div className="p-4 text-center text-red-500 text-sm">{error}</div>
   }
 
   if (routes.length === 0) return null
@@ -1582,6 +1617,7 @@ export function RouteResults({ routes, loading, error, selectedId, onSelect }: R
 **Step 3: Create AlertBanner component**
 
 Create `src/components/AlertBanner.tsx`:
+
 ```tsx
 'use client'
 
@@ -1605,9 +1641,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
     <div className={`${bgColor} text-white px-4 py-2 flex items-center justify-between text-sm`}>
       <div>
         <strong>{alert.headerText}</strong>
-        {alert.descriptionText && (
-          <span className="ml-2 opacity-90">{alert.descriptionText}</span>
-        )}
+        {alert.descriptionText && <span className="ml-2 opacity-90">{alert.descriptionText}</span>}
       </div>
       <button
         onClick={() => setDismissed((prev) => new Set(prev).add(alert.id))}
@@ -1623,6 +1657,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
 **Step 4: Wire everything together in page.tsx**
 
 Update `src/app/page.tsx`:
+
 ```tsx
 'use client'
 
@@ -1728,12 +1763,14 @@ git commit -m "feat: add route results, alert banner, and wire up full page"
 ## Task 14: Error Boundaries
 
 **Files:**
+
 - Create: `src/components/ErrorBoundary.tsx`
 - Modify: `src/app/page.tsx`
 
 **Step 1: Create error boundary component**
 
 Create `src/components/ErrorBoundary.tsx`:
+
 ```tsx
 'use client'
 
@@ -1774,6 +1811,7 @@ export class ErrorBoundary extends Component<Props, State> {
 **Step 2: Wrap map and route results in error boundaries**
 
 In `src/app/page.tsx`, wrap `<MapView>` with:
+
 ```tsx
 <ErrorBoundary fallback={<div className="flex-1 flex items-center justify-center text-gray-500">Map unavailable</div>}>
   <MapView ... />
@@ -1781,6 +1819,7 @@ In `src/app/page.tsx`, wrap `<MapView>` with:
 ```
 
 And wrap `<RouteResults>` with:
+
 ```tsx
 <ErrorBoundary fallback={<div className="p-4 text-center text-gray-500">Route search unavailable</div>}>
   <RouteResults ... />
@@ -1799,11 +1838,13 @@ git commit -m "feat: add error boundaries for graceful degradation"
 ## Task 15: GitHub Actions CI
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 **Step 1: Create CI workflow**
 
 Create `.github/workflows/ci.yml`:
+
 ```yaml
 name: CI
 
@@ -1851,20 +1892,20 @@ git commit -m "feat: add GitHub Actions CI workflow"
 
 ## Summary
 
-| Task | Description |
-|------|-------------|
-| 1 | Project scaffolding (Next.js, TypeScript, Tailwind, Prettier) |
-| 2 | Docker Compose with OpenTripPlanner + GTFS download |
-| 3 | Shared types and constants |
-| 4 | API route — vehicle positions (GPS parser + endpoint) |
-| 5 | API route — route planning (OTP proxy) |
-| 6 | API route — geocoding (Nominatim proxy) |
-| 7 | API route — service alerts |
-| 8 | Custom hooks (polling, vehicles, route plan, geocode, alerts) |
-| 9 | Page layout shell |
-| 10 | Search bar with autocomplete |
-| 11 | Transport filter chips with URL state |
-| 12 | Live map with MapLibre + vehicle markers |
-| 13 | Route results, route cards, alert banner, full page wiring |
-| 14 | Error boundaries |
-| 15 | GitHub Actions CI |
+| Task | Description                                                   |
+| ---- | ------------------------------------------------------------- |
+| 1    | Project scaffolding (Next.js, TypeScript, Tailwind, Prettier) |
+| 2    | Docker Compose with OpenTripPlanner + GTFS download           |
+| 3    | Shared types and constants                                    |
+| 4    | API route — vehicle positions (GPS parser + endpoint)         |
+| 5    | API route — route planning (OTP proxy)                        |
+| 6    | API route — geocoding (Nominatim proxy)                       |
+| 7    | API route — service alerts                                    |
+| 8    | Custom hooks (polling, vehicles, route plan, geocode, alerts) |
+| 9    | Page layout shell                                             |
+| 10   | Search bar with autocomplete                                  |
+| 11   | Transport filter chips with URL state                         |
+| 12   | Live map with MapLibre + vehicle markers                      |
+| 13   | Route results, route cards, alert banner, full page wiring    |
+| 14   | Error boundaries                                              |
+| 15   | GitHub Actions CI                                             |
