@@ -7,7 +7,7 @@ describe('parseGpsFeed', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toEqual({
       id: '96',
-      mode: 'bus',
+      mode: 'tram',
       line: '2',
       lat: 59.44855,
       lng: 24.71178,
@@ -19,12 +19,12 @@ describe('parseGpsFeed', () => {
   it('parses multiple lines', () => {
     const raw = [
       '3,2,24711780,59448550,,142,96,Z,147,Suur-Paala',
-      '1,4,24745970,59433380,,14,1009,Z,7,Tondi',
+      '2,15,24745970,59433380,,14,1009,Z,7,Tondi',
     ].join('\n')
     const result = parseGpsFeed(raw)
     expect(result).toHaveLength(2)
-    expect(result[0].mode).toBe('bus')
-    expect(result[1].mode).toBe('tram')
+    expect(result[0].mode).toBe('tram')
+    expect(result[1].mode).toBe('bus')
   })
 
   it('skips malformed lines', () => {
