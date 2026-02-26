@@ -14,10 +14,10 @@ export const POLL_INTERVALS = {
 }
 
 // Mapping from gps.txt type codes to our transport modes
+// Verified against live feed: type 2 = bus (majority), type 3 = tram (lines 1-5)
 export const GPS_TYPE_MAP: Record<string, TransportMode> = {
-  '1': 'tram',
-  '2': 'trolleybus',
-  '3': 'bus',
+  '2': 'bus',
+  '3': 'tram',
   '4': 'train',
   '5': 'ferry',
 }
@@ -25,7 +25,6 @@ export const GPS_TYPE_MAP: Record<string, TransportMode> = {
 export const MODE_COLORS: Record<TransportMode, string> = {
   bus: '#4CAF50',
   tram: '#F44336',
-  trolleybus: '#2196F3',
   train: '#FF9800',
   ferry: '#9C27B0',
 }
@@ -33,9 +32,8 @@ export const MODE_COLORS: Record<TransportMode, string> = {
 export const MODE_LABELS: Record<TransportMode, string> = {
   bus: 'Bus',
   tram: 'Tram',
-  trolleybus: 'Trolleybus',
   train: 'Train',
   ferry: 'Ferry',
 }
 
-export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'trolleybus', 'train', 'ferry']
+export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry']

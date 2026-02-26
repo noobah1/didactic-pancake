@@ -1,8 +1,21 @@
 {
+  "osm": [
+    {
+      "source": "data/estonia-latest.osm.pbf"
+    }
+  ],
   "transitFeeds": [
     {
       "type": "gtfs",
       "source": "data/gtfs.zip"
+    },
+    {
+      "type": "gtfs",
+      "source": "data/elron.zip"
+    },
+    {
+      "type": "gtfs",
+      "source": "data/tslaevad.zip"
     }
   ]
 }
