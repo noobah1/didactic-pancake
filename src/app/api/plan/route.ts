@@ -2,6 +2,37 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
 import { TransportMode, RouteResult, RouteLeg, LegPlace } from '@/lib/types'
 
+interface OtpPlace {
+  name?: string
+  lat: number
+  lon: number
+  stopId?: string
+  departure?: number
+  arrival?: number
+}
+
+interface OtpLeg {
+  mode: string
+  from: OtpPlace
+  to: OtpPlace
+  startTime: number
+  endTime: number
+  duration: number
+  route?: string
+  tripId?: string
+  legGeometry?: { points: string }
+  realTime?: boolean
+  departureDelay?: number
+}
+
+interface OtpItinerary {
+  duration: number
+  startTime: number
+  endTime: number
+  walkDistance: number
+  legs: OtpLeg[]
+}
+
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
   tram: 'TRAM',
@@ -53,28 +84,30 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: data.error.message || 'No routes found' }, { status: 404 })
     }
 
-    const routes: RouteResult[] = (data.plan?.itineraries || []).map((it: any, index: number) => ({
-      id: `route-${index}`,
-      duration: it.duration,
-      startTime: new Date(it.startTime).toISOString(),
-      endTime: new Date(it.endTime).toISOString(),
-      walkDistance: it.walkDistance,
-      legs: it.legs.map(
-        (leg: any): RouteLeg => ({
-          mode: leg.mode === 'WALK' ? 'walk' : otpModeToLocal(leg.mode),
-          from: mapPlace(leg.from),
-          to: mapPlace(leg.to),
-          startTime: new Date(leg.startTime).toISOString(),
-          endTime: new Date(leg.endTime).toISOString(),
-          duration: leg.duration,
-          route: leg.route || undefined,
-          tripId: leg.tripId || undefined,
-          legGeometry: leg.legGeometry || undefined,
-          realtime: leg.realTime || false,
-          delay: leg.departureDelay || 0,
-        }),
-      ),
-    }))
+    const routes: RouteResult[] = (data.plan?.itineraries || []).map(
+      (it: OtpItinerary, index: number) => ({
+        id: `route-${index}`,
+        duration: it.duration,
+        startTime: new Date(it.startTime).toISOString(),
+        endTime: new Date(it.endTime).toISOString(),
+        walkDistance: it.walkDistance,
+        legs: it.legs.map(
+          (leg: OtpLeg): RouteLeg => ({
+            mode: leg.mode === 'WALK' ? 'walk' : otpModeToLocal(leg.mode),
+            from: mapPlace(leg.from),
+            to: mapPlace(leg.to),
+            startTime: new Date(leg.startTime).toISOString(),
+            endTime: new Date(leg.endTime).toISOString(),
+            duration: leg.duration,
+            route: leg.route || undefined,
+            tripId: leg.tripId || undefined,
+            legGeometry: leg.legGeometry || undefined,
+            realtime: leg.realTime || false,
+            delay: leg.departureDelay || 0,
+          }),
+        ),
+      }),
+    )
 
     return NextResponse.json({ routes })
   } catch (error) {
@@ -94,7 +127,7 @@ function otpModeToLocal(otpMode: string): TransportMode {
   return map[otpMode] || 'bus'
 }
 
-function mapPlace(place: any): LegPlace {
+function mapPlace(place: OtpPlace): LegPlace {
   return {
     name: place.name || '',
     lat: place.lat,

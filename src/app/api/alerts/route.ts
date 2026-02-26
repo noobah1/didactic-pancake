@@ -2,6 +2,20 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
 import { ServiceAlert } from '@/lib/types'
 
+interface OtpAlertEntity {
+  route?: string
+}
+
+interface OtpAlert {
+  id?: string
+  alertHeaderText?: string
+  alertDescriptionText?: string
+  severity?: string
+  entities?: OtpAlertEntity[]
+  effectiveStartDate?: number
+  effectiveEndDate?: number
+}
+
 let cache: { data: ServiceAlert[]; timestamp: number } | null = null
 const CACHE_TTL = 60_000 // 1 minute
 
@@ -21,12 +35,14 @@ export async function GET() {
     }
 
     const data = await response.json()
-    const alerts: ServiceAlert[] = (data || []).map((alert: any) => ({
+    const alerts: ServiceAlert[] = (data || []).map((alert: OtpAlert) => ({
       id: alert.id || String(Math.random()),
       headerText: alert.alertHeaderText || 'Service alert',
       descriptionText: alert.alertDescriptionText || '',
       severity: mapSeverity(alert.severity),
-      affectedRoutes: (alert.entities || []).filter((e: any) => e.route).map((e: any) => e.route),
+      affectedRoutes: (alert.entities || [])
+        .filter((e: OtpAlertEntity) => e.route)
+        .map((e: OtpAlertEntity) => e.route),
       activePeriodStart: alert.effectiveStartDate
         ? new Date(alert.effectiveStartDate).toISOString()
         : undefined,

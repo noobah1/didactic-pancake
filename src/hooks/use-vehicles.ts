@@ -10,12 +10,13 @@ interface VehicleResponse {
 }
 
 export function useVehicles(modes: TransportMode[]) {
+  const modesKey = modes.join(',')
   const fetcher = useCallback(async (): Promise<VehicleResponse> => {
-    const params = new URLSearchParams({ modes: modes.join(',') })
+    const params = new URLSearchParams({ modes: modesKey })
     const res = await fetch(`/api/vehicles?${params}`)
     if (!res.ok) throw new Error('Failed to fetch vehicles')
     return res.json()
-  }, [modes.join(',')])
+  }, [modesKey])
 
   return usePolling(fetcher, POLL_INTERVALS.vehiclePositions)
 }

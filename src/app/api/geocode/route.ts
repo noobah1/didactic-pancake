@@ -27,8 +27,14 @@ export async function GET(request: Request) {
       throw new Error(`Nominatim returned ${response.status}`)
     }
 
+    interface NominatimResult {
+      display_name: string
+      lat: string
+      lon: string
+    }
+
     const data = await response.json()
-    const results = data.map((item: any) => ({
+    const results = data.map((item: NominatimResult) => ({
       name: item.display_name,
       lat: parseFloat(item.lat),
       lng: parseFloat(item.lon),

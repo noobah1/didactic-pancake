@@ -13,7 +13,7 @@ interface MapViewProps {
   onStopClick?: (stopId: string) => void
 }
 
-export function MapView({ vehicles, activeModes = [], routeGeometry }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [] }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
