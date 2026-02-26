@@ -3,10 +3,10 @@ services:
     image: opentripplanner/opentripplanner:2.6.0
     ports:
       - '8080:8080'
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xmx4g
     volumes:
-      - ./otp/data:/var/opentripplanner/data
-      - ./otp/build-config.json:/var/opentripplanner/build-config.json
-      - ./otp/router-config.json:/var/opentripplanner/router-config.json
+      - ./otp:/var/opentripplanner
     command: ['--load', '--serve']
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8080/otp/actuators/health']
