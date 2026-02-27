@@ -34,7 +34,7 @@ export function RouteResults({ routes, loading, error, selectedId, onSelect }: R
   )
 
   return (
-    <div className="flex flex-col max-h-80 bg-white rounded-xl shadow-lg mt-2">
+    <div className="flex flex-col max-h-52 bg-white rounded-xl shadow-lg mt-2">
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <h2 className="text-sm font-semibold text-gray-700">Routes</h2>
         <div className="flex gap-1">

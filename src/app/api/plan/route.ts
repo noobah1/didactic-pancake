@@ -10,14 +10,15 @@ const MODE_TO_OTP: Record<TransportMode, string> = {
 }
 
 const PLAN_QUERY = `
-query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String) {
+query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean) {
   plan(
     from: $from,
     to: $to,
     transportModes: $modes,
     numItineraries: $numItineraries,
     date: $date,
-    time: $time
+    time: $time,
+    arriveBy: $arriveBy
   ) {
     itineraries {
       duration
@@ -103,6 +104,7 @@ export async function GET(request: Request) {
   const toPlace = searchParams.get('toPlace')
   const modesParam = searchParams.get('modes')
   const dateTime = searchParams.get('dateTime')
+  const arriveBy = searchParams.get('arriveBy') === 'true'
 
   if (!fromPlace || !toPlace) {
     return NextResponse.json({ error: 'fromPlace and toPlace are required' }, { status: 400 })
@@ -133,6 +135,10 @@ export async function GET(request: Request) {
     const [date, time] = dateTime.split('T')
     if (date) variables.date = date
     if (time) variables.time = time
+  }
+
+  if (arriveBy) {
+    variables.arriveBy = true
   }
 
   try {

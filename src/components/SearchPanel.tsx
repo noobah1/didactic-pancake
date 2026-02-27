@@ -2,27 +2,34 @@
 
 import { useState } from 'react'
 import { LocationInput } from './LocationInput'
+import { CitySelector } from './CitySelector'
 import { TransportMode } from '@/lib/types'
+import { CityDef } from '@/lib/constants'
 
 interface SearchPanelProps {
-  onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => void
+  onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => void
   onClear?: () => void
   modes?: TransportMode[]
+  activeCities?: CityDef[]
+  onCityToggle?: (city: CityDef) => void
+  onCountyToggle?: (countyCities: CityDef[]) => void
+  onSetAllCities?: (cities: CityDef[]) => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [] }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities }: SearchPanelProps) {
   const [fromText, setFromText] = useState('')
   const [toText, setToText] = useState('')
   const [fromCoords, setFromCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [toCoords, setToCoords] = useState<{ lat: number; lng: number } | null>(null)
-  const [departureMode, setDepartureMode] = useState<'now' | 'custom'>('now')
+  const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now')
   const [dateTime, setDateTime] = useState('')
+  const [pickerVisible, setPickerVisible] = useState(false)
 
   const handleSearch = () => {
     if (!fromCoords || !toCoords) return
     const fromPlace = `${fromCoords.lat},${fromCoords.lng}`
     const toPlace = `${toCoords.lat},${toCoords.lng}`
-    onSearch?.(fromPlace, toPlace, modes, departureMode === 'custom' && dateTime ? dateTime : undefined)
+    onSearch?.(fromPlace, toPlace, modes, dateTime || undefined, timeMode === 'arrive' ? true : undefined)
   }
 
   const handleClear = () => {
@@ -90,23 +97,54 @@ export function SearchPanel({ onSearch, onClear, modes = [] }: SearchPanelProps)
           </button>
         </div>
       </div>
-      {/* Departure time selector */}
+      {/* Departure time selector + city selector */}
       <div className="flex items-center gap-2">
-        <select
-          value={departureMode}
-          onChange={(e) => setDepartureMode(e.target.value as 'now' | 'custom')}
-          className="px-2 py-3 bg-white border border-gray-300 rounded-lg text-sm shadow-md"
-        >
-          <option value="now">Depart now</option>
-          <option value="custom">Depart at...</option>
-        </select>
-        {departureMode === 'custom' && (
-          <input
-            type="datetime-local"
-            value={dateTime}
-            onChange={(e) => setDateTime(e.target.value)}
-            className="flex-1 px-2 py-3 bg-white border border-gray-300 rounded-lg text-sm shadow-md"
-          />
+        {pickerVisible ? (
+          <div className="flex items-center gap-1">
+            <input
+              type="datetime-local"
+              value={dateTime}
+              onChange={(e) => setDateTime(e.target.value)}
+              className="px-2 py-3 bg-white border border-gray-300 rounded-full text-xs shadow-md"
+            />
+            {dateTime && (
+              <button
+                type="button"
+                onClick={() => setPickerVisible(false)}
+                className="px-3 py-3 bg-blue-600 text-white rounded-full text-xs font-medium shadow-md"
+              >
+                Done
+              </button>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              if (timeMode === 'now') {
+                setTimeMode('depart')
+                setPickerVisible(true)
+              } else if (timeMode === 'depart') {
+                setTimeMode('arrive')
+                if (!dateTime) setPickerVisible(true)
+              } else {
+                setTimeMode('now')
+                setDateTime('')
+              }
+            }}
+            className={`px-4 py-3 rounded-full text-sm shadow-md border transition-colors ${timeMode !== 'now' && dateTime ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+          >
+            {timeMode === 'now' && 'Depart now'}
+            {timeMode === 'depart' && (dateTime
+              ? `Depart ${new Date(dateTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })}`
+              : 'Depart at...')}
+            {timeMode === 'arrive' && (dateTime
+              ? `Arrive ${new Date(dateTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })}`
+              : 'Arrive at...')}
+          </button>
+        )}
+        {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
+          <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
         )}
       </div>
     </div>

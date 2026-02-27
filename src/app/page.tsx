@@ -9,7 +9,6 @@ import { AlertBanner } from '@/components/AlertBanner'
 import { MapView } from '@/components/MapView'
 import { IncidentButton } from '@/components/IncidentButton'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { CitySelector } from '@/components/CitySelector'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { TransportMode, VehiclePosition } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef } from '@/lib/constants'
@@ -104,8 +103,8 @@ function HomeContent() {
     [activeModes, searchParams, router],
   )
 
-  const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => {
-    search(fromPlace, toPlace, modes, dateTime)
+  const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => {
+    search(fromPlace, toPlace, modes, dateTime, arriveBy)
   }
 
   const handleClear = () => {
@@ -162,7 +161,7 @@ function HomeContent() {
       {/* Floating UI column - top center */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none">
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} />
         </div>
         <div className="pointer-events-auto">
           <ErrorBoundary
@@ -178,7 +177,6 @@ function HomeContent() {
           </ErrorBoundary>
         </div>
         <div className="pointer-events-auto mt-2 flex flex-wrap justify-start gap-2">
-          <CitySelector activeCities={activeCities} onToggle={handleCityToggle} onToggleCounty={handleCountyToggle} onSetAll={handleSetAllCities} />
           <FilterChips activeModes={activeModes} onToggle={handleToggle} />
         </div>
       </div>

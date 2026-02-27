@@ -21,8 +21,8 @@ export function IncidentButton({ active, alertCount, onClick }: IncidentButtonPr
     >
       <AlertTriangle
         size={24}
-        fill={alertCount > 0 ? '#FBBF24' : 'none'}
-        stroke={alertCount > 0 ? '#EF4444' : '#9CA3AF'}
+        fill="#FBBF24"
+        stroke={active ? '#EF4444' : '#000000'}
         strokeWidth={2}
       />
       {alertCount > 0 && (
