@@ -41,6 +41,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
+  const arrowMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const activeRouteRef = useRef<string | null>(null)
   const stopMarkersRef = useRef<maplibregl.Marker[]>([])
   const planLayerIdsRef = useRef<string[]>([])
@@ -237,6 +238,15 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
 
         if (existing) {
           existing.setLngLat([vehicle.lng, vehicle.lat])
+          const arrowEntry = arrowMarkersRef.current.get(vehicle.id)
+          if (arrowEntry) {
+            const pillWidth = Math.max(18, vehicle.line.length * 7 + 8)
+            const offsetDist = Math.max(pillWidth / 2, 11) + 4
+            const rad = (vehicle.heading * Math.PI) / 180
+            arrowEntry.setOffset([Math.sin(rad) * offsetDist, -Math.cos(rad) * offsetDist])
+            arrowEntry.setLngLat([vehicle.lng, vehicle.lat])
+            arrowEntry.setRotation(vehicle.heading)
+          }
         } else {
           const el = document.createElement('div')
           el.className = 'vehicle-marker'
@@ -275,6 +285,35 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
             .addTo(map)
 
           markersRef.current.set(vehicle.id, marker)
+
+          // Arrow marker — rendered behind pill, offset in heading direction
+          const arrowEl = document.createElement('div')
+          arrowEl.style.width = '0'
+          arrowEl.style.height = '0'
+          arrowEl.style.borderLeft = '3px solid transparent'
+          arrowEl.style.borderRight = '3px solid transparent'
+          arrowEl.style.borderBottom = `6px solid ${MODE_COLORS[vehicle.mode]}`
+
+          // Offset further for wider pills
+          const pillWidth = Math.max(18, vehicle.line.length * 7 + 8)
+          const offsetDist = Math.max(pillWidth / 2, 11) + 4
+          const rad = (vehicle.heading * Math.PI) / 180
+          const arrowMarker = new maplibregl.Marker({
+            element: arrowEl,
+            rotation: vehicle.heading,
+            rotationAlignment: 'map',
+            offset: [Math.sin(rad) * offsetDist, -Math.cos(rad) * offsetDist],
+          })
+            .setLngLat([vehicle.lng, vehicle.lat])
+            .addTo(map)
+
+          // Move arrow behind pill in DOM
+          const arrowWrapper = arrowEl.closest('.maplibregl-marker') as HTMLElement
+          if (arrowWrapper) arrowWrapper.style.zIndex = '0'
+          const pillWrapper = el.closest('.maplibregl-marker') as HTMLElement
+          if (pillWrapper) pillWrapper.style.zIndex = '1'
+
+          arrowMarkersRef.current.set(vehicle.id, arrowMarker)
         }
       })
 
@@ -283,6 +322,11 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
       if (!currentIds.has(id)) {
         marker.remove()
         markersRef.current.delete(id)
+        const arrowMarker = arrowMarkersRef.current.get(id)
+        if (arrowMarker) {
+          arrowMarker.remove()
+          arrowMarkersRef.current.delete(id)
+        }
       }
     })
   }, [vehicles, activeModes, showRouteShape])
