@@ -16,6 +16,7 @@ export function FilterChips({ activeModes, onToggle }: FilterChipsProps) {
     <div className="flex items-center gap-1">
       <button
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
         className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full shadow-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,7 +26,7 @@ export function FilterChips({ activeModes, onToggle }: FilterChipsProps) {
       </button>
       <div
         className={`flex items-center gap-1 overflow-hidden transition-all duration-200 ${
-          expanded ? 'max-w-md opacity-100' : 'max-w-0 opacity-0'
+          expanded ? 'max-w-full opacity-100' : 'max-w-0 opacity-0'
         }`}
       >
         {ALL_MODES.map((mode) => {
