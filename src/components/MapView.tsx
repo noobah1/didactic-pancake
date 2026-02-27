@@ -25,6 +25,9 @@ const ROUTE_STOPS_LABEL_LAYER = 'route-stops-label-layer'
 const VEHICLE_DOT_SOURCE = 'vehicle-dot-source'
 const VEHICLE_DOT_LAYER = 'vehicle-dot-layer'
 const VEHICLE_DOT_GLOW_LAYER = 'vehicle-dot-glow-layer'
+const VEHICLE_CLUSTER_SOURCE = 'vehicle-cluster-source'
+const CLUSTER_CIRCLE_LAYER = 'cluster-circle-layer'
+const CLUSTER_COUNT_LAYER = 'cluster-count-layer'
 
 const PLAN_LAYER_PREFIX = 'plan-leg-'
 const PLAN_SOURCE_PREFIX = 'plan-leg-src-'
@@ -415,6 +418,98 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
 
     map.on('load', () => {
       mapReadyRef.current = true
+
+      // Clustered GeoJSON source for vehicle grouping
+      map.addSource(VEHICLE_CLUSTER_SOURCE, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+        cluster: true,
+        clusterRadius: 80,
+        clusterMinPoints: 25,
+      })
+
+      map.addLayer({
+        id: CLUSTER_CIRCLE_LAYER,
+        type: 'circle',
+        source: VEHICLE_CLUSTER_SOURCE,
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#6366F1',
+          'circle-radius': ['step', ['get', 'point_count'], 20, 50, 25, 100, 30],
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 2,
+          'circle-opacity': 0.9,
+        },
+      })
+
+      map.addLayer({
+        id: CLUSTER_COUNT_LAYER,
+        type: 'symbol',
+        source: VEHICLE_CLUSTER_SOURCE,
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-size': 13,
+          'text-allow-overlap': true,
+        },
+        paint: {
+          'text-color': '#ffffff',
+        },
+      })
+
+      // Click cluster to zoom in and expand
+      map.on('click', CLUSTER_CIRCLE_LAYER, async (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: [CLUSTER_CIRCLE_LAYER] })
+        if (!features.length) return
+        const clusterId = features[0].properties?.cluster_id
+        if (clusterId == null) return
+        const source = map.getSource(VEHICLE_CLUSTER_SOURCE) as maplibregl.GeoJSONSource
+        const zoom = await source.getClusterExpansionZoom(clusterId)
+        map.easeTo({
+          center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
+          zoom,
+        })
+      })
+
+      map.on('mouseenter', CLUSTER_CIRCLE_LAYER, () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', CLUSTER_CIRCLE_LAYER, () => {
+        map.getCanvas().style.cursor = ''
+      })
+
+      // Hide individual markers that are inside a cluster
+      const updateVisibility = () => {
+        if (!map.getSource(VEHICLE_CLUSTER_SOURCE)) return
+        const features = map.querySourceFeatures(VEHICLE_CLUSTER_SOURCE)
+        // If source tiles aren't loaded yet, keep current visibility
+        if (features.length === 0) return
+        const unclusteredIds = new Set<string>()
+        for (const f of features) {
+          if (!f.properties?.cluster && f.properties?.vehicleId) {
+            unclusteredIds.add(f.properties.vehicleId as string)
+          }
+        }
+        markersRef.current.forEach((marker, id) => {
+          const show = unclusteredIds.has(id)
+          marker.getElement().style.display = show ? '' : 'none'
+          const arrow = arrowMarkersRef.current.get(id)
+          if (arrow) arrow.getElement().style.display = show ? '' : 'none'
+        })
+      }
+
+      let visFrame: ReturnType<typeof requestAnimationFrame> | null = null
+      const scheduleVisUpdate = () => {
+        if (visFrame) cancelAnimationFrame(visFrame)
+        visFrame = requestAnimationFrame(updateVisibility)
+      }
+      map.on('zoom', scheduleVisUpdate)
+      map.on('sourcedata', (e) => {
+        if (e.sourceId === VEHICLE_CLUSTER_SOURCE) {
+          scheduleVisUpdate()
+        }
+      })
     })
 
     // Show stop info on click (name, times, status)
@@ -590,6 +685,21 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
         }
       }
     })
+
+    // Feed vehicle positions into the cluster source
+    if (map.getSource(VEHICLE_CLUSTER_SOURCE)) {
+      const features: GeoJSON.Feature<GeoJSON.Point>[] = vehicles
+        .filter((v) => activeModes.includes(v.mode))
+        .map((v) => ({
+          type: 'Feature' as const,
+          properties: { vehicleId: v.id },
+          geometry: { type: 'Point' as const, coordinates: [v.lng, v.lat] },
+        }))
+      ;(map.getSource(VEHICLE_CLUSTER_SOURCE) as maplibregl.GeoJSONSource).setData({
+        type: 'FeatureCollection',
+        features,
+      })
+    }
   }, [vehicles, activeModes, showRouteShape])
 
   // Draw planned route on map
