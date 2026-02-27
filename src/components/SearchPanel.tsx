@@ -7,9 +7,10 @@ import { TransportMode } from '@/lib/types'
 interface SearchPanelProps {
   onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => void
   modes?: TransportMode[]
+  hasResults?: boolean
 }
 
-export function SearchPanel({ onSearch, modes = [] }: SearchPanelProps = {}) {
+export function SearchPanel({ onSearch, modes = [], hasResults }: SearchPanelProps) {
   const [fromText, setFromText] = useState('')
   const [toText, setToText] = useState('')
   const [fromCoords, setFromCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -25,7 +26,7 @@ export function SearchPanel({ onSearch, modes = [] }: SearchPanelProps = {}) {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4 bg-white border-b border-gray-200">
+    <div className={`flex flex-col gap-3 p-4 bg-white shadow-lg ${hasResults ? 'rounded-t-xl' : 'rounded-xl'}`}>
       <h1 className="text-lg font-bold">Tallinn Transit</h1>
       <div className="flex flex-col gap-2">
         <LocationInput
