@@ -650,5 +650,5 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
     return cleanup
   }, [incidents])
 
-  return <div ref={containerRef} className="absolute inset-0" />
+  return <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 }
