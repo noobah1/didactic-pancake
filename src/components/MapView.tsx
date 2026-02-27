@@ -911,7 +911,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
           (b, c) => b.extend(c as [number, number]),
           new maplibregl.LngLatBounds(allCoords[0], allCoords[0]),
         )
-        map.fitBounds(bounds, { padding: 60 })
+        map.fitBounds(bounds, { padding: { top: 220, bottom: 80, left: 60, right: 60 } })
       }
     }
 

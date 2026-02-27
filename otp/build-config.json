@@ -8,6 +8,10 @@
     {
       "type": "gtfs",
       "source": "data/estonia_unified_gtfs.zip"
+    },
+    {
+      "type": "gtfs",
+      "source": "data/tslaevad.zip"
     }
   ]
 }
