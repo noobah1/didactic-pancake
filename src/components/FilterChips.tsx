@@ -1,8 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { Bus, TramFront, TrainFront, Ship } from 'lucide-react'
 import { TransportMode } from '@/lib/types'
 import { MODE_LABELS, MODE_COLORS, ALL_MODES } from '@/lib/constants'
+
+const MODE_ICONS: Record<TransportMode, React.ComponentType<{ size?: number }>> = {
+  bus: Bus,
+  tram: TramFront,
+  train: TrainFront,
+  ferry: Ship,
+}
 
 interface FilterChipsProps {
   activeModes: TransportMode[]
@@ -31,15 +39,17 @@ export function FilterChips({ activeModes, onToggle }: FilterChipsProps) {
       >
         {ALL_MODES.map((mode) => {
           const active = activeModes.includes(mode)
+          const Icon = MODE_ICONS[mode]
           return (
             <button
               key={mode}
               onClick={() => onToggle(mode)}
-              className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors border shadow-sm ${
+              className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors border shadow-sm flex items-center gap-1.5 ${
                 active ? 'text-white border-transparent' : 'text-gray-500 bg-white border-gray-300'
               }`}
               style={active ? { backgroundColor: MODE_COLORS[mode] } : undefined}
             >
+              <Icon size={14} />
               {MODE_LABELS[mode]}
             </button>
           )

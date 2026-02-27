@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { GPS_FEED_URL, OTP_BASE_URL } from '@/lib/constants'
 import { parseGpsFeed } from '@/lib/parse-gps'
+import { decodePolyline } from '@/lib/decode-polyline'
 import { VehiclePosition, TransportMode } from '@/lib/types'
 
 let gpsCache: { data: VehiclePosition[]; timestamp: number } | null = null
@@ -15,6 +16,7 @@ query ActiveTrips($date: String!) {
     mode
     patterns {
       directionId
+      patternGeometry { points }
       tripsForDate(serviceDate: $date) {
         gtfsId
         stoptimes {
@@ -30,6 +32,7 @@ query ActiveTrips($date: String!) {
     mode
     patterns {
       directionId
+      patternGeometry { points }
       tripsForDate(serviceDate: $date) {
         gtfsId
         stoptimes {
@@ -56,6 +59,7 @@ interface GqlTrip {
 
 interface GqlPattern {
   directionId: number
+  patternGeometry?: { points: string } | null
   tripsForDate: GqlTrip[]
 }
 
@@ -75,39 +79,162 @@ function getTodayDate(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Tallinn' })
 }
 
+function distSq(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const dlat = lat2 - lat1
+  const dlon = lon2 - lon1
+  return dlat * dlat + dlon * dlon
+}
+
+function findNearestPointIndex(
+  shapeLats: number[],
+  shapeLons: number[],
+  lat: number,
+  lon: number,
+  searchStart = 0,
+): number {
+  let bestIdx = searchStart
+  let bestDist = Infinity
+  for (let i = searchStart; i < shapeLats.length; i++) {
+    const d = distSq(shapeLats[i], shapeLons[i], lat, lon)
+    if (d < bestDist) {
+      bestDist = d
+      bestIdx = i
+    }
+  }
+  return bestIdx
+}
+
+function calcHeading(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const dLng = ((lon2 - lon1) * Math.PI) / 180
+  const rLat1 = (lat1 * Math.PI) / 180
+  const rLat2 = (lat2 * Math.PI) / 180
+  const y = Math.sin(dLng) * Math.cos(rLat2)
+  const x = Math.cos(rLat1) * Math.sin(rLat2) - Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLng)
+  return Math.round(((Math.atan2(y, x) * 180) / Math.PI + 360) % 360)
+}
+
+function interpolateAlongShape(
+  shapeLats: number[],
+  shapeLons: number[],
+  fromIdx: number,
+  toIdx: number,
+  fraction: number,
+): { lat: number; lng: number; heading: number } {
+  if (fromIdx === toIdx) {
+    return { lat: shapeLats[fromIdx], lng: shapeLons[fromIdx], heading: 0 }
+  }
+
+  const start = Math.min(fromIdx, toIdx)
+  const end = Math.max(fromIdx, toIdx)
+  const forward = fromIdx <= toIdx
+
+  // Calculate cumulative distances along the shape segment
+  const distances = [0]
+  for (let i = start + 1; i <= end; i++) {
+    const dlat = shapeLats[i] - shapeLats[i - 1]
+    const dlon = shapeLons[i] - shapeLons[i - 1]
+    distances.push(distances[distances.length - 1] + Math.sqrt(dlat * dlat + dlon * dlon))
+  }
+  const totalDist = distances[distances.length - 1]
+  if (totalDist === 0) {
+    return { lat: shapeLats[start], lng: shapeLons[start], heading: 0 }
+  }
+
+  const adjustedFraction = forward ? fraction : 1 - fraction
+  const targetDist = adjustedFraction * totalDist
+
+  for (let i = 0; i < distances.length - 1; i++) {
+    if (targetDist >= distances[i] && targetDist <= distances[i + 1]) {
+      const segFrac =
+        distances[i + 1] === distances[i]
+          ? 0
+          : (targetDist - distances[i]) / (distances[i + 1] - distances[i])
+      const si = start + i
+      const lat = shapeLats[si] + (shapeLats[si + 1] - shapeLats[si]) * segFrac
+      const lng = shapeLons[si] + (shapeLons[si + 1] - shapeLons[si]) * segFrac
+      const heading = calcHeading(shapeLats[si], shapeLons[si], shapeLats[si + 1], shapeLons[si + 1])
+      return { lat, lng, heading }
+    }
+  }
+
+  // Fallback: last point
+  return {
+    lat: shapeLats[end],
+    lng: shapeLons[end],
+    heading: 0,
+  }
+}
+
 function interpolatePosition(
   stoptimes: GqlStoptime[],
   nowSec: number,
+  shapeCoords?: [number, number][] | null,
 ): { lat: number; lng: number; heading: number; destination: string } | null {
   if (stoptimes.length < 2) return null
 
   const firstDep = stoptimes[0].scheduledDeparture
-  const lastArr = stoptimes[stoptimes.length - 1].scheduledArrival || stoptimes[stoptimes.length - 1].scheduledDeparture
+  const lastArr =
+    stoptimes[stoptimes.length - 1].scheduledArrival || stoptimes[stoptimes.length - 1].scheduledDeparture
 
   if (nowSec < firstDep || nowSec > lastArr) return null
 
   const destination = stoptimes[stoptimes.length - 1].stop.name
 
+  // Pre-compute shape arrays and stop indices if shape is available
+  let shapeLats: number[] | null = null
+  let shapeLons: number[] | null = null
+  let stopShapeIndices: number[] | null = null
+  if (shapeCoords && shapeCoords.length > 1) {
+    shapeLats = shapeCoords.map((c) => c[1])
+    shapeLons = shapeCoords.map((c) => c[0])
+    // Map each stop to its nearest point on the shape, searching forward
+    stopShapeIndices = []
+    let searchFrom = 0
+    for (const st of stoptimes) {
+      const idx = findNearestPointIndex(shapeLats, shapeLons, st.stop.lat, st.stop.lon, searchFrom)
+      stopShapeIndices.push(idx)
+      searchFrom = idx
+    }
+  }
+
   for (let i = 0; i < stoptimes.length - 1; i++) {
+    const arr = stoptimes[i].scheduledArrival || stoptimes[i].scheduledDeparture
     const dep = stoptimes[i].scheduledDeparture
     const nextArr = stoptimes[i + 1].scheduledArrival || stoptimes[i + 1].scheduledDeparture
 
+    // Train is dwelling at stop i (between arrival and departure)
+    if (i > 0 && nowSec >= arr && nowSec < dep) {
+      const stop = stoptimes[i].stop
+      const heading =
+        i < stoptimes.length - 1
+          ? calcHeading(stop.lat, stop.lon, stoptimes[i + 1].stop.lat, stoptimes[i + 1].stop.lon)
+          : 0
+      return { lat: stop.lat, lng: stop.lon, heading, destination }
+    }
+
+    // Train is between stop i and stop i+1
     if (nowSec >= dep && nowSec <= nextArr) {
       const fraction = nextArr === dep ? 0 : (nowSec - dep) / (nextArr - dep)
       const fromStop = stoptimes[i].stop
       const toStop = stoptimes[i + 1].stop
 
+      // Use shape geometry if available
+      if (shapeLats && shapeLons && stopShapeIndices) {
+        const result = interpolateAlongShape(
+          shapeLats,
+          shapeLons,
+          stopShapeIndices[i],
+          stopShapeIndices[i + 1],
+          fraction,
+        )
+        return { ...result, destination }
+      }
+
+      // Fallback: straight-line interpolation
       const lat = fromStop.lat + (toStop.lat - fromStop.lat) * fraction
       const lng = fromStop.lon + (toStop.lon - fromStop.lon) * fraction
-
-      const dLng = ((toStop.lon - fromStop.lon) * Math.PI) / 180
-      const lat1 = (fromStop.lat * Math.PI) / 180
-      const lat2 = (toStop.lat * Math.PI) / 180
-      const y = Math.sin(dLng) * Math.cos(lat2)
-      const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
-      const heading = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
-
-      return { lat, lng, heading: Math.round(heading), destination }
+      const heading = calcHeading(fromStop.lat, fromStop.lon, toStop.lat, toStop.lon)
+      return { lat, lng, heading, destination }
     }
   }
 
@@ -141,11 +268,16 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
 
   for (const route of allRoutes) {
     for (const pattern of route.patterns) {
+      // Decode track shape geometry for accurate interpolation
+      const shapeCoords = pattern.patternGeometry?.points
+        ? decodePolyline(pattern.patternGeometry.points)
+        : null
+
       for (const trip of pattern.tripsForDate) {
         if (seenTrips.has(trip.gtfsId)) continue
         seenTrips.add(trip.gtfsId)
 
-        const pos = interpolatePosition(trip.stoptimes, nowSec)
+        const pos = interpolatePosition(trip.stoptimes, nowSec, shapeCoords)
         if (!pos) continue
 
         vehicles.push({
