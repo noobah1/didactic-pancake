@@ -37,7 +37,38 @@ interface GqlAlert {
 let cache: { data: ServiceAlert[]; timestamp: number } | null = null
 const CACHE_TTL = 60_000 // 1 minute
 
-export async function GET() {
+const MOCK_ALERTS: ServiceAlert[] = [
+  {
+    id: 'mock-1',
+    headerText: 'Tram 4 disruption — track works',
+    descriptionText: 'Tram line 4 is diverted between Viru and Tondi due to track repair works. Expected to last until March 5.',
+    severity: 'severe',
+    affectedRoutes: ['4'],
+  },
+  {
+    id: 'mock-2',
+    headerText: 'Bus 2 delays',
+    descriptionText: 'Bus line 2 is experiencing 10-15 minute delays due to road construction on Pärnu maantee.',
+    severity: 'warning',
+    affectedRoutes: ['2'],
+  },
+  {
+    id: 'mock-3',
+    headerText: 'Tram 3 temporary stop closure',
+    descriptionText: 'The Hobujaama stop for tram line 3 is temporarily closed. Please use the Viru stop instead.',
+    severity: 'warning',
+    affectedRoutes: ['3'],
+  },
+]
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const useTestData = searchParams.get('test') === '1'
+
+  if (useTestData) {
+    return NextResponse.json({ alerts: MOCK_ALERTS, timestamp: Date.now(), test: true })
+  }
+
   try {
     const now = Date.now()
     if (cache && now - cache.timestamp < CACHE_TTL) {

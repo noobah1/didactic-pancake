@@ -12,7 +12,7 @@ export function IncidentButton({ active, alertCount, onClick }: IncidentButtonPr
   return (
     <button
       onClick={onClick}
-      className={`absolute right-3 top-28 z-10 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all border-2 ${
+      className={`absolute right-3 bottom-6 z-10 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all border-2 ${
         active
           ? 'bg-amber-100 border-red-500'
           : 'bg-white/90 border-gray-300 hover:bg-gray-100'
