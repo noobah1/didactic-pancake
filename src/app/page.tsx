@@ -29,7 +29,7 @@ function HomeContent() {
   const testAlerts = searchParams.get('test_alerts') === '1'
 
   const vehicleData = useVehicles(activeModes)
-  const { routes, loading, error, search } = useRoutePlan()
+  const { routes, loading, error, search, clear } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
 
   const handleToggle = useCallback(
@@ -52,6 +52,11 @@ function HomeContent() {
 
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => {
     search(fromPlace, toPlace, modes, dateTime)
+  }
+
+  const handleClear = () => {
+    clear()
+    setSelectedRouteId(null)
   }
 
   const activeAlerts = useMemo(
@@ -92,7 +97,7 @@ function HomeContent() {
       {/* Floating UI column - top center */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none">
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} modes={activeModes} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} />
         </div>
         <div className="pointer-events-auto">
           <ErrorBoundary
