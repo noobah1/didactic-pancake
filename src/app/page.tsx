@@ -107,14 +107,18 @@ function HomeContent() {
             />
           </ErrorBoundary>
         </div>
-        <div className="pointer-events-auto mt-2 flex justify-start gap-2">
+        <div className="pointer-events-auto mt-2 flex justify-start">
           <FilterChips activeModes={activeModes} onToggle={handleToggle} />
-          <IncidentButton
-            active={showIncidents}
-            alertCount={activeAlerts.length}
-            onClick={() => setShowIncidents((prev) => !prev)}
-          />
         </div>
+      </div>
+
+      {/* Incident button - bottom right */}
+      <div className="absolute bottom-6 right-4 z-30 pointer-events-auto">
+        <IncidentButton
+          active={showIncidents}
+          alertCount={activeAlerts.length}
+          onClick={() => setShowIncidents((prev) => !prev)}
+        />
       </div>
     </main>
   )
