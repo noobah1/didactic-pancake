@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { X } from 'lucide-react'
 import { VehiclePosition, TripStopInfo } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
@@ -52,14 +52,12 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
   const isScheduled = vehicle.id.includes(':')
   const color = MODE_COLORS[vehicle.mode]
 
-  // Get latest position from the vehicles array (updates every 5s)
-  const liveVehicle = useMemo(() => {
-    if (!vehicles) return null
-    return vehicles.find((v) => v.id === vehicle.id) || null
-  }, [vehicles, vehicle.id])
+  // Ref so the interval always reads the latest vehicles array
+  const vehiclesRef = useRef(vehicles)
+  vehiclesRef.current = vehicles
 
-  const currentLat = liveVehicle?.lat ?? vehicle.lat
-  const currentLng = liveVehicle?.lng ?? vehicle.lng
+  const currentLat = vehicle.lat
+  const currentLng = vehicle.lng
 
   // Fetch schedule — match trip once, then reuse tripId for all subsequent fetches
   useEffect(() => {
@@ -112,7 +110,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
     doFetch(currentLat, currentLng)
 
     const timer = setInterval(() => {
-      const lv = vehicles?.find((v) => v.id === vehicle.id)
+      const lv = vehiclesRef.current?.find((v) => v.id === vehicle.id)
       const lat = lv?.lat ?? vehicle.lat
       const lng = lv?.lng ?? vehicle.lng
       doFetch(lat, lng)
