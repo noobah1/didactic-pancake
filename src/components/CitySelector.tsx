@@ -14,6 +14,7 @@ interface CitySelectorProps {
 export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll }: CitySelectorProps) {
   const [expanded, setExpanded] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const activeIds = new Set(activeCities.map((c) => c.id))
   const label = activeCities.length === CITIES.length
     ? 'All'
@@ -35,7 +36,10 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
   useEffect(() => {
     if (!expanded) return
     const handler = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+      if (
+        panelRef.current && !panelRef.current.contains(e.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+      ) {
         setExpanded(false)
       }
     }
@@ -58,7 +62,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
         </svg>
       </button>
       {expanded && (
-        <div className="absolute top-12 left-0 z-50 bg-white rounded-2xl shadow-lg border border-gray-100 p-3 w-[calc(100vw-24px)] sm:w-[460px] max-h-[60vh] overflow-y-auto">
+        <div ref={dropdownRef} className="fixed top-12 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-lg border border-gray-100 p-3 w-[calc(100vw-24px)] sm:w-[460px] max-h-[60vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Counties</span>
