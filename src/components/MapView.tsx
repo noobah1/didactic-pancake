@@ -512,8 +512,10 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
+    let cancelled = false
 
     const cleanup = () => {
+      cancelled = true
       for (const id of incidentLayerIdsRef.current) {
         if (map.getLayer(id)) map.removeLayer(id)
       }
@@ -526,95 +528,113 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
       incidentMarkersRef.current = []
     }
 
+    const fetchRouteShape = async (
+      routeName: string,
+    ): Promise<{ patterns: RouteShapePattern[] } | null> => {
+      for (const mode of ['bus', 'tram', 'train', 'ferry']) {
+        const res = await fetch(
+          `/api/route-shape?line=${encodeURIComponent(routeName)}&mode=${mode}`,
+        )
+        if (res.ok) {
+          const data = await res.json()
+          if (data.patterns?.length) return data
+        }
+      }
+      return null
+    }
+
+    const escapeHtml = (s: string): string =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
     const draw = async () => {
       cleanup()
+      cancelled = false
       if (!incidents || incidents.length === 0 || !mapReadyRef.current) return
+
+      // Fetch all route shapes in parallel
+      const fetchTasks = incidents.flatMap((alert) =>
+        alert.affectedRoutes.map(async (routeName) => {
+          try {
+            const shapeData = await fetchRouteShape(routeName)
+            return shapeData ? { alert, routeName, patterns: shapeData.patterns } : null
+          } catch {
+            return null
+          }
+        }),
+      )
+      const results = (await Promise.allSettled(fetchTasks))
+        .filter((r): r is PromiseFulfilledResult<NonNullable<Awaited<(typeof fetchTasks)[0]>>> =>
+          r.status === 'fulfilled' && r.value != null,
+        )
+        .map((r) => r.value)
+
+      if (cancelled) return
 
       const layerIds: string[] = []
       let routeIndex = 0
 
-      for (const alert of incidents) {
+      for (const { alert, routeName, patterns } of results) {
         const color = alert.severity === 'severe' ? '#EF4444' : '#D97706'
+        let markerPlaced = false
 
-        for (const routeName of alert.affectedRoutes) {
-          try {
-            let shapeData: { patterns: RouteShapePattern[] } | null = null
-            for (const mode of ['bus', 'tram', 'train', 'ferry']) {
-              const res = await fetch(
-                `/api/route-shape?line=${encodeURIComponent(routeName)}&mode=${mode}`,
-              )
-              if (res.ok) {
-                const data = await res.json()
-                if (data.patterns?.length) {
-                  shapeData = data
-                  break
-                }
-              }
-            }
+        for (const pattern of patterns) {
+          const coords = decodePolyline(pattern.geometry)
+          if (coords.length < 2) continue
 
-            if (!shapeData?.patterns?.length) continue
+          const srcId = `${INCIDENT_SOURCE_PREFIX}${routeIndex}`
+          const layerId = `${INCIDENT_LINE_PREFIX}${routeIndex}`
 
-            for (const pattern of shapeData.patterns) {
-              const coords = decodePolyline(pattern.geometry)
-              if (coords.length < 2) continue
-
-              const srcId = `${INCIDENT_SOURCE_PREFIX}${routeIndex}`
-              const layerId = `${INCIDENT_LINE_PREFIX}${routeIndex}`
-
-              const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
-                type: 'Feature',
-                properties: {},
-                geometry: { type: 'LineString', coordinates: coords },
-              }
-
-              map.addSource(srcId, { type: 'geojson', data: geojson })
-              map.addLayer({
-                id: layerId,
-                type: 'line',
-                source: srcId,
-                paint: {
-                  'line-color': color,
-                  'line-width': 6,
-                  'line-opacity': 0.7,
-                },
-                layout: { 'line-join': 'round', 'line-cap': 'round' },
-              })
-
-              layerIds.push(layerId)
-
-              // Place a warning marker at the midpoint of each route
-              if (routeIndex === layerIds.length - 1) {
-                const mid = coords[Math.floor(coords.length / 2)]
-                const el = document.createElement('div')
-                el.style.width = '28px'
-                el.style.height = '28px'
-                el.style.borderRadius = '50%'
-                el.style.backgroundColor = alert.severity === 'severe' ? '#FEE2E2' : '#FEF3C7'
-                el.style.border = `2px solid ${color}`
-                el.style.display = 'flex'
-                el.style.alignItems = 'center'
-                el.style.justifyContent = 'center'
-                el.style.cursor = 'pointer'
-                el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
-                el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`
-
-                const popup = new maplibregl.Popup({ offset: 15, maxWidth: '250px' }).setHTML(
-                  `<div style="padding:4px"><strong style="color:${color}">${alert.headerText}</strong>${alert.descriptionText ? `<p style="margin:4px 0 0;font-size:13px;color:#374151">${alert.descriptionText}</p>` : ''}<p style="margin:4px 0 0;font-size:11px;color:#6B7280">Affected: ${routeName}</p></div>`,
-                )
-
-                const marker = new maplibregl.Marker({ element: el })
-                  .setLngLat(mid as [number, number])
-                  .setPopup(popup)
-                  .addTo(map)
-
-                incidentMarkersRef.current.push(marker)
-              }
-
-              routeIndex++
-            }
-          } catch {
-            // Skip routes we can't fetch shapes for
+          const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'LineString', coordinates: coords },
           }
+
+          map.addSource(srcId, { type: 'geojson', data: geojson })
+          map.addLayer({
+            id: layerId,
+            type: 'line',
+            source: srcId,
+            paint: {
+              'line-color': color,
+              'line-width': 6,
+              'line-opacity': 0.7,
+            },
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+          })
+
+          layerIds.push(layerId)
+
+          // Place one warning marker per (alert, route) pair
+          if (!markerPlaced) {
+            markerPlaced = true
+            const mid = coords[Math.floor(coords.length / 2)]
+            const el = document.createElement('div')
+            el.style.width = '28px'
+            el.style.height = '28px'
+            el.style.borderRadius = '50%'
+            el.style.backgroundColor = alert.severity === 'severe' ? '#FEE2E2' : '#FEF3C7'
+            el.style.border = `2px solid ${color}`
+            el.style.display = 'flex'
+            el.style.alignItems = 'center'
+            el.style.justifyContent = 'center'
+            el.style.cursor = 'pointer'
+            el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
+            el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`
+
+            const popup = new maplibregl.Popup({ offset: 15, maxWidth: '250px' }).setHTML(
+              `<div style="padding:4px"><strong style="color:${color}">${escapeHtml(alert.headerText)}</strong>${alert.descriptionText ? `<p style="margin:4px 0 0;font-size:13px;color:#374151">${escapeHtml(alert.descriptionText)}</p>` : ''}<p style="margin:4px 0 0;font-size:11px;color:#6B7280">Affected: ${escapeHtml(routeName)}</p></div>`,
+            )
+
+            const marker = new maplibregl.Marker({ element: el })
+              .setLngLat(mid as [number, number])
+              .setPopup(popup)
+              .addTo(map)
+
+            incidentMarkersRef.current.push(marker)
+          }
+
+          routeIndex++
         }
       }
 
