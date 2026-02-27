@@ -49,10 +49,9 @@ function HomeContent() {
     const next = isActive
       ? activeCities.filter((c) => c.id !== city.id)
       : [...activeCities, city]
-    if (next.length === 0) return
     setActiveCities(next)
     const params = new URLSearchParams(searchParams.toString())
-    if (next.length === CITIES.length) {
+    if (next.length === 0 || next.length === CITIES.length) {
       params.delete('cities')
     } else {
       params.set('cities', next.map((c) => c.id).join(','))
@@ -66,13 +65,23 @@ function HomeContent() {
     const next = allActive
       ? activeCities.filter((c) => !countyIds.has(c.id))
       : [...activeCities, ...countyCities.filter((c) => !activeCities.some((ac) => ac.id === c.id))]
-    if (next.length === 0) return
     setActiveCities(next)
     const params = new URLSearchParams(searchParams.toString())
-    if (next.length === CITIES.length) {
+    if (next.length === 0 || next.length === CITIES.length) {
       params.delete('cities')
     } else {
       params.set('cities', next.map((c) => c.id).join(','))
+    }
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
+
+  const handleSetAllCities = (cities: CityDef[]) => {
+    setActiveCities(cities)
+    const params = new URLSearchParams(searchParams.toString())
+    if (cities.length === 0 || cities.length === CITIES.length) {
+      params.delete('cities')
+    } else {
+      params.set('cities', cities.map((c) => c.id).join(','))
     }
     router.replace(`?${params.toString()}`, { scroll: false })
   }
@@ -169,7 +178,7 @@ function HomeContent() {
           </ErrorBoundary>
         </div>
         <div className="pointer-events-auto mt-2 flex flex-wrap justify-start gap-2">
-          <CitySelector activeCities={activeCities} onToggle={handleCityToggle} onToggleCounty={handleCountyToggle} />
+          <CitySelector activeCities={activeCities} onToggle={handleCityToggle} onToggleCounty={handleCountyToggle} onSetAll={handleSetAllCities} />
           <FilterChips activeModes={activeModes} onToggle={handleToggle} />
         </div>
       </div>
