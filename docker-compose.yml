@@ -7,7 +7,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Xmx4g
     volumes:
       - ./otp:/var/opentripplanner
-    command: ['--load', '--serve']
+    command: ['--build', '--save', '--serve']
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8080/otp/actuators/health']
       interval: 30s

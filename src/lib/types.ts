@@ -53,6 +53,16 @@ export interface ServiceAlert {
   activePeriodEnd?: string
 }
 
+export interface TripStopInfo {
+  name: string
+  lat: number
+  lng: number
+  stopId: string
+  scheduledArrival: number   // seconds since midnight
+  scheduledDeparture: number // seconds since midnight
+  status: 'passed' | 'current' | 'upcoming'
+}
+
 export interface SearchFilters {
   modes: TransportMode[]
   departureTime: 'now' | string // ISO timestamp

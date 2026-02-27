@@ -9,8 +9,10 @@ import { AlertBanner } from '@/components/AlertBanner'
 import { MapView } from '@/components/MapView'
 import { IncidentButton } from '@/components/IncidentButton'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { TransportMode } from '@/lib/types'
-import { ALL_MODES } from '@/lib/constants'
+import { CitySelector } from '@/components/CitySelector'
+import { TimetablePanel } from '@/components/TimetablePanel'
+import { TransportMode, VehiclePosition } from '@/lib/types'
+import { ALL_MODES, CITIES, CityDef } from '@/lib/constants'
 import { useVehicles } from '@/hooks/use-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
@@ -20,17 +22,46 @@ function HomeContent() {
   const router = useRouter()
 
   const modesFromUrl = searchParams.get('modes')
+  const citiesFromUrl = searchParams.get('cities')
+  const [activeCities, setActiveCities] = useState<CityDef[]>(() => {
+    if (citiesFromUrl) {
+      const ids = citiesFromUrl.split(',')
+      const matched = CITIES.filter((c) => ids.includes(c.id))
+      return matched.length > 0 ? matched : [CITIES[0]]
+    }
+    return [CITIES[0]]
+  })
   const [activeModes, setActiveModes] = useState<TransportMode[]>(
     modesFromUrl ? (modesFromUrl.split(',') as TransportMode[]) : [...ALL_MODES],
   )
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
+  const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
   const [showIncidents, setShowIncidents] = useState(false)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
 
-  const vehicleData = useVehicles(activeModes)
+  const vehicleData = useVehicles(activeModes, activeCities)
   const { routes, loading, error, search } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
+
+  const handleCityToggle = useCallback(
+    (city: CityDef) => {
+      const isActive = activeCities.some((c) => c.id === city.id)
+      const next = isActive
+        ? activeCities.filter((c) => c.id !== city.id)
+        : [...activeCities, city]
+      if (next.length === 0) return
+      setActiveCities(next)
+      const params = new URLSearchParams(searchParams.toString())
+      if (next.length === CITIES.length) {
+        params.delete('cities')
+      } else {
+        params.set('cities', next.map((c) => c.id).join(','))
+      }
+      router.replace(`?${params.toString()}`, { scroll: false })
+    },
+    [activeCities, searchParams, router],
+  )
 
   const handleToggle = useCallback(
     (mode: TransportMode) => {
@@ -79,8 +110,19 @@ function HomeContent() {
           activeModes={activeModes}
           selectedRoute={selectedRoute}
           incidents={showIncidents ? activeAlerts : undefined}
+          cities={activeCities}
+          onVehicleClick={setSelectedVehicle}
         />
       </ErrorBoundary>
+
+      {/* Timetable panel - bottom left */}
+      {selectedVehicle && (
+        <TimetablePanel
+          vehicle={selectedVehicle}
+          vehicles={vehicleData.data?.vehicles}
+          onClose={() => setSelectedVehicle(null)}
+        />
+      )}
 
       {/* Alert banner - top of viewport */}
       {alertData.data?.alerts && alertData.data.alerts.length > 0 && (
@@ -108,6 +150,7 @@ function HomeContent() {
           </ErrorBoundary>
         </div>
         <div className="pointer-events-auto mt-2 flex justify-start gap-2">
+          <CitySelector activeCities={activeCities} onToggle={handleCityToggle} />
           <FilterChips activeModes={activeModes} onToggle={handleToggle} />
           <IncidentButton
             active={showIncidents}
