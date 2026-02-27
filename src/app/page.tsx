@@ -60,6 +60,23 @@ function HomeContent() {
     router.replace(`?${params.toString()}`, { scroll: false })
   }
 
+  const handleCountyToggle = (countyCities: CityDef[]) => {
+    const allActive = countyCities.every((c) => activeCities.some((ac) => ac.id === c.id))
+    const countyIds = new Set(countyCities.map((c) => c.id))
+    const next = allActive
+      ? activeCities.filter((c) => !countyIds.has(c.id))
+      : [...activeCities, ...countyCities.filter((c) => !activeCities.some((ac) => ac.id === c.id))]
+    if (next.length === 0) return
+    setActiveCities(next)
+    const params = new URLSearchParams(searchParams.toString())
+    if (next.length === CITIES.length) {
+      params.delete('cities')
+    } else {
+      params.set('cities', next.map((c) => c.id).join(','))
+    }
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
+
   const handleToggle = useCallback(
     (mode: TransportMode) => {
       const next = activeModes.includes(mode)
@@ -151,8 +168,8 @@ function HomeContent() {
             />
           </ErrorBoundary>
         </div>
-        <div className="pointer-events-auto mt-2 flex justify-start gap-2">
-          <CitySelector activeCities={activeCities} onToggle={handleCityToggle} />
+        <div className="pointer-events-auto mt-2 flex flex-wrap justify-start gap-2">
+          <CitySelector activeCities={activeCities} onToggle={handleCityToggle} onToggleCounty={handleCountyToggle} />
           <FilterChips activeModes={activeModes} onToggle={handleToggle} />
         </div>
       </div>
