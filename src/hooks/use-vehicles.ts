@@ -11,7 +11,6 @@ interface VehicleResponse {
 
 export function useVehicles(modes: TransportMode[], cities: CityDef[] = []) {
   const modesKey = modes.join(',')
-  const citiesKey = cities.map((c) => c.id).sort().join(',')
   const fetcher = useCallback(async (): Promise<VehicleResponse> => {
     const params = new URLSearchParams({ modes: modesKey })
     if (cities.length > 0) {
@@ -20,7 +19,7 @@ export function useVehicles(modes: TransportMode[], cities: CityDef[] = []) {
     const res = await fetch(`/api/vehicles?${params}`)
     if (!res.ok) throw new Error('Failed to fetch vehicles')
     return res.json()
-  }, [modesKey, citiesKey])
+  }, [modesKey, cities])
 
   return usePolling(fetcher, POLL_INTERVALS.vehiclePositions)
 }
