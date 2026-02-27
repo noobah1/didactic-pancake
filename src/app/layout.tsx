@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Tallinn Transit',
-  description: 'Public transport route planner for Tallinn',
+  title: 'Estonia Transit',
+  description: 'Public transport route planner for Estonia',
 }
 
 export default function RootLayout({

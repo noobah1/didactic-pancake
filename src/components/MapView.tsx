@@ -3,15 +3,28 @@
 import { useRef, useEffect, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS } from '@/lib/constants'
-import { VehiclePosition, TransportMode, RouteResult, ServiceAlert } from '@/lib/types'
+import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/constants'
+import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
+
+function formatSecondsToTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
 
 const ROUTE_LINE_SOURCE = 'route-line-source'
 const ROUTE_LINE_LAYER = 'route-line-layer'
 const ROUTE_STOPS_SOURCE = 'route-stops-source'
 const ROUTE_STOPS_LAYER = 'route-stops-layer'
 const ROUTE_STOPS_LABEL_LAYER = 'route-stops-label-layer'
+const VEHICLE_DOT_SOURCE = 'vehicle-dot-source'
+const VEHICLE_DOT_LAYER = 'vehicle-dot-layer'
+const VEHICLE_DOT_GLOW_LAYER = 'vehicle-dot-glow-layer'
 
 const PLAN_LAYER_PREFIX = 'plan-leg-'
 const PLAN_SOURCE_PREFIX = 'plan-leg-src-'
@@ -22,6 +35,106 @@ const PLAN_STOPS_LABEL_LAYER = 'plan-stops-label-layer'
 
 const INCIDENT_LINE_PREFIX = 'incident-line-'
 const INCIDENT_SOURCE_PREFIX = 'incident-src-'
+
+// Get current time in Tallinn as seconds since midnight
+function getNowSeconds(): number {
+  const now = new Date()
+  const parts = now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Tallinn', hour12: false }).split(':')
+  return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
+}
+
+// Interpolate vehicle position along route line based on schedule
+function interpolateVehiclePosition(
+  stops: TripStopInfo[],
+  lineCoords: [number, number][],
+  nowSec: number,
+): [number, number] | null {
+  if (stops.length < 2 || lineCoords.length < 2) return null
+
+  // Find which two stops we're between
+  for (let i = 0; i < stops.length - 1; i++) {
+    const dep = stops[i].scheduledDeparture
+    const arr = stops[i + 1].scheduledArrival
+
+    // Currently dwelling at stop i
+    if (nowSec >= stops[i].scheduledArrival && nowSec < dep) {
+      return [stops[i].lng, stops[i].lat]
+    }
+
+    // Between stop i and stop i+1
+    if (nowSec >= dep && nowSec <= arr) {
+      const frac = arr > dep ? (nowSec - dep) / (arr - dep) : 0
+
+      // Find the segments of the route line closest to each stop
+      const fromStop: [number, number] = [stops[i].lng, stops[i].lat]
+      const toStop: [number, number] = [stops[i + 1].lng, stops[i + 1].lat]
+
+      const fromIdx = nearestPointIndex(lineCoords, fromStop)
+      const toIdx = nearestPointIndex(lineCoords, toStop)
+
+      if (fromIdx === toIdx) {
+        // Same segment — lerp between stops directly
+        return [
+          fromStop[0] + frac * (toStop[0] - fromStop[0]),
+          fromStop[1] + frac * (toStop[1] - fromStop[1]),
+        ]
+      }
+
+      // Walk along route line from fromIdx to toIdx
+      const startIdx = Math.min(fromIdx, toIdx)
+      const endIdx = Math.max(fromIdx, toIdx)
+      const segments: [number, number][] = lineCoords.slice(startIdx, endIdx + 1)
+
+      // Calculate total distance along these segments
+      let totalDist = 0
+      const segDists: number[] = []
+      for (let j = 1; j < segments.length; j++) {
+        const d = Math.hypot(segments[j][0] - segments[j - 1][0], segments[j][1] - segments[j - 1][1])
+        segDists.push(d)
+        totalDist += d
+      }
+
+      // Walk to the fractional distance
+      const targetDist = frac * totalDist
+      let walked = 0
+      for (let j = 0; j < segDists.length; j++) {
+        if (walked + segDists[j] >= targetDist) {
+          const segFrac = segDists[j] > 0 ? (targetDist - walked) / segDists[j] : 0
+          return [
+            segments[j][0] + segFrac * (segments[j + 1][0] - segments[j][0]),
+            segments[j][1] + segFrac * (segments[j + 1][1] - segments[j][1]),
+          ]
+        }
+        walked += segDists[j]
+      }
+
+      return segments[segments.length - 1]
+    }
+  }
+
+  // Before first stop
+  if (nowSec < stops[0].scheduledArrival) {
+    return [stops[0].lng, stops[0].lat]
+  }
+
+  // After last stop
+  const last = stops[stops.length - 1]
+  return [last.lng, last.lat]
+}
+
+// Find the index of the closest point in coords to target
+function nearestPointIndex(coords: [number, number][], target: [number, number]): number {
+  let bestIdx = 0
+  let bestDist = Infinity
+  for (let i = 0; i < coords.length; i++) {
+    const d = Math.hypot(coords[i][0] - target[0], coords[i][1] - target[1])
+    if (d < bestDist) {
+      bestDist = d
+      bestIdx = i
+    }
+  }
+  return bestIdx
+}
 
 interface RouteShapePattern {
   directionId: number
@@ -34,10 +147,11 @@ interface MapViewProps {
   activeModes?: TransportMode[]
   selectedRoute?: RouteResult | null
   incidents?: ServiceAlert[]
-  onStopClick?: (stopId: string) => void
+  cities?: CityDef[]
+  onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, cities, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -47,6 +161,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
   const planMarkerRef = useRef<maplibregl.Marker[]>([])
   const mapReadyRef = useRef(false)
   const incidentLayerIdsRef = useRef<string[]>([])
+  const showRouteShapeRef = useRef<(v: VehiclePosition) => void>(() => {})
+  const vehicleDotTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
 
   const clearRouteShape = useCallback(() => {
@@ -55,6 +171,14 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
 
     activeRouteRef.current = null
 
+    if (vehicleDotTimerRef.current) {
+      clearInterval(vehicleDotTimerRef.current)
+      vehicleDotTimerRef.current = null
+    }
+
+    if (map.getLayer(VEHICLE_DOT_GLOW_LAYER)) map.removeLayer(VEHICLE_DOT_GLOW_LAYER)
+    if (map.getLayer(VEHICLE_DOT_LAYER)) map.removeLayer(VEHICLE_DOT_LAYER)
+    if (map.getSource(VEHICLE_DOT_SOURCE)) map.removeSource(VEHICLE_DOT_SOURCE)
     if (map.getLayer(ROUTE_STOPS_LABEL_LAYER)) map.removeLayer(ROUTE_STOPS_LABEL_LAYER)
     if (map.getLayer(ROUTE_LINE_LAYER)) map.removeLayer(ROUTE_LINE_LAYER)
     if (map.getSource(ROUTE_LINE_SOURCE)) map.removeSource(ROUTE_LINE_SOURCE)
@@ -70,71 +194,129 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
       const map = mapRef.current
       if (!map || !mapReadyRef.current) return
 
-      const routeKey = `${vehicle.mode}-${vehicle.line}`
+      const routeKey = `${vehicle.mode}-${vehicle.line}-${vehicle.id}`
       if (activeRouteRef.current === routeKey) {
-        // Clicking the same route again clears it
         clearRouteShape()
+        onVehicleClick?.(null)
         return
       }
 
       clearRouteShape()
       activeRouteRef.current = routeKey
+      onVehicleClick?.(vehicle)
 
       try {
-        const res = await fetch(
-          `/api/route-shape?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}`,
-        )
-        if (!res.ok) return
+        const isScheduled = vehicle.id.includes(':')
 
-        const data: { patterns: RouteShapePattern[] } = await res.json()
-        if (!data.patterns?.length) return
+        // Build trip-stops URL: direct lookup for scheduled, match by line/mode for GPS
+        const tripStopsUrl = isScheduled
+          ? `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}`
+          : `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${vehicle.lat}&lng=${vehicle.lng}`
+
+        // Fetch trip stops (includes geometry now) — this is the primary data source
+        const tripRes = await fetch(tripStopsUrl).catch(() => null)
+
+        let tripStops: TripStopInfo[] | null = null
+        let tripGeometry: string | null = null
+        if (tripRes && tripRes.ok) {
+          const tripData = await tripRes.json()
+          tripStops = tripData.stops || null
+          tripGeometry = tripData.geometry || null
+        }
+
+        // If trip-stops failed, fall back to route-shape API
+        if (!tripStops || tripStops.length === 0) {
+          const shapeRes = await fetch(
+            `/api/route-shape?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}`,
+          )
+          if (!shapeRes.ok) return
+          const shapeData: { patterns: RouteShapePattern[] } = await shapeRes.json()
+          if (!shapeData.patterns?.length) return
+
+          // If route changed while we were fetching, abort
+          if (activeRouteRef.current !== routeKey) return
+
+          const bestPattern = shapeData.patterns[0]
+          tripStops = null
+          if (!tripGeometry && bestPattern.geometry) {
+            tripGeometry = bestPattern.geometry
+          }
+        }
 
         // If route changed while we were fetching, abort
         if (activeRouteRef.current !== routeKey) return
 
         const color = MODE_COLORS[vehicle.mode]
 
-        // Decode all pattern geometries into GeoJSON MultiLineString
-        const coordinates = data.patterns.map((p) => decodePolyline(p.geometry))
+        let stopFeatures: GeoJSON.Feature<GeoJSON.Point>[]
+        let lineCoords: [number, number][] = []
 
-        const geojson: GeoJSON.Feature<GeoJSON.MultiLineString> = {
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'MultiLineString', coordinates },
-        }
+        if (tripStops && tripStops.length > 0) {
+          stopFeatures = tripStops.map((stop) => ({
+            type: 'Feature' as const,
+            properties: {
+              name: stop.name,
+              status: stop.status,
+              arrivalTime: formatSecondsToTime(stop.scheduledArrival),
+              departureTime: formatSecondsToTime(stop.scheduledDeparture),
+              hasSchedule: 'true',
+            },
+            geometry: { type: 'Point' as const, coordinates: [stop.lng, stop.lat] },
+          }))
 
-        map.addSource(ROUTE_LINE_SOURCE, { type: 'geojson', data: geojson })
-        map.addLayer({
-          id: ROUTE_LINE_LAYER,
-          type: 'line',
-          source: ROUTE_LINE_SOURCE,
-          paint: {
-            'line-color': color,
-            'line-width': 4,
-            'line-opacity': 0.8,
-          },
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-        })
-
-        // Collect unique stops (deduplicate by name + coordinates)
-        const stopSet = new Map<string, { name: string; lat: number; lng: number }>()
-        for (const pattern of data.patterns) {
-          for (const stop of pattern.stops) {
-            const key = `${stop.lat.toFixed(5)},${stop.lng.toFixed(5)}`
-            if (!stopSet.has(key)) stopSet.set(key, stop)
+          // Use geometry from trip-stops API (exact match for this trip)
+          if (tripGeometry) {
+            const decoded = decodePolyline(tripGeometry)
+            lineCoords = decoded.length >= 2 ? decoded : tripStops.map((s) => [s.lng, s.lat] as [number, number])
+          } else {
+            lineCoords = tripStops.map((s) => [s.lng, s.lat] as [number, number])
+          }
+        } else {
+          // No trip data — decode geometry if available
+          stopFeatures = []
+          if (tripGeometry) {
+            lineCoords = decodePolyline(tripGeometry)
           }
         }
 
-        const stopFeatures: GeoJSON.Feature<GeoJSON.Point>[] = Array.from(stopSet.values()).map(
-          (stop) => ({
-            type: 'Feature',
-            properties: { name: stop.name },
-            geometry: { type: 'Point', coordinates: [stop.lng, stop.lat] },
-          }),
-        )
+        // ALWAYS draw line — fallback to stop-to-stop if lineCoords is empty
+        if (lineCoords.length < 2 && tripStops && tripStops.length >= 2) {
+          lineCoords = tripStops.map((s) => [s.lng, s.lat] as [number, number])
+        }
+
+        // Ensure no leftover source/layer before adding
+        if (map.getLayer(ROUTE_LINE_LAYER)) map.removeLayer(ROUTE_LINE_LAYER)
+        if (map.getSource(ROUTE_LINE_SOURCE)) map.removeSource(ROUTE_LINE_SOURCE)
+
+        // Draw line connecting all stops in order
+        if (lineCoords.length >= 2) {
+          map.addSource(ROUTE_LINE_SOURCE, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: { type: 'LineString', coordinates: lineCoords },
+            },
+          })
+          map.addLayer({
+            id: ROUTE_LINE_LAYER,
+            type: 'line',
+            source: ROUTE_LINE_SOURCE,
+            paint: {
+              'line-color': color,
+              'line-width': 5,
+              'line-opacity': 0.85,
+            },
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+          })
+        }
+
+        if (map.getLayer(ROUTE_STOPS_LABEL_LAYER)) map.removeLayer(ROUTE_STOPS_LABEL_LAYER)
+        if (map.getLayer(ROUTE_STOPS_LAYER)) map.removeLayer(ROUTE_STOPS_LAYER)
+        if (map.getSource(ROUTE_STOPS_SOURCE)) map.removeSource(ROUTE_STOPS_SOURCE)
 
         map.addSource(ROUTE_STOPS_SOURCE, {
           type: 'geojson',
@@ -146,10 +328,28 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
           type: 'circle',
           source: ROUTE_STOPS_SOURCE,
           paint: {
-            'circle-radius': 5,
-            'circle-color': '#ffffff',
-            'circle-stroke-color': color,
-            'circle-stroke-width': 2,
+            'circle-radius': [
+              'match', ['get', 'status'],
+              'current', 8,
+              5,
+            ],
+            'circle-color': [
+              'match', ['get', 'status'],
+              'passed', '#9CA3AF',
+              'current', '#FCD34D',
+              '#ffffff',
+            ],
+            'circle-stroke-color': [
+              'match', ['get', 'status'],
+              'passed', '#6B7280',
+              'current', '#F59E0B',
+              color,
+            ],
+            'circle-stroke-width': [
+              'match', ['get', 'status'],
+              'current', 3,
+              2,
+            ],
           },
         })
 
@@ -163,20 +363,29 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
             'text-offset': [0, 1.3],
             'text-anchor': 'top',
             'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
-            'text-allow-overlap': false,
+            'text-allow-overlap': true,
+            'text-ignore-placement': true,
           },
           paint: {
-            'text-color': '#1f2937',
+            'text-color': [
+              'match', ['get', 'status'],
+              'passed', '#9CA3AF',
+              '#1f2937',
+            ],
             'text-halo-color': '#ffffff',
-            'text-halo-width': 1.5,
+            'text-halo-width': 2,
           },
         })
-      } catch {
-        // Silently fail - route shape is a nice-to-have
+
+      } catch (err) {
+        console.error('showRouteShape failed:', err)
       }
     },
-    [clearRouteShape],
+    [clearRouteShape, onVehicleClick],
   )
+
+  // Keep ref in sync so click handlers always use the latest version
+  showRouteShapeRef.current = showRouteShape
 
   // Initialize map
   useEffect(() => {
@@ -202,14 +411,40 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
       mapReadyRef.current = true
     })
 
-    // Show stop name on click
-    const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: true })
+    // Show stop info on click (name, times, status)
+    const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: true, maxWidth: '220px' })
     map.on('click', ROUTE_STOPS_LAYER, (e) => {
       if (!e.features?.length) return
       const feature = e.features[0]
       const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
-      const name = feature.properties?.name || ''
-      popup.setLngLat(coords).setHTML(`<strong>${name}</strong>`).addTo(map)
+      const props = feature.properties || {}
+      const name = escapeHtml(props.name || '')
+      const hasSchedule = props.hasSchedule === 'true'
+      const arrivalTime = props.arrivalTime || ''
+      const departureTime = props.departureTime || ''
+      const status = props.status || 'none'
+
+      let html = `<strong>${name}</strong>`
+
+      if (hasSchedule && (arrivalTime || departureTime)) {
+        html += `<div style="margin-top:4px;font-size:13px;color:#374151">`
+        if (arrivalTime) html += `<span style="color:#6B7280">Arr</span> ${arrivalTime}`
+        if (arrivalTime && departureTime) html += `&nbsp;&nbsp;`
+        if (departureTime) html += `<span style="color:#6B7280">Dep</span> ${departureTime}`
+        html += `</div>`
+
+        const statusLabel = status === 'passed' ? 'Passed'
+          : status === 'current' ? 'At stop'
+          : 'Upcoming'
+        const statusColor = status === 'passed' ? '#6B7280'
+          : status === 'current' ? '#F59E0B'
+          : '#10B981'
+        html += `<div style="margin-top:4px"><span style="display:inline-block;padding:1px 8px;border-radius:4px;font-size:11px;font-weight:600;color:white;background:${statusColor}">${statusLabel}</span></div>`
+      } else if (!hasSchedule) {
+        html += `<div style="margin-top:4px;font-size:12px;color:#9CA3AF">Live GPS &mdash; schedule not available</div>`
+      }
+
+      popup.setLngLat(coords).setHTML(html).addTo(map)
     })
 
     mapRef.current = map
@@ -220,6 +455,28 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
       mapReadyRef.current = false
     }
   }, [])
+
+  // Fly to city/cities when selection changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !cities || cities.length === 0) return
+    if (cities.length === 1) {
+      map.flyTo({
+        center: [cities[0].lng, cities[0].lat],
+        zoom: cities[0].zoom,
+        duration: 1500,
+      })
+    } else {
+      const bounds = new maplibregl.LngLatBounds(
+        [cities[0].lng, cities[0].lat],
+        [cities[0].lng, cities[0].lat],
+      )
+      for (const c of cities) {
+        bounds.extend([c.lng, c.lat])
+      }
+      map.fitBounds(bounds, { padding: 80, duration: 1500 })
+    }
+  }, [cities])
 
   // Update vehicle markers
   useEffect(() => {
@@ -261,7 +518,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
 
           el.addEventListener('click', (e) => {
             e.stopPropagation()
-            showRouteShape(vehicle)
+            showRouteShapeRef.current(vehicle)
           })
 
           const marker = new maplibregl.Marker({ element: el })
@@ -543,8 +800,6 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
       return null
     }
 
-    const escapeHtml = (s: string): string =>
-      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
     const draw = async () => {
       cleanup()
@@ -650,5 +905,5 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
     return cleanup
   }, [incidents])
 
-  return <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+  return <div ref={containerRef} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }} />
 }
