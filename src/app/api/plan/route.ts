@@ -149,12 +149,12 @@ export async function GET(request: Request) {
 
     const data = await response.json()
 
-    if (data.errors?.length) {
+    const itineraries: GqlItinerary[] = data.data?.plan?.itineraries || []
+
+    if (data.errors?.length && itineraries.length === 0) {
       console.error('OTP GraphQL errors:', data.errors)
       return NextResponse.json({ error: data.errors[0].message || 'Route planning failed' }, { status: 502 })
     }
-
-    const itineraries: GqlItinerary[] = data.data?.plan?.itineraries || []
 
     if (itineraries.length === 0) {
       return NextResponse.json({ error: 'No routes found' }, { status: 404 })
