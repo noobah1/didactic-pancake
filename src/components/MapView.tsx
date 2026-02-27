@@ -502,5 +502,5 @@ export function MapView({ vehicles, activeModes = [], selectedRoute }: MapViewPr
     return cleanup
   }, [selectedRoute])
 
-  return <div ref={containerRef} className="flex-1" />
+  return <div ref={containerRef} className="absolute inset-0" />
 }

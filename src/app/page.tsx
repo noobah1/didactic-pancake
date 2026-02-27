@@ -53,26 +53,11 @@ function HomeContent() {
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 
   return (
-    <main className="h-dvh flex flex-col">
-      {alertData.data?.alerts && alertData.data.alerts.length > 0 && (
-        <AlertBanner alerts={alertData.data.alerts} />
-      )}
-      <SearchPanel onSearch={handleSearch} modes={activeModes} />
-      <FilterChips activeModes={activeModes} onToggle={handleToggle} />
-      <ErrorBoundary
-        fallback={<div className="p-4 text-center text-gray-500">Route search unavailable</div>}
-      >
-        <RouteResults
-          routes={routes}
-          loading={loading}
-          error={error}
-          selectedId={selectedRouteId}
-          onSelect={setSelectedRouteId}
-        />
-      </ErrorBoundary>
+    <main className="h-dvh relative overflow-hidden">
+      {/* Fullscreen map base layer */}
       <ErrorBoundary
         fallback={
-          <div className="flex-1 flex items-center justify-center text-gray-500">
+          <div className="absolute inset-0 flex items-center justify-center text-gray-500">
             Map unavailable
           </div>
         }
@@ -83,6 +68,36 @@ function HomeContent() {
           selectedRoute={selectedRoute}
         />
       </ErrorBoundary>
+
+      {/* Alert banner - top of viewport */}
+      {alertData.data?.alerts && alertData.data.alerts.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 z-40">
+          <AlertBanner alerts={alertData.data.alerts} />
+        </div>
+      )}
+
+      {/* Floating UI column - top center */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none">
+        <div className="pointer-events-auto">
+          <SearchPanel onSearch={handleSearch} modes={activeModes} />
+        </div>
+        <div className="pointer-events-auto">
+          <ErrorBoundary
+            fallback={<div className="p-4 text-center text-gray-500">Route search unavailable</div>}
+          >
+            <RouteResults
+              routes={routes}
+              loading={loading}
+              error={error}
+              selectedId={selectedRouteId}
+              onSelect={setSelectedRouteId}
+            />
+          </ErrorBoundary>
+        </div>
+        <div className="pointer-events-auto mt-2 flex justify-start">
+          <FilterChips activeModes={activeModes} onToggle={handleToggle} />
+        </div>
+      </div>
     </main>
   )
 }
