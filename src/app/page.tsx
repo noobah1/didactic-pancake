@@ -79,7 +79,7 @@ function HomeContent() {
       {/* Floating UI column - top center */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none">
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} modes={activeModes} />
+          <SearchPanel onSearch={handleSearch} modes={activeModes} hasResults={routes.length > 0 || loading} />
         </div>
         <div className="pointer-events-auto">
           <ErrorBoundary
