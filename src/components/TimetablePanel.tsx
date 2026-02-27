@@ -45,6 +45,7 @@ function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
 
 export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelProps) {
   const [stops, setStops] = useState<TripStopInfo[] | null>(null)
+  const [matchedTripId, setMatchedTripId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -60,15 +61,22 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
   const currentLat = liveVehicle?.lat ?? vehicle.lat
   const currentLng = liveVehicle?.lng ?? vehicle.lng
 
-  // Fetch schedule with GPS position, re-fetch every 15s
+  // Fetch schedule — match trip once, then reuse tripId for all subsequent fetches
   useEffect(() => {
     let cancelled = false
+    let lockedTripId: string | null = null
     let isFirstFetch = true
 
-    const doFetch = () => {
-      const url = isScheduled
-        ? `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${currentLat}&lng=${currentLng}`
-        : `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${currentLat}&lng=${currentLng}`
+    const doFetch = (lat: number, lng: number) => {
+      let url: string
+      if (lockedTripId) {
+        // After first match: use locked tripId, just update GPS position
+        url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`
+      } else if (isScheduled) {
+        url = `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${lat}&lng=${lng}`
+      } else {
+        url = `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${lat}&lng=${lng}`
+      }
 
       fetch(url)
         .then((res) => {
@@ -80,6 +88,11 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
             setStops(result.stops)
             setLoading(false)
             setError(null)
+            // Lock in the matched trip so it never flips
+            if (!lockedTripId && result.tripId) {
+              lockedTripId = result.tripId
+              setMatchedTripId(result.tripId)
+            }
           }
         })
         .catch((err) => {
@@ -94,11 +107,21 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
         .finally(() => { isFirstFetch = false })
     }
 
-    doFetch()
-    const timer = setInterval(doFetch, 10_000)
+    setLoading(true)
+    setError(null)
+    doFetch(currentLat, currentLng)
+
+    const timer = setInterval(() => {
+      const lv = vehicles?.find((v) => v.id === vehicle.id)
+      const lat = lv?.lat ?? vehicle.lat
+      const lng = lv?.lng ?? vehicle.lng
+      doFetch(lat, lng)
+    }, 10_000)
 
     return () => { cancelled = true; clearInterval(timer) }
-  }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isScheduled, currentLat, currentLng])
+  // Only re-run when the vehicle itself changes, NOT on every GPS position update
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isScheduled])
 
   const nowSec = getNowSeconds()
   const visibleStops = useMemo(() => stops ? trimStops(stops) : [], [stops])

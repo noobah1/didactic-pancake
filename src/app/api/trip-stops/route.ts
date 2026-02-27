@@ -124,18 +124,46 @@ function projectOntoSegment(
   return { fraction: t, dist: distanceMeters(pLat, pLon, projLat, projLon) }
 }
 
-// Use GPS position to determine which stops are passed/current/upcoming
+// Use GPS position + schedule time to determine which stops are passed/current/upcoming
 function computeStatusFromGPS(
   stoptimes: GqlStoptime[],
   vLat: number,
   vLng: number,
+  nowSec: number,
 ): { stops: TripStopInfo[]; afterStopIndex: number; fraction: number } {
-  // Find which route segment the vehicle is on
-  let bestSegIdx = 0
+  // Step 1: Estimate which segment the vehicle should be on based on schedule time
+  let timeSegIdx = -1
+  for (let i = 0; i < stoptimes.length - 1; i++) {
+    const dep = stoptimes[i].scheduledDeparture
+    const nextArr = stoptimes[i + 1].scheduledArrival
+    if (nowSec >= dep && nowSec <= nextArr) {
+      timeSegIdx = i
+      break
+    }
+    // Check if dwelling at stop
+    if (nowSec >= stoptimes[i].scheduledArrival && nowSec < dep) {
+      timeSegIdx = Math.max(0, i - 1)
+      break
+    }
+  }
+  // If past last departure, use last segment
+  if (timeSegIdx < 0 && stoptimes.length >= 2) {
+    const lastDep = stoptimes[stoptimes.length - 1].scheduledDeparture
+    if (nowSec >= lastDep) {
+      timeSegIdx = stoptimes.length - 2
+    }
+  }
+
+  // Step 2: GPS projection — search near the time-based estimate (±5 segments)
+  const searchRadius = 5
+  const searchFrom = timeSegIdx >= 0 ? Math.max(0, timeSegIdx - searchRadius) : 0
+  const searchTo = timeSegIdx >= 0 ? Math.min(stoptimes.length - 1, timeSegIdx + searchRadius + 1) : stoptimes.length - 1
+
+  let bestSegIdx = timeSegIdx >= 0 ? timeSegIdx : 0
   let bestDist = Infinity
   let bestFraction = 0
 
-  for (let i = 0; i < stoptimes.length - 1; i++) {
+  for (let i = searchFrom; i < searchTo; i++) {
     const a = stoptimes[i].stop
     const b = stoptimes[i + 1].stop
     const proj = projectOntoSegment(vLat, vLng, a.lat, a.lon, b.lat, b.lon)
@@ -146,9 +174,9 @@ function computeStatusFromGPS(
     }
   }
 
-  // Check if vehicle is very close to a stop (within 150m)
+  // Check if vehicle is very close to a stop (within 150m), also constrained by time window
   let atStopIdx = -1
-  for (let i = 0; i < stoptimes.length; i++) {
+  for (let i = searchFrom; i <= searchTo; i++) {
     const d = distanceMeters(vLat, vLng, stoptimes[i].stop.lat, stoptimes[i].stop.lon)
     if (d < 150) {
       atStopIdx = i
@@ -196,7 +224,7 @@ function buildResponse(
 
   // Use GPS to determine stop status when position is available
   if (vLat != null && vLng != null && trip.stoptimes.length >= 2) {
-    const { stops, afterStopIndex, fraction } = computeStatusFromGPS(trip.stoptimes, vLat, vLng)
+    const { stops, afterStopIndex, fraction } = computeStatusFromGPS(trip.stoptimes, vLat, vLng, nowSec)
     return {
       tripId: trip.gtfsId,
       line: line || trip.route?.shortName || '',
