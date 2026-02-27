@@ -7,6 +7,7 @@ import { FilterChips } from '@/components/FilterChips'
 import { RouteResults } from '@/components/RouteResults'
 import { AlertBanner } from '@/components/AlertBanner'
 import { MapView } from '@/components/MapView'
+import { IncidentButton } from '@/components/IncidentButton'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TransportMode } from '@/lib/types'
 import { ALL_MODES } from '@/lib/constants'
@@ -23,6 +24,7 @@ function HomeContent() {
     modesFromUrl ? (modesFromUrl.split(',') as TransportMode[]) : [...ALL_MODES],
   )
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
+  const [showIncidents, setShowIncidents] = useState(false)
 
   const vehicleData = useVehicles(activeModes)
   const { routes, loading, error, search } = useRoutePlan()
@@ -50,6 +52,10 @@ function HomeContent() {
     search(fromPlace, toPlace, modes, dateTime)
   }
 
+  const activeAlerts = (alertData.data?.alerts || []).filter(
+    (a) => a.severity !== 'info' && a.affectedRoutes.length > 0,
+  )
+
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 
   return (
@@ -66,6 +72,7 @@ function HomeContent() {
           vehicles={vehicleData.data?.vehicles}
           activeModes={activeModes}
           selectedRoute={selectedRoute}
+          incidents={showIncidents ? activeAlerts : undefined}
         />
       </ErrorBoundary>
 
@@ -94,8 +101,13 @@ function HomeContent() {
             />
           </ErrorBoundary>
         </div>
-        <div className="pointer-events-auto mt-2 flex justify-start">
+        <div className="pointer-events-auto mt-2 flex justify-start gap-2">
           <FilterChips activeModes={activeModes} onToggle={handleToggle} />
+          <IncidentButton
+            active={showIncidents}
+            alertCount={activeAlerts.length}
+            onClick={() => setShowIncidents((prev) => !prev)}
+          />
         </div>
       </div>
     </main>
