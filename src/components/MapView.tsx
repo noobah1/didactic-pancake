@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS } from '@/lib/constants'
-import { VehiclePosition, TransportMode, RouteResult } from '@/lib/types'
+import { VehiclePosition, TransportMode, RouteResult, ServiceAlert } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
 
 const ROUTE_LINE_SOURCE = 'route-line-source'
@@ -20,6 +20,9 @@ const PLAN_STOPS_SOURCE = 'plan-stops-source'
 const PLAN_STOPS_LAYER = 'plan-stops-layer'
 const PLAN_STOPS_LABEL_LAYER = 'plan-stops-label-layer'
 
+const INCIDENT_LINE_PREFIX = 'incident-line-'
+const INCIDENT_SOURCE_PREFIX = 'incident-src-'
+
 interface RouteShapePattern {
   directionId: number
   geometry: string
@@ -30,10 +33,11 @@ interface MapViewProps {
   vehicles?: VehiclePosition[]
   activeModes?: TransportMode[]
   selectedRoute?: RouteResult | null
+  incidents?: ServiceAlert[]
   onStopClick?: (stopId: string) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -42,6 +46,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute }: MapViewPr
   const planLayerIdsRef = useRef<string[]>([])
   const planMarkerRef = useRef<maplibregl.Marker[]>([])
   const mapReadyRef = useRef(false)
+  const incidentLayerIdsRef = useRef<string[]>([])
+  const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
 
   const clearRouteShape = useCallback(() => {
     const map = mapRef.current
@@ -501,6 +507,128 @@ export function MapView({ vehicles, activeModes = [], selectedRoute }: MapViewPr
 
     return cleanup
   }, [selectedRoute])
+
+  // Incident overlay effect
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    const cleanup = () => {
+      for (const id of incidentLayerIdsRef.current) {
+        if (map.getLayer(id)) map.removeLayer(id)
+      }
+      for (const id of incidentLayerIdsRef.current) {
+        const srcId = id.replace(INCIDENT_LINE_PREFIX, INCIDENT_SOURCE_PREFIX)
+        if (map.getSource(srcId)) map.removeSource(srcId)
+      }
+      incidentLayerIdsRef.current = []
+      incidentMarkersRef.current.forEach((m) => m.remove())
+      incidentMarkersRef.current = []
+    }
+
+    const draw = async () => {
+      cleanup()
+      if (!incidents || incidents.length === 0 || !mapReadyRef.current) return
+
+      const layerIds: string[] = []
+      let routeIndex = 0
+
+      for (const alert of incidents) {
+        const color = alert.severity === 'severe' ? '#EF4444' : '#D97706'
+
+        for (const routeName of alert.affectedRoutes) {
+          try {
+            let shapeData: { patterns: RouteShapePattern[] } | null = null
+            for (const mode of ['bus', 'tram', 'train', 'ferry']) {
+              const res = await fetch(
+                `/api/route-shape?line=${encodeURIComponent(routeName)}&mode=${mode}`,
+              )
+              if (res.ok) {
+                const data = await res.json()
+                if (data.patterns?.length) {
+                  shapeData = data
+                  break
+                }
+              }
+            }
+
+            if (!shapeData?.patterns?.length) continue
+
+            for (const pattern of shapeData.patterns) {
+              const coords = decodePolyline(pattern.geometry)
+              if (coords.length < 2) continue
+
+              const srcId = `${INCIDENT_SOURCE_PREFIX}${routeIndex}`
+              const layerId = `${INCIDENT_LINE_PREFIX}${routeIndex}`
+
+              const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'LineString', coordinates: coords },
+              }
+
+              map.addSource(srcId, { type: 'geojson', data: geojson })
+              map.addLayer({
+                id: layerId,
+                type: 'line',
+                source: srcId,
+                paint: {
+                  'line-color': color,
+                  'line-width': 6,
+                  'line-opacity': 0.7,
+                },
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+              })
+
+              layerIds.push(layerId)
+
+              // Place a warning marker at the midpoint of each route
+              if (routeIndex === layerIds.length - 1) {
+                const mid = coords[Math.floor(coords.length / 2)]
+                const el = document.createElement('div')
+                el.style.width = '28px'
+                el.style.height = '28px'
+                el.style.borderRadius = '50%'
+                el.style.backgroundColor = alert.severity === 'severe' ? '#FEE2E2' : '#FEF3C7'
+                el.style.border = `2px solid ${color}`
+                el.style.display = 'flex'
+                el.style.alignItems = 'center'
+                el.style.justifyContent = 'center'
+                el.style.cursor = 'pointer'
+                el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
+                el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`
+
+                const popup = new maplibregl.Popup({ offset: 15, maxWidth: '250px' }).setHTML(
+                  `<div style="padding:4px"><strong style="color:${color}">${alert.headerText}</strong>${alert.descriptionText ? `<p style="margin:4px 0 0;font-size:13px;color:#374151">${alert.descriptionText}</p>` : ''}<p style="margin:4px 0 0;font-size:11px;color:#6B7280">Affected: ${routeName}</p></div>`,
+                )
+
+                const marker = new maplibregl.Marker({ element: el })
+                  .setLngLat(mid as [number, number])
+                  .setPopup(popup)
+                  .addTo(map)
+
+                incidentMarkersRef.current.push(marker)
+              }
+
+              routeIndex++
+            }
+          } catch {
+            // Skip routes we can't fetch shapes for
+          }
+        }
+      }
+
+      incidentLayerIdsRef.current = layerIds
+    }
+
+    if (mapReadyRef.current) {
+      draw()
+    } else {
+      map.once('load', () => draw())
+    }
+
+    return cleanup
+  }, [incidents])
 
   return <div ref={containerRef} className="absolute inset-0" />
 }
