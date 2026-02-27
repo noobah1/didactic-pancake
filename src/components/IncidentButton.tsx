@@ -12,7 +12,7 @@ export function IncidentButton({ active, alertCount, onClick }: IncidentButtonPr
   return (
     <button
       onClick={onClick}
-      className={`absolute right-3 bottom-6 z-10 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all border-2 ${
+      className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all border-2 ${
         active
           ? 'bg-amber-100 border-red-500'
           : 'bg-white/90 border-gray-300 hover:bg-gray-100'
@@ -20,7 +20,7 @@ export function IncidentButton({ active, alertCount, onClick }: IncidentButtonPr
       title={active ? 'Hide incidents' : `Show incidents (${alertCount})`}
     >
       <AlertTriangle
-        size={20}
+        size={24}
         fill={alertCount > 0 ? '#FBBF24' : 'none'}
         stroke={alertCount > 0 ? '#EF4444' : '#9CA3AF'}
         strokeWidth={2}

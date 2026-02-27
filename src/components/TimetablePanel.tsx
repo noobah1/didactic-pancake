@@ -63,7 +63,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
   // Fetch schedule with GPS position, re-fetch every 15s
   useEffect(() => {
     let cancelled = false
-    let timer: ReturnType<typeof setInterval>
+    let isFirstFetch = true
 
     const doFetch = () => {
       const url = isScheduled
@@ -79,20 +79,23 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
           if (!cancelled) {
             setStops(result.stops)
             setLoading(false)
+            setError(null)
           }
         })
         .catch((err) => {
-          if (!cancelled && !stops) {
-            setError(err.message)
+          if (!cancelled) {
+            setStops((prev) => {
+              if (!prev && isFirstFetch) setError(err.message)
+              return prev
+            })
             setLoading(false)
           }
         })
+        .finally(() => { isFirstFetch = false })
     }
 
-    setLoading(true)
-    setError(null)
     doFetch()
-    timer = setInterval(doFetch, 10_000)
+    const timer = setInterval(doFetch, 10_000)
 
     return () => { cancelled = true; clearInterval(timer) }
   }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isScheduled, currentLat, currentLng])

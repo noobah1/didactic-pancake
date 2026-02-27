@@ -41,27 +41,24 @@ function HomeContent() {
   const testAlerts = searchParams.get('test_alerts') === '1'
 
   const vehicleData = useVehicles(activeModes, activeCities)
-  const { routes, loading, error, search } = useRoutePlan()
+  const { routes, loading, error, search, clear } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
 
-  const handleCityToggle = useCallback(
-    (city: CityDef) => {
-      const isActive = activeCities.some((c) => c.id === city.id)
-      const next = isActive
-        ? activeCities.filter((c) => c.id !== city.id)
-        : [...activeCities, city]
-      if (next.length === 0) return
-      setActiveCities(next)
-      const params = new URLSearchParams(searchParams.toString())
-      if (next.length === CITIES.length) {
-        params.delete('cities')
-      } else {
-        params.set('cities', next.map((c) => c.id).join(','))
-      }
-      router.replace(`?${params.toString()}`, { scroll: false })
-    },
-    [activeCities, searchParams, router],
-  )
+  const handleCityToggle = (city: CityDef) => {
+    const isActive = activeCities.some((c) => c.id === city.id)
+    const next = isActive
+      ? activeCities.filter((c) => c.id !== city.id)
+      : [...activeCities, city]
+    if (next.length === 0) return
+    setActiveCities(next)
+    const params = new URLSearchParams(searchParams.toString())
+    if (next.length === CITIES.length) {
+      params.delete('cities')
+    } else {
+      params.set('cities', next.map((c) => c.id).join(','))
+    }
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
 
   const handleToggle = useCallback(
     (mode: TransportMode) => {
@@ -83,6 +80,11 @@ function HomeContent() {
 
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => {
     search(fromPlace, toPlace, modes, dateTime)
+  }
+
+  const handleClear = () => {
+    clear()
+    setSelectedRouteId(null)
   }
 
   const activeAlerts = useMemo(
@@ -134,7 +136,7 @@ function HomeContent() {
       {/* Floating UI column - top center */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none">
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} modes={activeModes} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} />
         </div>
         <div className="pointer-events-auto">
           <ErrorBoundary
@@ -152,12 +154,16 @@ function HomeContent() {
         <div className="pointer-events-auto mt-2 flex justify-start gap-2">
           <CitySelector activeCities={activeCities} onToggle={handleCityToggle} />
           <FilterChips activeModes={activeModes} onToggle={handleToggle} />
-          <IncidentButton
-            active={showIncidents}
-            alertCount={activeAlerts.length}
-            onClick={() => setShowIncidents((prev) => !prev)}
-          />
         </div>
+      </div>
+
+      {/* Incident button - bottom right */}
+      <div className="absolute bottom-6 right-4 z-30 pointer-events-auto">
+        <IncidentButton
+          active={showIncidents}
+          alertCount={activeAlerts.length}
+          onClick={() => setShowIncidents((prev) => !prev)}
+        />
       </div>
     </main>
   )
