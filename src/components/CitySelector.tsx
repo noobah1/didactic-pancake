@@ -8,17 +8,20 @@ interface CitySelectorProps {
   activeCities: CityDef[]
   onToggle: (city: CityDef) => void
   onToggleCounty: (countyCities: CityDef[]) => void
+  onSetAll: (cities: CityDef[]) => void
 }
 
-export function CitySelector({ activeCities, onToggle, onToggleCounty }: CitySelectorProps) {
+export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll }: CitySelectorProps) {
   const [expanded, setExpanded] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const activeIds = new Set(activeCities.map((c) => c.id))
   const label = activeCities.length === CITIES.length
     ? 'All'
-    : activeCities.length === 1
-      ? activeCities[0].name
-      : `${activeCities.length} cities`
+    : activeCities.length === 0
+      ? 'None'
+      : activeCities.length === 1
+        ? activeCities[0].name
+        : `${activeCities.length} cities`
 
   const citiesByCounty = useMemo(() => {
     const map = new Map<string, CityDef[]>()
@@ -59,12 +62,30 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty }: CitySel
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Counties</span>
-            <button
-              onClick={() => setExpanded(false)}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <X size={14} className="text-gray-400" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (activeCities.length === CITIES.length) {
+                    onSetAll([])
+                  } else {
+                    onSetAll([...CITIES])
+                  }
+                }}
+                className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
+                  activeCities.length === CITIES.length
+                    ? 'text-blue-700 bg-blue-100'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {activeCities.length === CITIES.length ? 'Deselect all' : 'Select all'}
+              </button>
+              <button
+                onClick={() => setExpanded(false)}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X size={14} className="text-gray-400" />
+              </button>
+            </div>
           </div>
           {/* County grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
