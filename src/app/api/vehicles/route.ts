@@ -43,6 +43,38 @@ query ActiveTrips($date: String!) {
       }
     }
   }
+  bus: routes(transportModes: [BUS]) {
+    shortName
+    mode
+    patterns {
+      directionId
+      patternGeometry { points }
+      tripsForDate(serviceDate: $date) {
+        gtfsId
+        stoptimes {
+          scheduledDeparture
+          scheduledArrival
+          stop { name lat lon }
+        }
+      }
+    }
+  }
+  tram: routes(transportModes: [TRAM]) {
+    shortName
+    mode
+    patterns {
+      directionId
+      patternGeometry { points }
+      tripsForDate(serviceDate: $date) {
+        gtfsId
+        stoptimes {
+          scheduledDeparture
+          scheduledArrival
+          stop { name lat lon }
+        }
+      }
+    }
+  }
 }
 `
 
@@ -241,6 +273,15 @@ function interpolatePosition(
   return null
 }
 
+function mapOtpMode(mode: string): TransportMode {
+  switch (mode) {
+    case 'RAIL': return 'train'
+    case 'FERRY': return 'ferry'
+    case 'TRAM': return 'tram'
+    default: return 'bus'
+  }
+}
+
 async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
   const now = Date.now()
   if (scheduledCache && now - scheduledCache.timestamp < SCHEDULED_CACHE_TTL) {
@@ -262,13 +303,17 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
   const data = await response.json()
   if (data.errors?.length) return scheduledCache?.data || []
 
-  const allRoutes: GqlRoute[] = [...(data.data?.rail || []), ...(data.data?.ferry || [])]
+  const allRoutes: GqlRoute[] = [
+    ...(data.data?.rail || []),
+    ...(data.data?.ferry || []),
+    ...(data.data?.bus || []),
+    ...(data.data?.tram || []),
+  ]
   const vehicles: VehiclePosition[] = []
   const seenTrips = new Set<string>()
 
   for (const route of allRoutes) {
     for (const pattern of route.patterns) {
-      // Decode track shape geometry for accurate interpolation
       const shapeCoords = pattern.patternGeometry?.points
         ? decodePolyline(pattern.patternGeometry.points)
         : null
@@ -282,7 +327,7 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
 
         vehicles.push({
           id: trip.gtfsId,
-          mode: route.mode === 'FERRY' ? 'ferry' : 'train',
+          mode: mapOtpMode(route.mode),
           line: route.shortName,
           lat: pos.lat,
           lng: pos.lng,
@@ -297,23 +342,53 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
   return vehicles
 }
 
+// ~30km radius for city filtering (in degrees, rough approximation)
+const CITY_RADIUS_DEG = 0.3
+
+function filterByCities(vehicles: VehiclePosition[], cityCoords: { lat: number; lng: number }[]): VehiclePosition[] {
+  return vehicles.filter((v) =>
+    cityCoords.some((city) => {
+      const dlat = Math.abs(v.lat - city.lat)
+      const dlng = Math.abs(v.lng - city.lng)
+      return dlat < CITY_RADIUS_DEG && dlng < CITY_RADIUS_DEG
+    }),
+  )
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const modesParam = searchParams.get('modes')
   const modes = modesParam ? (modesParam.split(',') as TransportMode[]) : null
 
+  // Parse cities param: "lat,lng;lat,lng;..."
+  const citiesParam = searchParams.get('cities')
+  const cityCoords: { lat: number; lng: number }[] = citiesParam
+    ? citiesParam.split(';').map((pair) => {
+        const [lat, lng] = pair.split(',').map(Number)
+        return { lat, lng }
+      }).filter((c) => !isNaN(c.lat) && !isNaN(c.lng))
+    : []
+
+  const includesTallinn = cityCoords.length === 0 || cityCoords.some(
+    (c) => Math.abs(c.lat - 59.437) < 0.1 && Math.abs(c.lng - 24.754) < 0.1,
+  )
+
   try {
     const now = Date.now()
+    let gpsVehicles: VehiclePosition[] = []
 
-    // Fetch GPS vehicles (buses/trams)
-    if (!gpsCache || now - gpsCache.timestamp > GPS_CACHE_TTL) {
-      const response = await fetch(GPS_FEED_URL, { cache: 'no-store' })
-      if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
-      const text = await response.text()
-      gpsCache = { data: parseGpsFeed(text), timestamp: now }
+    // Fetch Tallinn live GPS vehicles (only when Tallinn is selected)
+    if (includesTallinn) {
+      if (!gpsCache || now - gpsCache.timestamp > GPS_CACHE_TTL) {
+        const response = await fetch(GPS_FEED_URL, { cache: 'no-store' })
+        if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
+        const text = await response.text()
+        gpsCache = { data: parseGpsFeed(text), timestamp: now }
+      }
+      gpsVehicles = gpsCache.data
     }
 
-    // Fetch scheduled vehicles (trains/ferries)
+    // Fetch scheduled vehicles (all modes, nationwide)
     let scheduled: VehiclePosition[] = []
     try {
       scheduled = await fetchScheduledVehicles()
@@ -321,7 +396,25 @@ export async function GET(request: Request) {
       // Non-critical: continue with GPS-only vehicles
     }
 
-    let vehicles = [...gpsCache.data, ...scheduled]
+    // Merge: use live GPS for Tallinn bus/tram, scheduled for everything else
+    // Only exclude scheduled bus/tram that overlap with Tallinn's live GPS area
+    let vehicles: VehiclePosition[]
+    if (includesTallinn) {
+      const isTallinnArea = (v: VehiclePosition) =>
+        Math.abs(v.lat - 59.437) < CITY_RADIUS_DEG && Math.abs(v.lng - 24.754) < CITY_RADIUS_DEG
+      const scheduledFiltered = scheduled.filter(
+        (v) => !isTallinnArea(v) || v.mode === 'train' || v.mode === 'ferry',
+      )
+      vehicles = [...gpsVehicles, ...scheduledFiltered]
+    } else {
+      vehicles = scheduled
+    }
+
+    // Filter by city locations
+    if (cityCoords.length > 0) {
+      vehicles = filterByCities(vehicles, cityCoords)
+    }
+
     if (modes) {
       vehicles = vehicles.filter((v) => modes.includes(v.mode))
     }
@@ -329,7 +422,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ vehicles, timestamp: now })
   } catch (error) {
     console.error('Failed to fetch vehicle positions:', error)
-    if (gpsCache) {
+    if (gpsCache && includesTallinn) {
       return NextResponse.json({
         vehicles: gpsCache.data,
         timestamp: gpsCache.timestamp,
