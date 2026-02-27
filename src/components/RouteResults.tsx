@@ -13,17 +13,17 @@ interface RouteResultsProps {
 
 export function RouteResults({ routes, loading, error, selectedId, onSelect }: RouteResultsProps) {
   if (loading) {
-    return <div className="p-4 text-center text-gray-500 text-sm bg-white rounded-b-xl shadow-lg mt-px">Searching routes...</div>
+    return <div className="p-4 text-center text-gray-500 text-sm bg-white rounded-xl shadow-lg mt-2">Searching routes...</div>
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-500 text-sm bg-white rounded-b-xl shadow-lg mt-px">{error}</div>
+    return <div className="p-4 text-center text-red-500 text-sm bg-white rounded-xl shadow-lg mt-2">{error}</div>
   }
 
   if (routes.length === 0) return null
 
   return (
-    <div className="flex flex-col gap-2 p-3 overflow-y-auto max-h-64 bg-white rounded-b-xl shadow-lg mt-px">
+    <div className="flex flex-col gap-2 p-3 overflow-y-auto max-h-64 bg-white rounded-xl shadow-lg mt-2">
       {routes.map((route) => (
         <RouteCard
           key={route.id}
