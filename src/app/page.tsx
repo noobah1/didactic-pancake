@@ -26,26 +26,28 @@ function HomeContent() {
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
   const [showIncidents, setShowIncidents] = useState(false)
 
+  const testAlerts = searchParams.get('test_alerts') === '1'
+
   const vehicleData = useVehicles(activeModes)
   const { routes, loading, error, search } = useRoutePlan()
-  const alertData = useAlerts()
+  const alertData = useAlerts(testAlerts)
 
   const handleToggle = useCallback(
     (mode: TransportMode) => {
-      setActiveModes((prev) => {
-        const next = prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
-        if (next.length === 0) return prev
-        const params = new URLSearchParams(searchParams.toString())
-        if (next.length === ALL_MODES.length) {
-          params.delete('modes')
-        } else {
-          params.set('modes', next.join(','))
-        }
-        router.replace(`?${params.toString()}`, { scroll: false })
-        return next
-      })
+      const next = activeModes.includes(mode)
+        ? activeModes.filter((m) => m !== mode)
+        : [...activeModes, mode]
+      if (next.length === 0) return
+      setActiveModes(next)
+      const params = new URLSearchParams(searchParams.toString())
+      if (next.length === ALL_MODES.length) {
+        params.delete('modes')
+      } else {
+        params.set('modes', next.join(','))
+      }
+      router.replace(`?${params.toString()}`, { scroll: false })
     },
-    [searchParams, router],
+    [activeModes, searchParams, router],
   )
 
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string) => {
