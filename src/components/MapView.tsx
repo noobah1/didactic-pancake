@@ -187,15 +187,16 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents }
       style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
       center: [TALLINN_CENTER.lng, TALLINN_CENTER.lat],
       zoom: DEFAULT_ZOOM,
+      attributionControl: false,
     })
 
-    map.addControl(new maplibregl.NavigationControl(), 'top-right')
+    map.addControl(new maplibregl.NavigationControl(), 'bottom-left')
     map.addControl(
       new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
       }),
-      'top-right',
+      'bottom-left',
     )
 
     map.on('load', () => {
