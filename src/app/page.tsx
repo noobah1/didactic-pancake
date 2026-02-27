@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, Suspense } from 'react'
+import { useState, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SearchPanel } from '@/components/SearchPanel'
 import { FilterChips } from '@/components/FilterChips'
@@ -52,8 +52,12 @@ function HomeContent() {
     search(fromPlace, toPlace, modes, dateTime)
   }
 
-  const activeAlerts = (alertData.data?.alerts || []).filter(
-    (a) => a.severity !== 'info' && a.affectedRoutes.length > 0,
+  const activeAlerts = useMemo(
+    () =>
+      (alertData.data?.alerts || []).filter(
+        (a) => a.severity !== 'info' && a.affectedRoutes.length > 0,
+      ),
+    [alertData.data?.alerts],
   )
 
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
