@@ -121,6 +121,13 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isScheduled])
 
+  // Tick every 15s to keep displayed times current
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 15_000)
+    return () => clearInterval(t)
+  }, [])
+
   const nowSec = getNowSeconds()
   const visibleStops = useMemo(() => stops ? trimStops(stops) : [], [stops])
 
