@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Estonia Transit',
+  title: 'LiveTravel',
   description: 'Public transport route planner for Estonia',
 }
 
