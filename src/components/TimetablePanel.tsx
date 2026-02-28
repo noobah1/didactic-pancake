@@ -44,6 +44,7 @@ function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
 }
 
 export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelProps) {
+  const [expanded, setExpanded] = useState(true)
   const [stops, setStops] = useState<TripStopInfo[] | null>(null)
   const [matchedTripId, setMatchedTripId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -156,130 +157,154 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
         className="flex items-center justify-between px-4 py-3 text-white shrink-0"
         style={{ backgroundColor: color }}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-1 min-w-0">
           <span className="text-lg font-bold">{vehicle.line}</span>
           <span className="text-sm opacity-90 truncate">&rarr; {vehicle.destination}</span>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-5 min-w-0">
+          {/* The expand/collapse button */}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            aria-expanded={expanded}
+            aria-label="Expand/Collapse"
+            className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
+          >
+            <svg
+              className={`w-3.5 h-3.5 text-white transition-transform ${expanded ? '' : 'rotate-180'}`}
+              fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+            </svg>
+          </button>  
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Next stop arrival banner — hidden when bus is at a station */}
-      {arrivalInfo && nextStop && !currentStop && (
-        <div className={`px-4 py-2 text-sm font-medium shrink-0 ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-          {arrivalInfo.late && arrivalInfo.minutes > 0 ? (
-            <>
-              <span className="font-bold">{nextStop.name}</span> &mdash; {arrivalInfo.minutes} min late
-            </>
-          ) : arrivalInfo.late ? (
-            <>
-              <span className="font-bold">{nextStop.name}</span> &mdash; on time
-            </>
-          ) : (
-            <>
-              <span className="font-bold">{nextStop.name}</span> &mdash; in {arrivalInfo.minutes} min
-            </>
-          )}
-        </div>
-      )}
-      {currentStop && (
-        <div className="px-4 py-2 text-sm font-medium bg-amber-50 text-amber-700 shrink-0">
-          At <span className="font-bold">{currentStop.name}</span>
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="overflow-y-auto flex-1">
-        {loading && (
-          <div className="p-4 text-center text-gray-400 text-sm">Loading timetable...</div>
-        )}
-
-        {error && (
-          <div className="p-4 text-center text-gray-400 text-sm">{error}</div>
-        )}
-
-        {!loading && !error && visibleStops.length > 0 && (
-          <div className="py-2">
-            {visibleStops.map((stop, i) => {
-              const isCurrent = stop.status === 'current'
-              const isPassed = stop.status === 'passed'
-              const isFirst = i === 0
-              const isLast = i === visibleStops.length - 1
-              const isNextStop = nextStop && stop.stopId === nextStop.stopId && stop.scheduledArrival === nextStop.scheduledArrival
-
-              let minutesAway: number | null = null
-              if (stop.status === 'upcoming') {
-                const diff = stop.scheduledArrival - nowSec
-                minutesAway = Math.ceil(diff / 60)
-              }
-
-              return (
-                <div key={`${stop.stopId}-${i}`}>
-                  <div
-                    className={`flex items-stretch px-4 ${isCurrent ? 'bg-amber-50' : isNextStop ? 'bg-green-50/50' : ''}`}
-                  >
-                    {/* Timeline */}
-                    <div className="flex flex-col items-center w-5 shrink-0 mr-3">
-                      {!isFirst && (
-                        <div
-                          className="w-0.5 flex-1"
-                          style={{ backgroundColor: isPassed || isCurrent ? '#D1D5DB' : color }}
-                        />
-                      )}
-                      <div
-                        className="shrink-0 rounded-full border-2"
-                        style={{
-                          width: isCurrent || isNextStop ? 14 : 10,
-                          height: isCurrent || isNextStop ? 14 : 10,
-                          backgroundColor: isCurrent ? '#FCD34D' : isPassed ? '#D1D5DB' : isNextStop ? '#BBF7D0' : '#fff',
-                          borderColor: isCurrent ? '#F59E0B' : isPassed ? '#9CA3AF' : isNextStop ? '#16A34A' : color,
-                        }}
-                      />
-                      {!isLast && (
-                        <div
-                          className="w-0.5 flex-1"
-                          style={{ backgroundColor: isPassed ? '#D1D5DB' : color }}
-                        />
-                      )}
-                    </div>
-
-                    {/* Stop info */}
-                    <div className={`flex-1 py-2 min-w-0 ${isPassed ? 'opacity-50' : ''}`}>
-                      <div className={`text-sm leading-tight truncate ${isCurrent || isNextStop ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
-                        {stop.name}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-gray-400">
-                          {formatTime(stop.scheduledArrival)} &rarr; {formatTime(stop.scheduledDeparture)}
-                        </span>
-                        {isCurrent && (
-                          <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
-                            NOW
-                          </span>
-                        )}
-                        {isNextStop && arrivalInfo && (
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'text-red-700 bg-red-100' : 'text-green-700 bg-green-100'}`}>
-                            {arrivalInfo.late && arrivalInfo.minutes > 0 ? `${arrivalInfo.minutes} min late` : arrivalInfo.late ? 'on time' : `${arrivalInfo.minutes} min`}
-                          </span>
-                        )}
-                        {!isPassed && !isCurrent && !isNextStop && minutesAway !== null && minutesAway > 0 && (
-                          <span className="text-[10px] text-gray-400">
-                            {minutesAway} min
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              )
-            })}
+      {/* expanding-contracting */}
+      <div
+        className={`flex items-center gap-1 overflow-hidden transition-all duration-200 ${
+          expanded ? 'max-h-[70vh]' : 'max-h-0'
+        }`}
+      >
+      
+        {/* Next stop arrival banner — hidden when bus is at a station */}
+        {arrivalInfo && nextStop && !currentStop && (
+          <div className={`px-4 py-2 text-sm font-medium shrink-0 ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+            {arrivalInfo.late && arrivalInfo.minutes > 0 ? (
+              <>
+                <span className="font-bold">{nextStop.name}</span> &mdash; {arrivalInfo.minutes} min late
+              </>
+            ) : arrivalInfo.late ? (
+              <>
+                <span className="font-bold">{nextStop.name}</span> &mdash; on time
+              </>
+            ) : (
+              <>
+                <span className="font-bold">{nextStop.name}</span> &mdash; in {arrivalInfo.minutes} min
+              </>
+            )}
           </div>
         )}
+        {currentStop && (
+          <div className="px-4 py-2 text-sm font-medium bg-amber-50 text-amber-700 shrink-0">
+            At <span className="font-bold">{currentStop.name}</span>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="overflow-y-auto flex-1">
+          {loading && (
+            <div className="p-4 text-center text-gray-400 text-sm">Loading timetable...</div>
+          )}
+
+          {error && (
+            <div className="p-4 text-center text-gray-400 text-sm">{error}</div>
+          )}
+
+          {!loading && !error && visibleStops.length > 0 && (
+            <div className="py-2">
+              {visibleStops.map((stop, i) => {
+                const isCurrent = stop.status === 'current'
+                const isPassed = stop.status === 'passed'
+                const isFirst = i === 0
+                const isLast = i === visibleStops.length - 1
+                const isNextStop = nextStop && stop.stopId === nextStop.stopId && stop.scheduledArrival === nextStop.scheduledArrival
+
+                let minutesAway: number | null = null
+                if (stop.status === 'upcoming') {
+                  const diff = stop.scheduledArrival - nowSec
+                  minutesAway = Math.ceil(diff / 60)
+                }
+
+                return (
+                  <div key={`${stop.stopId}-${i}`}>
+                    <div
+                      className={`flex items-stretch px-4 ${isCurrent ? 'bg-amber-50' : isNextStop ? 'bg-green-50/50' : ''}`}
+                    >
+                      {/* Timeline */}
+                      <div className="flex flex-col items-center w-5 shrink-0 mr-3">
+                        {!isFirst && (
+                          <div
+                            className="w-0.5 flex-1"
+                            style={{ backgroundColor: isPassed || isCurrent ? '#D1D5DB' : color }}
+                          />
+                        )}
+                        <div
+                          className="shrink-0 rounded-full border-2"
+                          style={{
+                            width: isCurrent || isNextStop ? 14 : 10,
+                            height: isCurrent || isNextStop ? 14 : 10,
+                            backgroundColor: isCurrent ? '#FCD34D' : isPassed ? '#D1D5DB' : isNextStop ? '#BBF7D0' : '#fff',
+                            borderColor: isCurrent ? '#F59E0B' : isPassed ? '#9CA3AF' : isNextStop ? '#16A34A' : color,
+                          }}
+                        />
+                        {!isLast && (
+                          <div
+                            className="w-0.5 flex-1"
+                            style={{ backgroundColor: isPassed ? '#D1D5DB' : color }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Stop info */}
+                      <div className={`flex-1 py-2 min-w-0 ${isPassed ? 'opacity-50' : ''}`}>
+                        <div className={`text-sm leading-tight truncate ${isCurrent || isNextStop ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                          {stop.name}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-gray-400">
+                            {formatTime(stop.scheduledArrival)} &rarr; {formatTime(stop.scheduledDeparture)}
+                          </span>
+                          {isCurrent && (
+                            <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
+                              NOW
+                            </span>
+                          )}
+                          {isNextStop && arrivalInfo && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'text-red-700 bg-red-100' : 'text-green-700 bg-green-100'}`}>
+                              {arrivalInfo.late && arrivalInfo.minutes > 0 ? `${arrivalInfo.minutes} min late` : arrivalInfo.late ? 'on time' : `${arrivalInfo.minutes} min`}
+                            </span>
+                          )}
+                          {!isPassed && !isCurrent && !isNextStop && minutesAway !== null && minutesAway > 0 && (
+                            <span className="text-[10px] text-gray-400">
+                              {minutesAway} min
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
