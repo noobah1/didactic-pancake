@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
+import logo3 from './logo3.png'
 import { SearchPanel } from '@/components/SearchPanel'
 import { FilterChips } from '@/components/FilterChips'
 import { RouteResults } from '@/components/RouteResults'
@@ -190,6 +192,11 @@ function HomeContent() {
           alertCount={activeAlerts.length}
           onClick={() => setShowIncidents((prev) => !prev)}
         />
+      </div>
+
+      {/* Logo - bottom center */}
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
+        <Image src={logo3} alt="Logo" height={24} className="w-auto" />
       </div>
     </main>
   )
