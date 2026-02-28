@@ -44,9 +44,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
         {/* Stacked search boxes */}
-        <div className="flex flex-col gap-2">
+        <div className="flex-1 flex flex-col gap-2">
           <div className="bg-white rounded-xl shadow-lg border border-gray-300">
             <LocationInput
               label="From"
@@ -72,23 +72,12 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             />
           </div>
         </div>
-        {/* Action buttons - row below inputs */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSearch}
-            disabled={!fromCoords || !toCoords}
-            className="h-10 px-4 bg-white border-2 border-blue-800 text-blue-800 rounded-full flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors shadow-lg text-sm font-medium"
-            aria-label="Search routes"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            Search
-          </button>
+        {/* Buttons - stacked vertically to the right */}
+        <div className={`flex flex-col items-center ${hasInput ? 'justify-start' : 'justify-center'} gap-1.5`}>
           {hasInput && (
             <button
               onClick={handleClear}
-              className="h-10 px-3 bg-white border border-gray-300 text-gray-500 rounded-full flex items-center justify-center hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-md text-sm"
+              className="w-12 h-12 bg-white border border-gray-300 text-gray-500 rounded-full flex items-center justify-center hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-md"
               aria-label="Clear search"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -96,6 +85,16 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               </svg>
             </button>
           )}
+          <button
+            onClick={handleSearch}
+            disabled={!fromCoords || !toCoords}
+            className="w-12 h-12 bg-white border-2 border-blue-800 text-blue-800 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors shadow-lg"
+            aria-label="Search routes"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </button>
         </div>
       </div>
       {/* Departure time selector + city selector */}
