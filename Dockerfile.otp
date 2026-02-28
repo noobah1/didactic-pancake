@@ -1,0 +1,8 @@
+FROM opentripplanner/opentripplanner:2.6.0
+
+COPY otp/graph.obj /var/opentripplanner/graph.obj
+COPY otp/router-config.json /var/opentripplanner/router-config.json
+
+ENV JAVA_TOOL_OPTIONS="-Xmx1800m"
+EXPOSE 8080
+CMD ["--load", "--serve"]

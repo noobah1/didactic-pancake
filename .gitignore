@@ -43,9 +43,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# GTFS data and OTP graph
+# GTFS data (graph.obj tracked via Git LFS)
 otp/data/
-otp/graph.obj
 
 # IDE
 .idea/
