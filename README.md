@@ -1,6 +1,6 @@
-# Tallinn Transit
+# LiveTravel
 
-Public transport route planner for Tallinn. Find the fastest route using buses, trams, trolleybuses, trains, and ferries — with live vehicle positions on the map.
+Public transport route planner for Estonia. Find the fastest route using buses, trams, trolleybuses, trains, and ferries — with live vehicle positions on the map.
 
 ## Prerequisites
 
