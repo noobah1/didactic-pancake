@@ -1,6 +1,10 @@
-FROM opentripplanner/opentripplanner:2.6.0
+FROM alpine:3.20 AS fetcher
+RUN apk add --no-cache curl
+ARG GRAPH_URL=https://media.githubusercontent.com/media/noobah1/didactic-pancake/main/otp/graph.obj
+RUN curl -fSL -o /graph.obj "${GRAPH_URL}"
 
-COPY otp/graph.obj /var/opentripplanner/graph.obj
+FROM opentripplanner/opentripplanner:2.6.0
+COPY --from=fetcher /graph.obj /var/opentripplanner/graph.obj
 COPY otp/router-config.json /var/opentripplanner/router-config.json
 
 ENV JAVA_TOOL_OPTIONS="-Xmx1800m"
