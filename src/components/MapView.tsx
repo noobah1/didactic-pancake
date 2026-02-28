@@ -218,7 +218,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
         // Build trip-stops URL: direct lookup for scheduled, match by line/mode for GPS
         const tripStopsUrl = isScheduled
           ? `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}`
-          : `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${vehicle.lat}&lng=${vehicle.lng}`
+          : `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${vehicle.lat}&lng=${vehicle.lng}&heading=${vehicle.heading}`
 
         // Fetch trip stops (includes geometry now) — this is the primary data source
         const tripRes = await fetch(tripStopsUrl).catch(() => null)
@@ -243,7 +243,28 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
           // If route changed while we were fetching, abort
           if (activeRouteRef.current !== routeKey) return
 
-          const bestPattern = shapeData.patterns[0]
+          // Pick the pattern whose direction matches the vehicle's heading
+          let bestPattern = shapeData.patterns[0]
+          if (shapeData.patterns.length > 1 && vehicle.heading != null) {
+            for (const p of shapeData.patterns) {
+              if (p.stops.length >= 2) {
+                const first = p.stops[0]
+                const last = p.stops[p.stops.length - 1]
+                const dLng = ((last.lng - first.lng) * Math.PI) / 180
+                const rLat1 = (first.lat * Math.PI) / 180
+                const rLat2 = (last.lat * Math.PI) / 180
+                const y = Math.sin(dLng) * Math.cos(rLat2)
+                const x = Math.cos(rLat1) * Math.sin(rLat2) - Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLng)
+                const patternHeading = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
+                const diff = Math.abs(vehicle.heading - patternHeading) % 360
+                const angleDiff = diff > 180 ? 360 - diff : diff
+                if (angleDiff < 90) {
+                  bestPattern = p
+                  break
+                }
+              }
+            }
+          }
           tripStops = null
           if (!tripGeometry && bestPattern.geometry) {
             tripGeometry = bestPattern.geometry

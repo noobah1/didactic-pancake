@@ -293,6 +293,29 @@ function tripPositionScore(trip: GqlTrip, nowSec: number, vLat: number, vLng: nu
   return minDist
 }
 
+// Calculate heading (degrees) from point A to point B
+function calcHeading(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const dLng = ((lon2 - lon1) * Math.PI) / 180
+  const rLat1 = (lat1 * Math.PI) / 180
+  const rLat2 = (lat2 * Math.PI) / 180
+  const y = Math.sin(dLng) * Math.cos(rLat2)
+  const x = Math.cos(rLat1) * Math.sin(rLat2) - Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLng)
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
+}
+
+// Get the general heading of a trip (first stop to last stop)
+function tripHeading(trip: GqlTrip): number {
+  const first = trip.stoptimes[0].stop
+  const last = trip.stoptimes[trip.stoptimes.length - 1].stop
+  return calcHeading(first.lat, first.lon, last.lat, last.lon)
+}
+
+// Angular difference between two headings (0-180)
+function headingDiff(a: number, b: number): number {
+  const diff = Math.abs(a - b) % 360
+  return diff > 180 ? 360 - diff : diff
+}
+
 // Find the best matching trip from a route's trips for a GPS vehicle
 function findBestTrip(
   trips: GqlTrip[],
@@ -300,6 +323,7 @@ function findBestTrip(
   destination?: string | null,
   vehicleLat?: number | null,
   vehicleLng?: number | null,
+  vehicleHeading?: number | null,
 ): GqlTrip | null {
   // Filter to trips currently running (between first departure and last arrival)
   const activeTrips = trips.filter((t) => {
@@ -323,7 +347,13 @@ function findBestTrip(
     if (matched.length > 0) directionTrips = matched
   }
 
-  // Step 2: Among direction-matched trips, use GPS position to pick the best one
+  // Step 2: If destination didn't narrow it down, use heading to filter direction
+  if (directionTrips.length === activeTrips.length && vehicleHeading != null && activeTrips.length >= 2) {
+    const withHeading = activeTrips.filter((t) => headingDiff(vehicleHeading, tripHeading(t)) < 90)
+    if (withHeading.length > 0) directionTrips = withHeading
+  }
+
+  // Step 3: Among direction-matched trips, use GPS position to pick the best one
   if (vehicleLat != null && vehicleLng != null) {
     let bestTrip = directionTrips[0]
     let bestDist = Infinity
@@ -337,7 +367,7 @@ function findBestTrip(
     return bestTrip
   }
 
-  // Step 3: No GPS — pick the trip closest to current time
+  // Step 4: No GPS — pick the trip closest to current time
   if (directionTrips.length === 1) return directionTrips[0]
 
   let bestTrip = directionTrips[0]
@@ -360,6 +390,7 @@ export async function GET(request: Request) {
   const destination = searchParams.get('destination')
   const vehicleLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null
   const vehicleLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null
+  const vehicleHeading = searchParams.get('heading') ? parseFloat(searchParams.get('heading')!) : null
 
   const nowSec = getSecondsSinceMidnight()
 
@@ -436,7 +467,7 @@ export async function GET(request: Request) {
         }
       }
 
-      const bestTrip = findBestTrip(allTrips, nowSec, destination, vehicleLat, vehicleLng)
+      const bestTrip = findBestTrip(allTrips, nowSec, destination, vehicleLat, vehicleLng, vehicleHeading)
       if (!bestTrip) {
         return NextResponse.json({ error: 'No active trip found for this route' }, { status: 404 })
       }

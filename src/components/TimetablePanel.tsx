@@ -73,7 +73,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
       } else if (isScheduled) {
         url = `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${lat}&lng=${lng}`
       } else {
-        url = `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${lat}&lng=${lng}`
+        url = `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${lat}&lng=${lng}&heading=${vehicle.heading}`
       }
 
       fetch(url)
