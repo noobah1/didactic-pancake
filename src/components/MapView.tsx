@@ -151,12 +151,13 @@ interface MapViewProps {
   vehicles?: VehiclePosition[]
   activeModes?: TransportMode[]
   selectedRoute?: RouteResult | null
+  selectedVehicle?: VehiclePosition | null
   incidents?: ServiceAlert[]
   cities?: CityDef[]
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, cities, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVehicle, incidents, cities, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -419,6 +420,13 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
   useEffect(() => {
     onVehicleClickRef.current = onVehicleClick
   }, [onVehicleClick])
+
+  // Clear route shape when vehicle is deselected externally (e.g. timetable X)
+  useEffect(() => {
+    if (!selectedVehicle && activeRouteRef.current) {
+      clearRouteShape()
+    }
+  }, [selectedVehicle, clearRouteShape])
 
   // Initialize map
   useEffect(() => {

@@ -138,6 +138,7 @@ function HomeContent() {
           vehicles={vehicleData.data?.vehicles}
           activeModes={activeModes}
           selectedRoute={selectedRoute}
+          selectedVehicle={selectedVehicle}
           incidents={showIncidents ? activeAlerts : undefined}
           cities={activeCities}
           onVehicleClick={setSelectedVehicle}
