@@ -10,16 +10,19 @@ export function usePolling<T>(
   const [lastUpdated, setLastUpdated] = useState<number | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
 
+  const fetcherRef = useRef(fetcher)
+  fetcherRef.current = fetcher
+
   const poll = useCallback(async () => {
     try {
-      const result = await fetcher()
+      const result = await fetcherRef.current()
       setData(result)
       setError(null)
       setLastUpdated(Date.now())
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Polling failed'))
     }
-  }, [fetcher])
+  }, [])
 
   useEffect(() => {
     if (!enabled) {
@@ -27,13 +30,17 @@ export function usePolling<T>(
       return
     }
 
-    const initialId = setTimeout(poll, 0)
+    poll()
     timerRef.current = setInterval(poll, interval)
     return () => {
-      clearTimeout(initialId)
       clearInterval(timerRef.current)
     }
   }, [poll, interval, enabled])
+
+  // Re-fetch immediately when fetcher changes (e.g. modes/cities change)
+  useEffect(() => {
+    if (enabled) poll()
+  }, [fetcher, enabled, poll])
 
   // Pause polling when tab is hidden
   useEffect(() => {
