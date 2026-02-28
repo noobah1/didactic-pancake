@@ -52,6 +52,7 @@ export const CITIES: CityDef[] = [
   // Pärnu
   { id: 'parnu', name: 'Pärnu', county: 'Pärnu', lat: 58.385, lng: 24.497, zoom: 14 },
   { id: 'sindi', name: 'Sindi', county: 'Pärnu', lat: 58.399, lng: 24.662, zoom: 14 },
+  { id: 'virtsu', name: 'Virtsu', county: 'Pärnu', lat: 58.575, lng: 23.508, zoom: 14 },
   // Viljandi
   { id: 'viljandi', name: 'Viljandi', county: 'Viljandi', lat: 58.363, lng: 25.596, zoom: 14 },
   // Lääne-Viru
@@ -61,7 +62,6 @@ export const CITIES: CityDef[] = [
   { id: 'kuressaare', name: 'Kuressaare', county: 'Saare', lat: 58.248, lng: 22.503, zoom: 14 },
   // Lääne
   { id: 'haapsalu', name: 'Haapsalu', county: 'Lääne', lat: 58.943, lng: 23.541, zoom: 14 },
-  { id: 'virtsu', name: 'Virtsu', county: 'Lääne', lat: 58.575, lng: 23.508, zoom: 14 },
   // Rapla
   { id: 'rapla', name: 'Rapla', county: 'Rapla', lat: 58.998, lng: 24.799, zoom: 14 },
   // Järva
