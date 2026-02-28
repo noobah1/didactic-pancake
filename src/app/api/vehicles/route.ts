@@ -410,9 +410,11 @@ export async function GET(request: Request) {
       vehicles = scheduled
     }
 
-    // Filter by city locations
+    // Filter by city locations (trains/ferries bypass — they're intercity)
     if (cityCoords.length > 0) {
-      vehicles = filterByCities(vehicles, cityCoords)
+      const intercity = vehicles.filter((v) => v.mode === 'train' || v.mode === 'ferry')
+      const local = vehicles.filter((v) => v.mode !== 'train' && v.mode !== 'ferry')
+      vehicles = [...filterByCities(local, cityCoords), ...intercity]
     }
 
     if (modes) {
