@@ -168,6 +168,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
   const mapReadyRef = useRef(false)
   const incidentLayerIdsRef = useRef<string[]>([])
   const showRouteShapeRef = useRef<(v: VehiclePosition) => void>(() => {})
+  const onVehicleClickRef = useRef(onVehicleClick)
   const vehicleDotTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
 
@@ -390,10 +391,13 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
     [clearRouteShape, onVehicleClick],
   )
 
-  // Keep ref in sync so click handlers always use the latest version
+  // Keep refs in sync so click handlers always use the latest version
   useEffect(() => {
     showRouteShapeRef.current = showRouteShape
   }, [showRouteShape])
+  useEffect(() => {
+    onVehicleClickRef.current = onVehicleClick
+  }, [onVehicleClick])
 
   // Initialize map
   useEffect(() => {
@@ -498,6 +502,18 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, incidents, 
           if (arrow) arrow.getElement().style.display = show ? '' : 'none'
         })
       }
+
+      // Click empty map area to dismiss route shape and timetable
+      map.on('click', (e) => {
+        const interactive = map.queryRenderedFeatures(e.point, {
+          layers: [CLUSTER_CIRCLE_LAYER, ROUTE_STOPS_LAYER].filter((id) => map.getLayer(id)),
+        })
+        if (interactive.length > 0) return
+        if (activeRouteRef.current) {
+          clearRouteShape()
+          onVehicleClickRef.current?.(null)
+        }
+      })
 
       let visFrame: ReturnType<typeof requestAnimationFrame> | null = null
       const scheduleVisUpdate = () => {
