@@ -20,9 +20,10 @@ interface TripStopsResponse {
 }
 
 function formatTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+  const h = Math.floor(seconds / 3600) // raw hours 
+  const m = Math.floor((seconds % 3600) / 60) // raw minutes
+  const hf = h % 24 // formatted hours, if the time so happens to be past midnight
+  return `${hf.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
 }
 
 function getNowSeconds(): number {
@@ -33,7 +34,7 @@ function getNowSeconds(): number {
 
 function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
   let lastPassedIdx = -1
-  for (let i = stops.length - 1; i >= 0; i--) {
+  for (let i = stops.length - 2; i >= 0; i--) {
     if (stops[i].status === 'passed') {
       lastPassedIdx = i
       break
@@ -137,18 +138,20 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
   const currentStop = stops?.find((s) => s.status === 'current')
 
   // Lateness: GPS says bus hasn't reached the stop yet + schedule says it should have (+ 59s buffer)
-  // No prediction — just facts: is the bus there or not, and is the time past?
-  let arrivalInfo: { minutes: number; late: boolean } | null = null
+  // is the bus there or not, and is the time past?
+  let arrivalInfo: { minutes: number; hours: number; late: boolean } | null = null
+  let arrivalDisplay: string | null = null
   if (nextStop) {
     const diff = nextStop.scheduledArrival - nowSec
     if (diff >= -59) {
-      // Within 59s buffer = on time
-      arrivalInfo = { minutes: Math.max(0, Math.ceil(diff / 60)), late: false }
+      arrivalInfo = { minutes: Math.max(0, Math.ceil(diff / 60)), hours: Math.floor(diff / 3600), late: false }
     } else {
-      // GPS shows bus isn't at the stop yet AND more than 59s past schedule = late
-      arrivalInfo = { minutes: Math.ceil(Math.abs(diff) / 60), late: true }
-    }
+      arrivalInfo = { minutes: Math.ceil(Math.abs(diff) / 60), hours: Math.floor(diff / 3600), late: true }
+    } // just for display purposes
+    arrivalDisplay = arrivalInfo.hours <= 0 ? `${arrivalInfo.minutes} min` : `${arrivalInfo.hours} h ${arrivalInfo.minutes % 60} min`
   }
+
+  // ui part
 
   return (
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 w-80 max-h-[70vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
@@ -187,7 +190,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
 
       {/* expanding-contracting */}
       <div
-        className={`flex items-center gap-1 overflow-hidden transition-all duration-200 ${
+        className={`transition-all duration-200 overflow-y-auto ${
           expanded ? 'max-h-[70vh]' : 'max-h-0'
         }`}
       >
@@ -197,7 +200,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
           <div className={`px-4 py-2 text-sm font-medium shrink-0 ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
             {arrivalInfo.late && arrivalInfo.minutes > 0 ? (
               <>
-                <span className="font-bold">{nextStop.name}</span> &mdash; {arrivalInfo.minutes} min late
+                <span className="font-bold">{nextStop.name}</span> &mdash; {arrivalDisplay} late
               </>
             ) : arrivalInfo.late ? (
               <>
@@ -205,7 +208,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
               </>
             ) : (
               <>
-                <span className="font-bold">{nextStop.name}</span> &mdash; in {arrivalInfo.minutes} min
+                <span className="font-bold">{nextStop.name}</span> &mdash; in {arrivalDisplay}
               </>
             )}
           </div>
@@ -241,6 +244,25 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
                   minutesAway = Math.ceil(diff / 60)
                 }
 
+                let hoursAway: number | null = null
+                if (stop.status === 'upcoming') {
+                  const diff = stop.scheduledArrival - nowSec
+                  hoursAway = Math.floor(diff / 3600)
+                }
+                
+                // formats the minutesAway and hoursAway into a readable format
+                let hoursMinutesAway: string | null = null
+                if (stop.status === 'upcoming') {
+                  const diff = stop.scheduledArrival - nowSec
+                  if (hoursAway === 0) {
+                    hoursMinutesAway = `${minutesAway} min`
+                  }
+                  else {
+                    hoursMinutesAway = `${Math.floor(minutesAway! / 60)} h ${minutesAway! % 60} min`
+                  }
+                }
+
+                
                 return (
                   <div key={`${stop.stopId}-${i}`}>
                     <div
@@ -287,12 +309,12 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
                           )}
                           {isNextStop && arrivalInfo && (
                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'text-red-700 bg-red-100' : 'text-green-700 bg-green-100'}`}>
-                              {arrivalInfo.late && arrivalInfo.minutes > 0 ? `${arrivalInfo.minutes} min late` : arrivalInfo.late ? 'on time' : `${arrivalInfo.minutes} min`}
+                              {arrivalInfo.late && arrivalInfo.minutes > 0 ? `${arrivalDisplay} late` : arrivalInfo.late ? 'on time' : `${arrivalDisplay}`}
                             </span>
                           )}
                           {!isPassed && !isCurrent && !isNextStop && minutesAway !== null && minutesAway > 0 && (
                             <span className="text-[10px] text-gray-400">
-                              {minutesAway} min
+                              {hoursMinutesAway}
                             </span>
                           )}
                         </div>
