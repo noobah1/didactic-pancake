@@ -17,7 +17,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
   const bgColor = alert.severity === 'severe' ? 'bg-red-500' : 'bg-amber-500'
 
   return (
-    <div className={`${bgColor} text-white px-4 py-2 flex items-center justify-between text-sm rounded-b-lg shadow-md`}>
+    <div className={`${bgColor} text-white px-4 py-2 flex items-center justify-between text-sm rounded-lg shadow-md`}>
       <div>
         <strong>{alert.headerText}</strong>
         {alert.descriptionText && <span className="ml-2 opacity-90">{alert.descriptionText}</span>}
@@ -26,7 +26,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         onClick={() => setDismissed((prev) => new Set(prev).add(alert.id))}
         className="ml-4 text-white opacity-80 hover:opacity-100"
       >
-        x
+        X
       </button>
     </div>
   )

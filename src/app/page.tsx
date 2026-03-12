@@ -145,7 +145,7 @@ function HomeContent() {
         />
       </ErrorBoundary>
 
-      {/* Timetable panel - bottom left */}
+      {/* Timetable panel - bottom center */}
       {selectedVehicle && (
         <TimetablePanel
           vehicle={selectedVehicle}
@@ -153,50 +153,47 @@ function HomeContent() {
           onClose={() => setSelectedVehicle(null)}
         />
       )}
-
-      {/* Alert banner - top of viewport */}
-      {alertData.data?.alerts && alertData.data.alerts.length > 0 && (
-        <div className="absolute top-0 left-0 right-0 z-40">
-          <AlertBanner alerts={alertData.data.alerts} />
-        </div>
-      )}
-
       {/* Floating UI column - top center */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none">
-        <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} />
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none flex flex-col gap-2">
+          {alertData.data?.alerts && alertData.data.alerts.length > 0 && (
+          <div className="pointer-events-auto">
+            <AlertBanner alerts={alertData.data.alerts} />
+          </div>
+          )}
+          <div className="pointer-events-auto">
+            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} />
+          </div>
+          <div className="pointer-events-auto">
+            <ErrorBoundary
+              fallback={<div className="p-4 text-center text-gray-500">Route search unavailable</div>}
+            >
+              <RouteResults
+                routes={routes}
+                loading={loading}
+                error={error}
+                selectedId={selectedRouteId}
+                onSelect={setSelectedRouteId}
+              />
+            </ErrorBoundary>
+          </div>
+          <div className="pointer-events-auto mt-2 flex flex-wrap justify-start gap-2">
+            <FilterChips activeModes={activeModes} onToggle={handleToggle} />
+          </div>
         </div>
-        <div className="pointer-events-auto">
-          <ErrorBoundary
-            fallback={<div className="p-4 text-center text-gray-500">Route search unavailable</div>}
-          >
-            <RouteResults
-              routes={routes}
-              loading={loading}
-              error={error}
-              selectedId={selectedRouteId}
-              onSelect={setSelectedRouteId}
-            />
-          </ErrorBoundary>
-        </div>
-        <div className="pointer-events-auto mt-2 flex flex-wrap justify-start gap-2">
-          <FilterChips activeModes={activeModes} onToggle={handleToggle} />
-        </div>
-      </div>
 
-      {/* Incident button - bottom right */}
-      <div className="absolute bottom-6 right-4 z-30 pointer-events-auto">
-        <IncidentButton
-          active={showIncidents}
-          alertCount={activeAlerts.length}
-          onClick={() => setShowIncidents((prev) => !prev)}
-        />
-      </div>
+        {/* Incident button - bottom right */}
+        <div className="absolute bottom-6 right-4 z-30 pointer-events-auto">
+          <IncidentButton
+            active={showIncidents}
+            alertCount={activeAlerts.length}
+            onClick={() => setShowIncidents((prev) => !prev)}
+          />
+        </div>
 
-      {/* Logo - bottom center */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
-        <Image src={logo3} alt="Logo" height={24} className="w-auto" />
-      </div>
+        {/* Logo - bottom center */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
+          <Image src={logo3} alt="Logo" height={24} className="w-auto" />
+        </div>
     </main>
   )
 }
