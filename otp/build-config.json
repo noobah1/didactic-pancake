@@ -5,13 +5,25 @@
     }
   ],
   "transitFeeds": [
-    {
-      "type": "gtfs",
-      "source": "data/estonia_unified_gtfs.zip"
-    },
-    {
-      "type": "gtfs",
-      "source": "data/tslaevad.zip"
-    }
-  ]
+    { "type": "gtfs", "source": "data/tallinn.zip" },
+    { "type": "gtfs", "source": "data/harjumaa.zip" },
+    { "type": "gtfs", "source": "data/tartumaa.zip" },
+    { "type": "gtfs", "source": "data/parnumaa.zip" },
+    { "type": "gtfs", "source": "data/raplamaa.zip" },
+    { "type": "gtfs", "source": "data/jarvamaa.zip" },
+    { "type": "gtfs", "source": "data/jogevamaa.zip" },
+    { "type": "gtfs", "source": "data/viljandimaa.zip" },
+    { "type": "gtfs", "source": "data/valgamaa.zip" },
+    { "type": "gtfs", "source": "data/vorumaa.zip" },
+    { "type": "gtfs", "source": "data/polvamaa.zip" },
+    { "type": "gtfs", "source": "data/saaremaa.zip" },
+    { "type": "gtfs", "source": "data/hiiumaa.zip" },
+    { "type": "gtfs", "source": "data/laanemaa.zip" },
+    { "type": "gtfs", "source": "data/elron.zip" },
+    { "type": "gtfs", "source": "data/tslaevad.zip" }
+  ],
+  "transitModelTimeZone": "Europe/Tallinn",
+  "fares": {
+    "type": "no-fare"
+  }
 }

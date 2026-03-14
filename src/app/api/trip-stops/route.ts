@@ -131,34 +131,20 @@ function computeStatusFromGPS(
   vLng: number,
   nowSec: number,
 ): { stops: TripStopInfo[]; afterStopIndex: number; fraction: number } {
-  // Step 1: Estimate which segment the vehicle should be on based on schedule time
+  // Use time as a hint but search wider — GPS position is the truth
   let timeSegIdx = -1
   for (let i = 0; i < stoptimes.length - 1; i++) {
     const dep = stoptimes[i].scheduledDeparture
     const nextArr = stoptimes[i + 1].scheduledArrival
-    if (nowSec >= dep && nowSec <= nextArr) {
-      timeSegIdx = i
-      break
-    }
-    // Check if dwelling at stop
-    if (nowSec >= stoptimes[i].scheduledArrival && nowSec < dep) {
-      timeSegIdx = Math.max(0, i - 1)
-      break
-    }
+    if (nowSec >= dep && nowSec <= nextArr) { timeSegIdx = i; break }
+    if (nowSec >= stoptimes[i].scheduledArrival && nowSec < dep) { timeSegIdx = Math.max(0, i - 1); break }
   }
-  // If past last departure, use last segment
   if (timeSegIdx < 0 && stoptimes.length >= 2) {
     const lastDep = stoptimes[stoptimes.length - 1].scheduledDeparture
-    if (nowSec >= lastDep) {
-      timeSegIdx = stoptimes.length - 2
-    }
+    if (nowSec >= lastDep) timeSegIdx = stoptimes.length - 2
   }
-
-  // Step 2: GPS projection — search near the time-based estimate (±5 segments)
-  const searchRadius = 5
-  const searchFrom = timeSegIdx >= 0 ? Math.max(0, timeSegIdx - searchRadius) : 0
-  const searchTo = timeSegIdx >= 0 ? Math.min(stoptimes.length - 1, timeSegIdx + searchRadius + 1) : stoptimes.length - 1
-
+  const searchFrom = 0
+  const searchTo = stoptimes.length - 1
   let bestSegIdx = timeSegIdx >= 0 ? timeSegIdx : 0
   let bestDist = Infinity
   let bestFraction = 0
@@ -209,7 +195,26 @@ function computeStatusFromGPS(
     }
   })
 
-  return { stops, afterStopIndex: bestSegIdx, fraction: bestFraction }
+  // Calculate actual delay based on GPS position vs schedule
+  // Use the next upcoming stop for delay calculation — more accurate
+  const nextStopIdx = bestSegIdx + 1
+  const refStop = nextStopIdx < stoptimes.length ? stoptimes[nextStopIdx] : stoptimes[bestSegIdx]
+  const scheduledTimeSec = refStop.scheduledArrival
+  // Only count delay if vehicle hasn't reached the stop yet
+  const distToNext = nextStopIdx < stoptimes.length 
+    ? distanceMeters(vLat, vLng, stoptimes[nextStopIdx].stop.lat, stoptimes[nextStopIdx].stop.lon)
+    : Infinity
+  const delaySec = distToNext > 100 ? nowSec - scheduledTimeSec : 0
+  const stopsWithDelay: TripStopInfo[] = stops.map((stop, i) => {
+    if (stop.status === 'passed') return stop
+    return {
+      ...stop,
+      scheduledArrival: stop.scheduledArrival + delaySec,
+      scheduledDeparture: stop.scheduledDeparture + delaySec,
+    }
+  })
+
+  return { stops: stopsWithDelay, afterStopIndex: bestSegIdx, fraction: bestFraction }
 }
 
 function buildResponse(
@@ -263,34 +268,15 @@ function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number):
 
 // Score a trip by how close the vehicle's GPS position is to where the trip should be right now
 function tripPositionScore(trip: GqlTrip, nowSec: number, vLat: number, vLng: number): number {
-  // Find the segment the vehicle should be on based on schedule
+  // Find the closest segment on the route to the GPS position
+  let bestDist = Infinity
   for (let i = 0; i < trip.stoptimes.length - 1; i++) {
-    const dep = trip.stoptimes[i].scheduledDeparture
-    const nextArr = trip.stoptimes[i + 1].scheduledArrival
-    if (nowSec >= dep && nowSec <= nextArr) {
-      // Vehicle should be between stop i and stop i+1
-      const s1 = trip.stoptimes[i].stop
-      const s2 = trip.stoptimes[i + 1].stop
-      // Interpolate position
-      const frac = nextArr > dep ? (nowSec - dep) / (nextArr - dep) : 0.5
-      const estLat = s1.lat + frac * (s2.lat - s1.lat)
-      const estLon = s1.lon + frac * (s2.lon - s1.lon)
-      return distanceMeters(vLat, vLng, estLat, estLon)
-    }
+    const a = trip.stoptimes[i].stop
+    const b = trip.stoptimes[i + 1].stop
+    const proj = projectOntoSegment(vLat, vLng, a.lat, a.lon, b.lat, b.lon)
+    if (proj.dist < bestDist) bestDist = proj.dist
   }
-  // Check if at a stop (dwelling)
-  for (const st of trip.stoptimes) {
-    if (nowSec >= st.scheduledArrival && nowSec <= st.scheduledDeparture) {
-      return distanceMeters(vLat, vLng, st.stop.lat, st.stop.lon)
-    }
-  }
-  // Fallback: distance to nearest stop
-  let minDist = Infinity
-  for (const st of trip.stoptimes) {
-    const d = distanceMeters(vLat, vLng, st.stop.lat, st.stop.lon)
-    if (d < minDist) minDist = d
-  }
-  return minDist
+  return bestDist
 }
 
 // Calculate heading (degrees) from point A to point B

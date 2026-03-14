@@ -1,5 +1,6 @@
 'use client'
-
+import { useJourneyMonitor } from '@/hooks/use-journey-monitor'
+import { DelayBanner } from '@/components/DelayBanner'
 import { useState, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -124,6 +125,8 @@ function HomeContent() {
 
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 
+const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute)
+ 
   return (
     <main className="h-dvh relative overflow-hidden">
       {/* Fullscreen map base layer */}
@@ -177,6 +180,20 @@ function HomeContent() {
               selectedId={selectedRouteId}
               onSelect={setSelectedRouteId}
             />
+            <DelayBanner
+  warnings={warnings}
+  onGetAlternatives={() => {
+    if (selectedRoute) {
+      const firstLeg = selectedRoute.legs[0]
+      search(
+        `${firstLeg.from.lat},${firstLeg.from.lng}`,
+        `${selectedRoute.legs[selectedRoute.legs.length - 1].to.lat},${selectedRoute.legs[selectedRoute.legs.length - 1].to.lng}`,
+        activeModes,
+      )
+    }
+  }}
+  onDismiss={dismissWarning}
+/>
           </ErrorBoundary>
         </div>
         <div className="pointer-events-auto mt-2 flex flex-wrap justify-start gap-2">
