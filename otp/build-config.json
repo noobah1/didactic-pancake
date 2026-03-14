@@ -22,8 +22,5 @@
     { "type": "gtfs", "source": "data/elron.zip" },
     { "type": "gtfs", "source": "data/tslaevad.zip" }
   ],
-  "transitModelTimeZone": "Europe/Tallinn",
-  "fares": {
-    "type": "no-fare"
-  }
+  "transitModelTimeZone": "Europe/Tallinn"
 }
