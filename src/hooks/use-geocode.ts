@@ -23,9 +23,11 @@ export function useGeocode() {
       setLoading(true)
       try {
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
-        setResults(data.results)
-      } catch {
+        setResults(data.results || [])
+      } catch (error) {
+        console.error('Geocode error:', error)
         setResults([])
       } finally {
         setLoading(false)
