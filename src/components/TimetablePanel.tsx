@@ -67,10 +67,10 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
 
     const doFetch = (lat: number, lng: number) => {
       let url: string
-      if (lockedTripId) {
-        // After first match: use locked tripId, just update GPS position
-        url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`
-      } else if (isScheduled) {
+     if (lockedTripId && isScheduled) {
+  // Only lock trip ID for scheduled vehicles (OTP trips with colon in ID)
+  url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`
+} else if (isScheduled) {
         url = `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${lat}&lng=${lng}`
       } else {
         url = `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${lat}&lng=${lng}&heading=${vehicle.heading}`
