@@ -6,8 +6,9 @@ services:
       dockerfile: ./Dockerfile
     environment:
       NODE_ENV: production
+      OTP_BASE_URL: http://otp:8080
     ports:
-      - 3000:3000
+      - 3001:3000
 
   otp:
     image: opentripplanner/opentripplanner:2.6.0
