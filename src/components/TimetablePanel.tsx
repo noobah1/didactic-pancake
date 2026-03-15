@@ -73,7 +73,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
           url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`
         } else if (isScheduled) {
          // Only lock trip ID for scheduled vehicles (OTP trips with colon in ID)
-        url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`
+       url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId!)}&lat=${lat}&lng=${lng}`
       } else if (isScheduled) {
         url = `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${lat}&lng=${lng}`
       } else {
