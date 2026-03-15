@@ -1,0 +1,28 @@
+warning: in the working copy of 'src/components/TimetablePanel.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --cc src/components/TimetablePanel.tsx[m
+[1mindex 542910c,3e38740..0000000[m
+[1m--- a/src/components/TimetablePanel.tsx[m
+[1m+++ b/src/components/TimetablePanel.tsx[m
+[36m@@@ -67,10 -68,10 +68,10 @@@[m [mexport function TimetablePanel({ vehicl[m
+  [m
+      const doFetch = (lat: number, lng: number) => {[m
+        let url: string[m
+[31m-      if (lockedTripId && isScheduled) {[m
+[31m-   // Only lock trip ID for scheduled vehicles (OTP trips with colon in ID)[m
+[31m-   url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`[m
+[31m- } else if (isScheduled) {[m
+[32m+       if (lockedTripId && isScheduled) {[m
+[31m -         // Only lock trip ID for scheduled vehicles (OTP trips with colon in ID)[m
+[31m -        url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`[m
+[31m -      } else if (isScheduled) {[m
+[32m++          // Only lock trip ID for scheduled vehicles (OTP trips with colon in ID)[m
+[32m++          url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`[m
+[32m++        } else if (isScheduled) {[m
+          url = `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${lat}&lng=${lng}`[m
+        } else {[m
+          url = `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${lat}&lng=${lng}&heading=${vehicle.heading}`[m
+[36m@@@ -284,3 -309,3 +309,4 @@@[m
+      </div>[m
+    )[m
+  }[m
+[32m++[m
