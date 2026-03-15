@@ -111,8 +111,8 @@ async function searchEstonianAddresses(query: string): Promise<GeoResult[]> {
     if (!res.ok) return []
     const data = await res.json()
     return (data.addresses || [])
-      .map((item: any) => ({ name: item.ipikkaadress || query, lat: parseFloat(item.viitepunkt_b || '0'), lng: parseFloat(item.viitepunkt_l || '0') }))
-      .filter((r: any) => r.lat > 57.5 && r.lat < 60 && r.lng > 21 && r.lng < 28)
+      .map((item: { ipikkaadress?: string; viitepunkt_b?: string; viitepunkt_l?: string }) => ({ name: item.ipikkaadress || query, lat: parseFloat(item.viitepunkt_b || '0'), lng: parseFloat(item.viitepunkt_l || '0') }))
+      .filter((r: { lat: number; lng: number }) => r.lat > 57.5 && r.lat < 60 && r.lng > 21 && r.lng < 28)
   } catch { return [] }
 }
 
