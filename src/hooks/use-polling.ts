@@ -11,7 +11,9 @@ export function usePolling<T>(
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
 
   const fetcherRef = useRef(fetcher)
+  useEffect(() => {
   fetcherRef.current = fetcher
+})
 
   const poll = useCallback(async () => {
     try {

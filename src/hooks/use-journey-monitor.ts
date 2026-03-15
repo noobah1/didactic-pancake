@@ -120,6 +120,7 @@ export function useJourneyMonitor(selectedRoute: RouteResult | null) {
  
   useEffect(() => {
     if (!selectedRoute) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWarnings([])
       dismissedRef.current = new Set()
       routeIdRef.current = null

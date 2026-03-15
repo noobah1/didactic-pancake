@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
 const TRANSIT_STOPS_QUERY = `
 query {
