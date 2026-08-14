@@ -51,3 +51,4 @@ otp/data/*.tmp
 
 # IDE
 .idea/
+otp/graph.obj

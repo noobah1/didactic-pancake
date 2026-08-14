@@ -20,8 +20,8 @@ services:
     volumes:
       - ./otp:/var/opentripplanner
     # graph.obj is built by the "Build OTP graph" GitHub Actions workflow and
-    # committed via Git LFS — this container only ever loads it, never builds.
-    # Run scripts/refresh-graph.sh (e.g. via cron) to pull a newer graph and reload.
+    # published as a release asset — this container only ever loads it, never builds.
+    # Run scripts/refresh-graph.sh (e.g. via cron) to fetch a newer graph and reload.
     command: ['--load', '--serve']
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8080/otp/actuators/health']
