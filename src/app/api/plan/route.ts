@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
 import { TransportMode, RouteResult, RouteLeg, LegPlace } from '@/lib/types'
 
+// Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
+// TROLLEYBUS route_type in the data), so trip planning requests BUS for it too.
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
   tram: 'TRAM',
   train: 'RAIL',
   ferry: 'FERRY',
+  trolleybus: 'BUS',
 }
 
 const PLAN_QUERY = `

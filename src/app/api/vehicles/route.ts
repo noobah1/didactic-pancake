@@ -278,6 +278,7 @@ function mapOtpMode(mode: string): TransportMode {
     case 'RAIL': return 'train'
     case 'FERRY': return 'ferry'
     case 'TRAM': return 'tram'
+    case 'TROLLEYBUS': return 'trolleybus'
     default: return 'bus'
   }
 }

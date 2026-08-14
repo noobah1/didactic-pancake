@@ -27,6 +27,13 @@ describe('parseGpsFeed', () => {
     expect(result[1].mode).toBe('bus')
   })
 
+  it('parses type code 1 as trolleybus', () => {
+    const raw = '1,4,24776270,59428570,,309,505,Z,188,Tondi'
+    const result = parseGpsFeed(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0].mode).toBe('trolleybus')
+  })
+
   it('skips malformed lines', () => {
     const raw = 'bad,data\n3,2,24711780,59448550,,142,96,Z,147,Suur-Paala'
     const result = parseGpsFeed(raw)

@@ -1,4 +1,4 @@
-export type TransportMode = 'bus' | 'tram' | 'train' | 'ferry'
+export type TransportMode = 'bus' | 'tram' | 'train' | 'ferry' | 'trolleybus'
 
 export interface VehiclePosition {
   id: string

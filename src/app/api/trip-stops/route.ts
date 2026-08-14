@@ -39,13 +39,17 @@ query RouteTrips($name: String!, $modes: [Mode!], $date: String!) {
 }
 `
 
+// Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
+// TROLLEYBUS route_type in the data) — so trolleybus route/trip lookups query
+// OTP as BUS. GPS-position scoring in findBestTrip() still picks the correct
+// trip among same-numbered routes elsewhere in the country.
 const MODE_MAP: Record<string, string> = {
   bus: 'BUS',
   tram: 'TRAM',
   train: 'RAIL',
   ferry: 'FERRY',
+  trolleybus: 'BUS',
 }
-
 interface GqlStoptime {
   scheduledArrival: number
   scheduledDeparture: number
@@ -143,8 +147,19 @@ function computeStatusFromGPS(
     const lastDep = stoptimes[stoptimes.length - 1].scheduledDeparture
     if (nowSec >= lastDep) timeSegIdx = stoptimes.length - 2
   }
-  const searchFrom = 0
-  const searchTo = stoptimes.length - 1
+// Constrain the geometric search to a window around the time-predicted
+  // segment, so the matcher can't lock onto a geometrically-nearer point on a
+  // different part of a looping/overlapping route.
+  const WINDOW = 3 // stops on either side of the time-predicted segment
+  const CLOSE_ENOUGH_M = 300 // if best-in-window is within this, trust it outright
+
+  let searchFrom = 0
+  let searchTo = stoptimes.length - 1
+  if (timeSegIdx >= 0) {
+    searchFrom = Math.max(0, timeSegIdx - WINDOW)
+    searchTo = Math.min(stoptimes.length - 1, timeSegIdx + WINDOW)
+  }
+
   let bestSegIdx = timeSegIdx >= 0 ? timeSegIdx : 0
   let bestDist = Infinity
   let bestFraction = 0
@@ -160,8 +175,38 @@ function computeStatusFromGPS(
     }
   }
 
-  // Check if vehicle is very close to a stop (within 150m), also constrained by time window
+  // Only fall back to a full-route search if the windowed search came up bad
+  // (vehicle genuinely far from where the schedule says it should be — e.g.
+  // real delay/detour — not a matching artifact).
+  if (bestDist > CLOSE_ENOUGH_M) {
+    for (let i = 0; i < stoptimes.length - 1; i++) {
+      if (i >= searchFrom && i < searchTo) continue // already checked
+      const a = stoptimes[i].stop
+      const b = stoptimes[i + 1].stop
+      const proj = projectOntoSegment(vLat, vLng, a.lat, a.lon, b.lat, b.lon)
+      if (proj.dist < bestDist) {
+        bestDist = proj.dist
+        bestSegIdx = i
+        bestFraction = proj.fraction
+      }
+    }
+  }
+
+  // Check if vehicle is very close to a stop (within 150m), constrained to the
+  // same window so a loop line can't snap to the wrong occurrence of a stop
   let atStopIdx = -1
+  for (let i = searchFrom; i <= searchTo; i++) {
+    const d = distanceMeters(vLat, vLng, stoptimes[i].stop.lat, stoptimes[i].stop.lon)
+    if (d < 150) {
+      atStopIdx = i
+      break
+    }
+  }
+
+  if (atStopIdx >= 0 && Math.abs(atStopIdx - bestSegIdx) <= 1) {
+    bestSegIdx = Math.max(0, atStopIdx - 1)
+    bestFraction = atStopIdx === 0 ? 0 : 1
+  }
   for (let i = searchFrom; i <= searchTo; i++) {
     const d = distanceMeters(vLat, vLng, stoptimes[i].stop.lat, stoptimes[i].stop.lon)
     if (d < 150) {
@@ -268,15 +313,23 @@ function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number):
 
 // Score a trip by how close the vehicle's GPS position is to where the trip should be right now
 function tripPositionScore(trip: GqlTrip, nowSec: number, vLat: number, vLng: number): number {
-  // Find the closest segment on the route to the GPS position
   let bestDist = Infinity
+  let bestTimeDiff = Infinity
   for (let i = 0; i < trip.stoptimes.length - 1; i++) {
     const a = trip.stoptimes[i].stop
     const b = trip.stoptimes[i + 1].stop
     const proj = projectOntoSegment(vLat, vLng, a.lat, a.lon, b.lat, b.lon)
-    if (proj.dist < bestDist) bestDist = proj.dist
+    if (proj.dist < bestDist) {
+      bestDist = proj.dist
+      const segStart = trip.stoptimes[i].scheduledDeparture
+      const segEnd = trip.stoptimes[i + 1].scheduledArrival
+      const interpolatedTime = segStart + proj.fraction * (segEnd - segStart)
+      bestTimeDiff = Math.abs(nowSec - interpolatedTime)
+    }
   }
-  return bestDist
+  // Distance in meters + a heavy per-second time penalty, so trips sharing
+  // identical geometry are disambiguated by schedule instead of tying at 0.
+  return bestDist + bestTimeDiff * 5
 }
 
 // Calculate heading (degrees) from point A to point B
@@ -418,6 +471,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Invalid mode' }, { status: 400 })
     }
 
+   // Tram route shortNames carry a T-prefix (e.g. "T2") since the GTFS rebuild
+    const routeName = mode === 'tram' && !/^T/i.test(line) ? `T${line}` : line
+
     try {
       const date = getTodayDate()
       const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
@@ -425,7 +481,7 @@ export async function GET(request: Request) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: ROUTE_TRIPS_QUERY,
-          variables: { name: line, modes: [otpMode], date },
+          variables: { name: routeName, modes: [otpMode], date },
         }),
       })
 
