@@ -87,8 +87,11 @@ export const POLL_INTERVALS = {
 }
 
 // Mapping from gps.txt type codes to our transport modes
-// Verified against live feed: type 2 = bus (majority), type 3 = tram (lines 1-5)
+// Verified against live feed: type 1 = trolleybus (lines terminate at Kopli/Kadriorg/
+// Kaubamaja/Balti jaam, Tallinn's trolleybus depots), type 2 = bus (majority),
+// type 3 = tram (lines 1-5)
 export const GPS_TYPE_MAP: Record<string, TransportMode> = {
+  '1': 'trolleybus',
   '2': 'bus',
   '3': 'tram',
   '4': 'train',
@@ -100,6 +103,7 @@ export const MODE_COLORS: Record<TransportMode, string> = {
   tram: '#F44336',
   train: '#FF9800',
   ferry: '#9C27B0',
+  trolleybus: '#00008B',
 }
 
 export const MODE_LABELS: Record<TransportMode, string> = {
@@ -107,6 +111,7 @@ export const MODE_LABELS: Record<TransportMode, string> = {
   tram: 'Tram',
   train: 'Train',
   ferry: 'Ferry',
+  trolleybus: 'Trolleybus',
 }
 
-export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry']
+export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry', 'trolleybus']

@@ -11,6 +11,6 @@
   ],
   "transitModelTimeZone": "Europe/Tallinn",
   "fares": {
-    "type": "highest-fare-in-free-transfer-window"
+    "type": "off"
   }
 }

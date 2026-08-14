@@ -992,7 +992,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
     const fetchRouteShape = async (
       routeName: string,
     ): Promise<{ patterns: RouteShapePattern[] } | null> => {
-      for (const mode of ['bus', 'tram', 'train', 'ferry']) {
+      for (const mode of ['bus', 'tram', 'train', 'ferry', 'trolleybus']) {
         const res = await fetch(
           `/api/route-shape?line=${encodeURIComponent(routeName)}&mode=${mode}`,
         )

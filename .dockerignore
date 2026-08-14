@@ -14,6 +14,7 @@
 **/charts
 **/node_modules
 **/npm-debug.log
+Transport app
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml

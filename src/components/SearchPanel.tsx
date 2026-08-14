@@ -53,6 +53,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               placeholder="Current location or search..."
               value={fromText}
               onChange={setFromText}
+              allowMyLocation
               onSelect={(name, lat, lng) => {
                 setFromText(name)
                 setFromCoords({ lat, lng })

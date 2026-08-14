@@ -33,11 +33,14 @@ interface GqlRoute {
   patterns: GqlPattern[]
 }
 
+// Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
+// TROLLEYBUS route_type in the data) — so trolleybus shape lookups query OTP as BUS.
 const MODE_MAP: Record<string, string> = {
   bus: 'BUS',
   tram: 'TRAM',
   train: 'RAIL',
   ferry: 'FERRY',
+  trolleybus: 'BUS',
 }
 
 export async function GET(request: Request) {
@@ -54,13 +57,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid mode' }, { status: 400 })
   }
 
+  // Tram route shortNames carry a T-prefix (e.g. "T2") since the GTFS rebuild
+  const routeName = mode === 'tram' && !/^T/i.test(line) ? `T${line}` : line
+
   try {
     const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: ROUTE_SHAPE_QUERY,
-        variables: { name: line, modes: [otpMode] },
+        variables: { name: routeName, modes: [otpMode] },
       }),
     })
 
