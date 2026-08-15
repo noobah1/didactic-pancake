@@ -391,8 +391,20 @@ export function matchVehicleToTrip(
   // delay against that same already-served last stop for as long as
   // MAX_TRIP_OVERRUN_SEC still counts the trip as a live match — a parked
   // vehicle reported as getting later every second it sits still.
-  const isAtTerminus = atStopIdx === 0 || atStopIdx === stoptimes.length - 1
-  const delaySeconds = isAtTerminus ? 0 : nowSec - scheduledTimeSec
+  //
+  // Checked as a direct distance to the trip's own final stop, independent
+  // of atStopIdx's "nearest stop wins" search above — real depot termini
+  // are frequently modeled as two adjacent, near-duplicate stops (e.g. two
+  // stops both literally named "Mustamäe" a block apart, one for boarding
+  // and one marking the yard itself), so the true final stop can lose the
+  // "nearest" contest to its own neighbor while the vehicle is still
+  // unambiguously parked at the depot — confirmed live: a stationary
+  // trolleybus 100m from the second-to-last stop and 147m from the actual
+  // final stop kept accumulating delay because atStopIdx locked onto the
+  // marginally-closer neighbor instead.
+  const lastStop = stoptimes[stoptimes.length - 1].stop
+  const nearFinalStop = distanceMeters(vLat, vLng, lastStop.lat, lastStop.lon) < TERMINUS_STOP_RADIUS_M
+  const delaySeconds = atStopIdx === 0 || nearFinalStop ? 0 : nowSec - scheduledTimeSec
 
   return { afterStopIndex: bestSegIdx, fraction: bestFraction, atStopIndex: atStopIdx, delaySeconds }
 }

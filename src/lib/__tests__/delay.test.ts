@@ -48,4 +48,38 @@ describe('matchVehicleToTrip', () => {
     const match = matchVehicleToTrip(stoptimes, 59.41, 24.71, 1400)
     expect(match.delaySeconds).toBeGreaterThan(0)
   })
+
+  // Real depots are frequently modeled as two near-duplicate stops close
+  // together — e.g. two GTFS stops both literally named "Mustamäe" a block
+  // apart — one for boarding, one marking the yard. A vehicle parked
+  // between them can end up physically closer to the second-to-last stop
+  // than to the trip's actual final stop, so atStopIdx's "nearest wins"
+  // search locks onto the wrong one. Confirmed live against production
+  // data: this exact shape stayed stuck reporting growing delay even after
+  // the terminus-radius widening above landed.
+  const depotDuplicateStoptimes: DelayStoptime[] = [
+    ...stoptimes.slice(0, 2),
+    {
+      scheduledArrival: 1180,
+      scheduledDeparture: 1180,
+      stop: { name: 'Terminus depot (near)', lat: 59.4197, lon: 24.7194 },
+    },
+    {
+      scheduledArrival: 1200,
+      scheduledDeparture: 1200,
+      stop: { name: 'Terminus depot (actual)', lat: 59.42, lon: 24.72 },
+    },
+  ]
+
+  it('reports zero delay when parked closer to a near-duplicate second-to-last stop than the true final stop', () => {
+    // Sits right on top of the second-to-last stop (~48m from the actual
+    // final stop) — closer to its neighbor, same as the real trolleybus
+    // case, and well past the trip's scheduled finish. atStopIndex should
+    // resolve to the *nearer* stop (proving the "wrong stop wins" scenario
+    // is actually being exercised here), while delaySeconds still zeroes
+    // out via the independent final-stop distance check.
+    const match = matchVehicleToTrip(depotDuplicateStoptimes, 59.4197, 24.7194, 1900)
+    expect(match.atStopIndex).toBe(depotDuplicateStoptimes.length - 2)
+    expect(match.delaySeconds).toBe(0)
+  })
 })
