@@ -8,6 +8,10 @@ export interface VehiclePosition {
   lng: number
   heading: number
   destination: string
+  // true when this position is interpolated from the static timetable (no
+  // real-time signal exists for this vehicle at all — most non-Tallinn-agency
+  // routes), as opposed to a real GPS fix. Absent/false means real GPS.
+  estimated?: boolean
 }
 
 export interface RouteResult {

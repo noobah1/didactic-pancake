@@ -157,9 +157,19 @@ interface MapViewProps {
   incidents?: ServiceAlert[]
   cities?: CityDef[]
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
+  // Picks the basemap at creation time only — the parent remounts this
+  // whole component (via a key keyed on theme) rather than live-swapping
+  // styles on an existing map instance. maplibre's setStyle() wipes every
+  // source/layer this component adds across its many effects, and this
+  // component's own layer-adding logic isn't written to redo itself on a
+  // style reload — a full remount sidesteps needing it to be. A real
+  // CARTO dark style (not a CSS filter on the canvas) means overlay layers
+  // like stop-circle markers and the route-progress dot keep their real
+  // colors instead of getting dragged along by a filter meant for the tiles.
+  darkMode?: boolean
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, onVehicleClick, darkMode }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -515,7 +525,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      style: darkMode
+        ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+        : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
       center: [TALLINN_CENTER.lng, TALLINN_CENTER.lat],
       zoom: DEFAULT_ZOOM,
       attributionControl: false,
@@ -681,6 +693,10 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       mapRef.current = null
       mapReadyRef.current = false
     }
+  // darkMode is deliberately read only once here, at map creation — the
+  // parent remounts this whole component on theme change instead of this
+  // effect reacting to it live (see the darkMode prop's own comment).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Fly to city/cities when selection changes
@@ -734,11 +750,16 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           const el = existing.getElement()
           if (el.textContent !== vehicle.line) el.textContent = vehicle.line
           el.style.backgroundColor = MODE_COLORS[vehicle.mode]
-          el.title = `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
+          el.style.opacity = vehicle.estimated ? '0.55' : '1'
+          el.style.borderStyle = vehicle.estimated ? 'dashed' : 'solid'
+          el.title = vehicle.estimated
+            ? `${vehicle.mode} ${vehicle.line} → ${vehicle.destination} (estimated from schedule — not live tracked)`
+            : `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
 
           const arrowEntry = arrowMarkersRef.current.get(vehicle.id)
           if (arrowEntry) {
             arrowEntry.getElement().style.borderBottomColor = MODE_COLORS[vehicle.mode]
+            arrowEntry.getElement().style.opacity = vehicle.estimated ? '0.55' : '1'
             const pillWidth = Math.max(18, vehicle.line.length * 7 + 8)
             const offsetDist = Math.max(pillWidth / 2, 11) + 4
             const rad = (vehicle.heading * Math.PI) / 180
@@ -754,7 +775,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.padding = '0 4px'
           el.style.borderRadius = '9px'
           el.style.backgroundColor = MODE_COLORS[vehicle.mode]
-          el.style.border = '2px solid white'
+          el.style.border = vehicle.estimated ? '2px dashed white' : '2px solid white'
+          el.style.opacity = vehicle.estimated ? '0.55' : '1'
           el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
           el.style.cursor = 'pointer'
           el.style.display = 'flex'
@@ -767,7 +789,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.lineHeight = '1'
           el.style.whiteSpace = 'nowrap'
           el.textContent = vehicle.line
-          el.title = `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
+          el.title = vehicle.estimated
+            ? `${vehicle.mode} ${vehicle.line} → ${vehicle.destination} (estimated from schedule — not live tracked)`
+            : `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
 
           el.addEventListener('click', (e) => {
             e.stopPropagation()
@@ -782,7 +806,11 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
             .setLngLat([vehicle.lng, vehicle.lat])
             .setPopup(
               new maplibregl.Popup({ offset: 10 }).setHTML(
-                `<strong>${vehicle.line}</strong><br/>${vehicle.destination}`,
+                `<strong>${escapeHtml(vehicle.line)}</strong><br/>${escapeHtml(vehicle.destination)}${
+                  vehicle.estimated
+                    ? '<br/><span style="color:#9CA3AF;font-size:11px">Estimated from schedule — not live tracked</span>'
+                    : ''
+                }`,
               ),
             )
             .addTo(map)
@@ -793,6 +821,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           const arrowEl = document.createElement('div')
           arrowEl.style.width = '0'
           arrowEl.style.height = '0'
+          arrowEl.style.opacity = vehicle.estimated ? '0.55' : '1'
           arrowEl.style.borderLeft = '3px solid transparent'
           arrowEl.style.borderRight = '3px solid transparent'
           arrowEl.style.borderBottom = `6px solid ${MODE_COLORS[vehicle.mode]}`

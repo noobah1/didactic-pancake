@@ -325,6 +325,7 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
           lng: pos.lng,
           heading: pos.heading,
           destination: pos.destination,
+          estimated: true,
         })
       }
     }
