@@ -15,6 +15,13 @@ interface TimetablePanelProps {
   // highlight) can track the real-time status instead of freezing whatever
   // was true at the moment the vehicle was selected.
   onLateChange?: (late: boolean) => void
+  // When the selection came from somewhere that already knows this
+  // vehicle's trip (e.g. the delay board), pass it here so this panel's
+  // very first fetch is hinted instead of running an entirely independent,
+  // unhinted line/mode/GPS match — which, under real ambiguity, frequently
+  // lands on a different trip than the one that opened it, showing a
+  // different delay number for what's supposed to be the same vehicle.
+  initialTripId?: string | null
 }
 
 interface TripStopsResponse {
@@ -50,7 +57,7 @@ function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
   return stops.slice(from)
 }
 
-export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange }: TimetablePanelProps) {
+export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initialTripId }: TimetablePanelProps) {
   const [expanded, setExpanded] = useState(true)
   const [showAllStops, setShowAllStops] = useState(false)
   const [stops, setStops] = useState<TripStopInfo[] | null>(null)
@@ -72,7 +79,10 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange }: Tim
   // Fetch schedule — match trip once, then reuse tripId for all subsequent fetches
   useEffect(() => {
     let cancelled = false
-    let lockedTripId: string | null = null
+    // Seeded from the caller's hint (e.g. the delay board's own match) so
+    // even the very first fetch is biased toward the same trip, not just
+    // subsequent ones.
+    let lockedTripId: string | null = initialTripId ?? null
     let isFirstFetch = true
 
     const doFetch = (lat: number, lng: number) => {
@@ -144,7 +154,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange }: Tim
     return () => { cancelled = true; clearInterval(timer) }
   // Only re-run when the vehicle itself changes, NOT on every GPS position update
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isScheduled])
+  }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isScheduled, initialTripId])
 
   // Tick every 15s to keep displayed times current
   const [, setTick] = useState(0)

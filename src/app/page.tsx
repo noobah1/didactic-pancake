@@ -46,6 +46,13 @@ function HomeContent() {
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
   const [selectedVehicleDelayed, setSelectedVehicleDelayed] = useState(false)
+  // The trip the delay board itself already matched this vehicle to, if
+  // selection came from there — passed to TimetablePanel so its very first
+  // fetch is hinted instead of running an entirely independent, unhinted
+  // match that can (and often does) land on a different trip than the
+  // board just showed for the same vehicle. Cleared on a plain map click,
+  // which has no such trip to hand over.
+  const [selectedVehicleInitialTripId, setSelectedVehicleInitialTripId] = useState<string | null>(null)
   const [showIssues, setShowIssues] = useState(false)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
@@ -141,12 +148,14 @@ function HomeContent() {
       heading: live?.heading ?? vehicle.heading,
       destination: vehicle.destination,
     })
+    setSelectedVehicleInitialTripId(vehicle.tripId)
     setSelectedVehicleDelayed(true)
     setShowIssues(false)
   }
 
   const handleVehicleClick = (vehicle: VehiclePosition | null) => {
     setSelectedVehicle(vehicle)
+    setSelectedVehicleInitialTripId(null)
     setSelectedVehicleDelayed(false)
   }
 
@@ -306,7 +315,8 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         <TimetablePanel
           vehicle={selectedVehicle}
           vehicles={vehicleData.data?.vehicles}
-          onClose={() => setSelectedVehicle(null)}
+          initialTripId={selectedVehicleInitialTripId}
+          onClose={() => { setSelectedVehicle(null); setSelectedVehicleInitialTripId(null) }}
           onLateChange={setSelectedVehicleDelayed}
         />
       )}
