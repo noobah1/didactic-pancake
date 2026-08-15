@@ -20,7 +20,7 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
   const isEmpty = delayedVehicles.length === 0 && alerts.length === 0
 
   return (
-    <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
+    <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-amber-500 text-white shrink-0">
         <span className="text-sm font-semibold">Current issues</span>
         <button
@@ -36,13 +36,13 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
         ) : (
           <>
             {delayedVehicles.length > 0 && (
-              <div className="flex flex-col divide-y divide-gray-100">
+              <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
                 {delayedVehicles.map((v) => (
                   <button
                     key={v.vehicleId}
                     type="button"
                     onClick={() => onSelectVehicle(v)}
-                    className="flex items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-amber-50 transition-colors"
+                    className="flex items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span
@@ -52,12 +52,12 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
                       >
                         {v.line}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-gray-600 truncate">
+                      <span className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 truncate">
                         <Navigation size={11} className="text-gray-400 shrink-0" />
                         {v.destination}
                       </span>
                     </div>
-                    <span className="text-xs text-amber-600 font-medium shrink-0">
+                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium shrink-0">
                       {Math.round(v.delaySeconds / 60)}min
                     </span>
                   </button>
@@ -65,7 +65,7 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
               </div>
             )}
             {alerts.length > 0 && (
-              <div className="flex flex-col divide-y divide-gray-100 border-t border-gray-100">
+              <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700 border-t border-gray-100 dark:border-gray-700">
                 {alerts.map((alert) => (
                   <div key={alert.id} className="px-4 py-2.5">
                     <div className="flex items-center gap-1.5">
@@ -74,7 +74,7 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
                           alert.severity === 'severe' ? 'bg-red-500' : 'bg-amber-500'
                         }`}
                       />
-                      <span className="text-xs font-medium text-gray-700">{alert.headerText}</span>
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{alert.headerText}</span>
                     </div>
                     {alert.affectedRoutes.length > 0 && (
                       <span className="text-xs text-gray-400 ml-3">

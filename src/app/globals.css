@@ -1,8 +1,30 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 html, body {
   height: 100%;
   margin: 0;
+}
+
+body {
+  background-color: #fff;
+  color: #111827;
+}
+
+.dark body {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+/* Dark map: invert+rotate the rendered basemap tiles rather than swapping to
+   a whole separate vector style — MapView holds a lot of manually-managed
+   layer/source/marker state that a live style swap would need to carefully
+   re-add after every reload. This targets only the WebGL canvas itself, so
+   markers/popups (separate DOM elements maplibre positions over the canvas,
+   never drawn onto it) are untouched and keep their real colors. */
+.dark .maplibregl-canvas {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
 }
 
 /* Your live vehicle on the selected journey — needs to visibly pulse since it

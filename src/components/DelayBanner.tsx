@@ -16,11 +16,11 @@ export function DelayBanner({ warnings, onGetAlternatives, onDismiss }: DelayBan
       {warnings.map((warning) => (
         <div
           key={warning.legIndex}
-          className="flex items-center justify-between gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs"
+          className="flex items-center justify-between gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-xs"
         >
           <div className="flex items-center gap-1.5">
             <span className="text-amber-500 text-base">⚠️</span>
-            <span className="text-amber-800 font-medium">{warning.message}</span>
+            <span className="text-amber-800 dark:text-amber-300 font-medium">{warning.message}</span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -33,7 +33,7 @@ export function DelayBanner({ warnings, onGetAlternatives, onDismiss }: DelayBan
             <button
               type="button"
               onClick={() => onDismiss(warning.legIndex)}
-              className="px-2 py-1 text-amber-600 hover:text-amber-800 transition-colors"
+              className="px-2 py-1 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
             >
               ✕
             </button>

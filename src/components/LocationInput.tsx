@@ -79,7 +79,7 @@ export function LocationInput({
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => results.length > 0 && setShowDropdown(true)}
           placeholder={`${label}: ${placeholder}`}
-          className="w-full px-3 py-3 text-base sm:text-sm focus:outline-none"
+          className="w-full px-3 py-3 text-base sm:text-sm focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
         {allowMyLocation && (
           <button
@@ -88,7 +88,7 @@ export function LocationInput({
             disabled={locating}
             title="Use my current location"
             aria-label="Use my current location"
-            className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-blue-700 disabled:opacity-50 transition-colors"
+            className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 disabled:opacity-50 transition-colors"
           >
             {locating ? (
               <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -105,18 +105,18 @@ export function LocationInput({
         )}
       </div>
       {locateError && (
-        <p className="absolute z-50 w-full mt-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg border border-red-200">
+        <p className="absolute z-50 w-full mt-1 px-3 py-1.5 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-xs rounded-lg border border-red-200 dark:border-red-800">
           {locateError}
         </p>
       )}
       {showDropdown && results.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
           {results.map((r, i) => (
             <li key={i}>
               <button
                 type="button"
                 onClick={() => handleSelect(r)}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 truncate"
+                className="w-full px-3 py-2 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 truncate"
               >
                 {r.name}
               </button>

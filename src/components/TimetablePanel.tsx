@@ -211,7 +211,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
       : null
 
   return (
-    <div className="absolute bottom-3 left-3 z-50 w-64 max-h-[38vh] sm:max-h-[55vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
+    <div className="absolute bottom-3 left-3 z-50 w-64 max-h-[38vh] sm:max-h-[55vh] bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col overflow-hidden">
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3 text-white shrink-0"
@@ -254,7 +254,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
       
         {/* Delay status — compact, at the top, no repeated "At X" text */}
         {!loading && !error && headline && (
-          <div className="px-4 pt-3 pb-1 text-sm font-semibold shrink-0 text-red-600">
+          <div className="px-4 pt-3 pb-1 text-sm font-semibold shrink-0 text-red-600 dark:text-red-400">
             {headline.text}
           </div>
         )}
@@ -264,7 +264,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
           <button
             type="button"
             onClick={() => setShowAllStops(false)}
-            className="mx-4 mb-1 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 shrink-0 text-left"
+            className="mx-4 mb-1 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 shrink-0 text-left"
           >
             Show fewer stops
           </button>
@@ -273,11 +273,11 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
         {/* Content */}
         <div className="overflow-y-auto flex-1">
           {loading && (
-            <div className="p-4 text-center text-gray-400 text-sm">Loading timetable...</div>
+            <div className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">Loading timetable...</div>
           )}
 
           {error && (
-            <div className="p-4 text-center text-gray-400 text-sm">{error}</div>
+            <div className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">{error}</div>
           )}
 
           {!loading && !error && visibleStops.length > 0 && (
@@ -298,7 +298,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
                 return (
                   <div key={`${stop.stopId}-${i}`}>
                     <div
-                      className={`flex items-stretch px-4 ${isCurrent ? 'bg-amber-50' : isNextStop ? 'bg-green-50/50' : ''}`}
+                      className={`flex items-stretch px-4 ${isCurrent ? 'bg-amber-50 dark:bg-amber-950' : isNextStop ? 'bg-green-50/50 dark:bg-green-950/50' : ''}`}
                     >
                       {/* Timeline */}
                       <div className="flex flex-col items-center w-5 shrink-0 mr-3">
@@ -327,15 +327,15 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
 
                       {/* Stop info */}
                       <div className={`flex-1 py-2 min-w-0 ${isPassed ? 'opacity-50' : ''}`}>
-                        <div className={`text-sm leading-tight truncate ${isCurrent || isNextStop ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                        <div className={`text-sm leading-tight truncate ${isCurrent || isNextStop ? 'font-semibold text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                           {stop.name}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
                             {formatTime(stop.scheduledArrival)}
                           </span>
                           {isCurrent && (
-                            <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900 px-1.5 py-0.5 rounded">
                               NOW
                             </span>
                           )}
@@ -343,17 +343,17 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
                             <span
                               className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                                 arrivalInfo.late
-                                  ? 'text-red-700 bg-red-100'
+                                  ? 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900'
                                   : arrivalInfo.hasLiveData
-                                    ? 'text-green-700 bg-green-100'
-                                    : 'text-gray-500 bg-gray-100'
+                                    ? 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900'
+                                    : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
                               }`}
                             >
                               {arrivalInfo.late ? `${arrivalInfo.minutes} min late` : `${arrivalInfo.minutes} min`}
                             </span>
                           )}
                           {!isPassed && !isCurrent && !isNextStop && minutesAway !== null && minutesAway > 0 && (
-                            <span className="text-[10px] text-gray-400">
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
                               {minutesAway} min
                             </span>
                           )}
@@ -371,7 +371,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
             <button
               type="button"
               onClick={() => setShowAllStops(!showAllStops)}
-              className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-t border-gray-100"
+              className="w-full py-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-t border-gray-100 dark:border-gray-700"
             >
               {showAllStops ? 'Show less' : `Show full route (${trimmedStops.length} stops)`}
             </button>

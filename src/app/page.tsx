@@ -15,6 +15,7 @@ import { IssuesPanel } from '@/components/IssuesPanel'
 import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { TransportMode, VehiclePosition } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg } from '@/lib/delay'
@@ -24,10 +25,12 @@ import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
 import { useDelayToast } from '@/hooks/use-delay-toast'
+import { useTheme } from '@/hooks/use-theme'
 
 function HomeContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { preference: themePreference, setPreference: setThemePreference } = useTheme()
 
   const modesFromUrl = searchParams.get('modes')
   const citiesFromUrl = searchParams.get('cities')
@@ -238,7 +241,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       {/* Fullscreen map base layer */}
       <ErrorBoundary
         fallback={
-          <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+          <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
             Map unavailable
           </div>
         }
@@ -286,7 +289,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         </div>
         <div className="pointer-events-auto mt-8 sm:mt-0">
           <ErrorBoundary
-            fallback={<div className="p-4 text-center text-gray-500">Route search unavailable</div>}
+            fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">Route search unavailable</div>}
           >
             <RouteResults
               routes={routes}
@@ -350,6 +353,11 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           onClose={() => setShowIssues(false)}
         />
       )}
+
+      {/* Theme toggle - bottom right, left of the issues button */}
+      <div className="absolute bottom-6 right-20 z-30 pointer-events-auto">
+        <ThemeToggle preference={themePreference} onChange={setThemePreference} />
+      </div>
 
       {/* Issues button - bottom right (delays + service alerts, merged) */}
       <div className="absolute bottom-6 right-4 z-30 pointer-events-auto">

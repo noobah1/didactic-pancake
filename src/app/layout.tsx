@@ -27,10 +27,19 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1D4ED8',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#1D4ED8' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
   width: 'device-width',
   initialScale: 1,
 }
+
+// Applies the saved theme (or the OS preference, if set to "system"/unset)
+// before first paint. Runs as a blocking inline script so there's no flash
+// of the wrong theme while React hydrates — useTheme() (use-theme.ts) picks
+// up from whatever class this already applied and keeps it live afterward.
+const themeInitScript = `(function(){try{var p=localStorage.getItem('theme');var d=p==='dark'||((!p||p==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})()`
 
 export default function RootLayout({
   children,
@@ -38,7 +47,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="et">
+    <html lang="et" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ServiceWorkerRegistration />
         {children}

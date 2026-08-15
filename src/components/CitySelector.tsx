@@ -53,7 +53,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
         aria-label="Cities"
-        className="flex items-center gap-1.5 h-10 px-3 bg-white rounded-full shadow-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-1.5 h-10 px-3 bg-white dark:bg-gray-800 rounded-full shadow-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
       >
         <MapPin size={14} />
         {label}
@@ -62,10 +62,10 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
         </svg>
       </button>
       {expanded && (
-        <div ref={dropdownRef} className="fixed top-12 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-lg border border-gray-100 p-3 w-[calc(100vw-24px)] sm:w-[460px] max-h-[60vh] overflow-y-auto">
+        <div ref={dropdownRef} className="fixed top-12 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 w-[calc(100vw-24px)] sm:w-[460px] max-h-[60vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Counties</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Counties</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
@@ -77,15 +77,15 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                 }}
                 className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
                   activeCities.length === CITIES.length
-                    ? 'text-blue-700 bg-blue-100'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                    ? 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900'
+                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {activeCities.length === CITIES.length ? 'Deselect all' : 'Select all'}
               </button>
               <button
                 onClick={() => setExpanded(false)}
-                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <X size={14} className="text-gray-400" />
               </button>
@@ -103,10 +103,10 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                     onClick={() => onToggleCounty(cities)}
                     className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded transition-colors text-left ${
                       allActive
-                        ? 'text-blue-700 bg-blue-50'
+                        ? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50'
                         : someActive
-                          ? 'text-blue-500 bg-blue-50/50'
-                          : 'text-gray-400 hover:text-gray-600'
+                          ? 'text-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/30'
+                          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                     }`}
                   >
                     {county}
@@ -121,7 +121,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                           className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
                             active
                               ? 'text-white bg-blue-600 border-blue-600'
-                              : 'text-gray-500 bg-white border-gray-200 hover:border-gray-300'
+                              : 'text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                           }`}
                         >
                           {city.name}

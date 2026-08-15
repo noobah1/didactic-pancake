@@ -20,11 +20,11 @@ export function RouteResults({ routes, loading, error, selectedId, onSelect, del
   const [sortBy, setSortBy] = useState<SortMode>('duration')
 
   if (loading) {
-    return <div className="p-4 text-center text-gray-500 text-sm bg-white rounded-xl shadow-lg mt-2">Searching routes...</div>
+    return <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">Searching routes...</div>
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-500 text-sm bg-white rounded-xl shadow-lg mt-2">{error}</div>
+    return <div className="p-4 text-center text-red-500 dark:text-red-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">{error}</div>
   }
 
   if (routes.length === 0) return null
@@ -36,22 +36,22 @@ export function RouteResults({ routes, loading, error, selectedId, onSelect, del
   )
 
   return (
-    <div className={`flex flex-col bg-white rounded-xl shadow-lg mt-2 ${selectedId ? 'max-h-[40vh] sm:max-h-[24rem]' : 'max-h-44 sm:max-h-80'}`}>
+    <div className={`flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2 ${selectedId ? 'max-h-[40vh] sm:max-h-[24rem]' : 'max-h-44 sm:max-h-80'}`}>
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
-        <h2 className="text-sm font-semibold text-gray-700">Routes</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Routes</h2>
         {!selectedId && (
           <div className="flex gap-1">
             <button
               type="button"
               onClick={() => setSortBy('duration')}
-              className={`px-2 py-1.5 text-xs rounded-full transition-colors ${sortBy === 'duration' ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-2 py-1.5 text-xs rounded-full transition-colors ${sortBy === 'duration' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               Fastest
             </button>
             <button
               type="button"
               onClick={() => setSortBy('departure')}
-              className={`px-2 py-1.5 text-xs rounded-full transition-colors ${sortBy === 'departure' ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-2 py-1.5 text-xs rounded-full transition-colors ${sortBy === 'departure' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               Departure
             </button>

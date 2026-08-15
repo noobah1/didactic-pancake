@@ -16,10 +16,10 @@ export function IssuesButton({ active, count, onClick }: IssuesButtonProps) {
       onClick={onClick}
       className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all border-2 ${
         active
-          ? 'bg-amber-100 border-amber-500'
+          ? 'bg-amber-100 dark:bg-amber-900 border-amber-500'
           : hasIssues
-            ? 'bg-white border-amber-400 hover:bg-amber-50'
-            : 'bg-white border-transparent hover:bg-gray-50'
+            ? 'bg-white dark:bg-gray-800 border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950'
+            : 'bg-white dark:bg-gray-800 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
       title={active ? 'Hide issues' : `Show issues (${count})`}
     >

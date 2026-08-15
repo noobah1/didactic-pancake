@@ -47,7 +47,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
       <div className="flex gap-2">
         {/* Stacked search boxes */}
         <div className="flex-1 flex flex-col gap-2">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-300">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label="From"
               placeholder="Current location or search..."
@@ -60,7 +60,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               }}
             />
           </div>
-          <div className="bg-white rounded-xl shadow-lg border border-gray-300">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label="To"
               placeholder="Where to?"
@@ -78,7 +78,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           {hasInput && (
             <button
               onClick={handleClear}
-              className="w-12 h-12 bg-white border border-gray-300 text-gray-500 rounded-full flex items-center justify-center hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-md"
+              className="w-12 h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors shadow-md"
               aria-label="Clear search"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -89,7 +89,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           <button
             onClick={handleSearch}
             disabled={!fromCoords || !toCoords}
-            className="w-12 h-12 bg-white border-2 border-blue-800 text-blue-800 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors shadow-lg"
+            className="w-12 h-12 bg-white dark:bg-gray-800 border-2 border-blue-800 dark:border-blue-500 text-blue-800 dark:text-blue-400 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-lg"
             aria-label="Search routes"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -106,7 +106,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               type="datetime-local"
               value={dateTime}
               onChange={(e) => setDateTime(e.target.value)}
-              className="px-2 py-3 bg-white border border-gray-300 rounded-full text-base sm:text-xs shadow-md"
+              className="px-2 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-full text-base sm:text-xs shadow-md"
             />
             {dateTime && (
               <button
@@ -133,7 +133,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 setDateTime('')
               }
             }}
-            className={`px-4 py-3 rounded-full text-sm shadow-md border transition-colors ${timeMode !== 'now' && dateTime ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            className={`px-4 py-3 rounded-full text-sm shadow-md border transition-colors ${timeMode !== 'now' && dateTime ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
           >
             {timeMode === 'now' && 'Depart now'}
             {timeMode === 'depart' && (dateTime
