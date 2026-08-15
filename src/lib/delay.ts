@@ -291,6 +291,11 @@ export interface VehicleTripMatch {
   fraction: number
   atStopIndex: number
   delaySeconds: number
+  // Vehicle is sitting at its trip's own first/last stop (see the
+  // nearOrigin/nearFinalStop comment below) — parked at a terminus/depot,
+  // not actually running the trip right now.
+  nearOrigin: boolean
+  nearFinalStop: boolean
 }
 
 // Core GPS-vs-schedule matching: where is the vehicle along the trip (as a
@@ -475,7 +480,14 @@ export function matchVehicleToTrip(
   const nearFinalStop = distanceMeters(vLat, vLng, lastStop.lat, lastStop.lon) < TERMINUS_STOP_RADIUS_M
   const delaySeconds = nearOrigin || nearFinalStop ? 0 : nowSec - scheduledTimeSec
 
-  return { afterStopIndex: bestSegIdx, fraction: bestFraction, atStopIndex: atStopIdx, delaySeconds }
+  return {
+    afterStopIndex: bestSegIdx,
+    fraction: bestFraction,
+    atStopIndex: atStopIdx,
+    delaySeconds,
+    nearOrigin,
+    nearFinalStop,
+  }
 }
 
 export interface StatusFromGPS {

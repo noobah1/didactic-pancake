@@ -204,6 +204,18 @@ async function computeDelays(): Promise<DelaysResponse> {
     nextTripMemory.set(gv.id, bestTrip.gtfsId)
 
     const match = matchVehicleToTrip(bestTrip.stoptimes, gv.lat, gv.lng, nowSec)
+    // A vehicle parked at its trip's own final stop has already finished
+    // that trip — it's sitting at a terminus/depot, possibly done for the
+    // night, not "running 0 seconds late" in any sense a rider cares about.
+    // Showing it with delaySeconds: 0 kept resurrecting the exact "depot bug"
+    // this matcher was built to kill: MAX_TRIP_OVERRUN_SEC's generous window
+    // (needed so a genuinely still-running late bus doesn't vanish right
+    // when it matters) also keeps a long-finished, parked vehicle matched
+    // and visible for that same half hour. There's nothing to show for it —
+    // drop it entirely rather than report a manufactured "on time". It
+    // reappears on its own once it pulls out for a new trip and this same
+    // check no longer applies.
+    if (match.nearFinalStop) continue
     vehicles.push({
       vehicleId: gv.id,
       tripId: bestTrip.gtfsId,
