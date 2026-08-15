@@ -125,6 +125,19 @@ let resultCache: { data: DelaysResponse; timestamp: number } | null = null
 // even briefly loses its "sticky" match rather than anchoring forever to a
 // trip it may no longer be running.
 let vehicleTripMemory = new Map<string, string>()
+// Recent positions per vehicle, oldest first, used to detect a vehicle
+// that's genuinely parked (see the stationary check below) rather than reset
+// every cycle like vehicleTripMemory — movement can only be measured across
+// multiple polls. Self-cleaning: a vehicle absent from the current GPS poll
+// is simply never carried into nextPositionHistory (see bottom of
+// computeDelays), so a vehicle that drops off the feed doesn't accumulate
+// history forever.
+let vehiclePositionHistory = new Map<string, { lat: number; lng: number; t: number }[]>()
+// How long a vehicle needs to sit within STATIONARY_RADIUS_M of itself to
+// count as parked, not just paused at a light or briefly boxed in by
+// traffic — long enough that normal stop-and-go doesn't false-positive.
+const STATIONARY_WINDOW_MS = 3 * 60_000
+const STATIONARY_RADIUS_M = 60
 
 async function fetchScheduleData(): Promise<GqlRoute[]> {
   const now = Date.now()
@@ -191,7 +204,16 @@ async function computeDelays(): Promise<DelaysResponse> {
 
   const vehicles: DelayedVehicle[] = []
   const nextTripMemory = new Map<string, string>()
+  const nextPositionHistory = new Map<string, { lat: number; lng: number; t: number }[]>()
   for (const gv of gpsVehicles) {
+    // Carry this vehicle's position history forward (see the stationary
+    // check below) regardless of whether it ends up matched to a trip this
+    // cycle — a vehicle briefly falling out of line/mode lookup shouldn't
+    // reset the clock on how long it's been sitting still.
+    const history = [...(vehiclePositionHistory.get(gv.id) || []), { lat: gv.lat, lng: gv.lng, t: now }]
+      .filter((p) => now - p.t <= STATIONARY_WINDOW_MS)
+    nextPositionHistory.set(gv.id, history)
+
     const otpMode = VEHICLE_MODE_TO_OTP[gv.mode]
     // Tram route shortNames carry a T-prefix (e.g. "T2") since the GTFS rebuild
     const routeName = gv.mode === 'tram' && !/^T/i.test(gv.line) ? `T${gv.line}` : gv.line
@@ -204,18 +226,37 @@ async function computeDelays(): Promise<DelaysResponse> {
     nextTripMemory.set(gv.id, bestTrip.gtfsId)
 
     const match = matchVehicleToTrip(bestTrip.stoptimes, gv.lat, gv.lng, nowSec)
-    // A vehicle parked at its trip's own final stop has already finished
-    // that trip — it's sitting at a terminus/depot, possibly done for the
-    // night, not "running 0 seconds late" in any sense a rider cares about.
-    // Showing it with delaySeconds: 0 kept resurrecting the exact "depot bug"
-    // this matcher was built to kill: MAX_TRIP_OVERRUN_SEC's generous window
-    // (needed so a genuinely still-running late bus doesn't vanish right
-    // when it matters) also keeps a long-finished, parked vehicle matched
-    // and visible for that same half hour. There's nothing to show for it —
-    // drop it entirely rather than report a manufactured "on time". It
-    // reappears on its own once it pulls out for a new trip and this same
-    // check no longer applies.
-    if (match.nearFinalStop) continue
+
+    // A vehicle parked at its trip's own final *stop* has already finished
+    // that trip — it's sitting at a terminus, possibly done for the night,
+    // not "running 0 seconds late" in any sense a rider cares about. But
+    // real depot yards are frequently nowhere near the route's official
+    // GTFS-recorded last stop (confirmed live: five different routes'
+    // buses parked together at a shared yard, each still "matched" to a
+    // trip whose own recorded endpoint sat up to 4km away) — no fixed
+    // radius from that one point can catch every operator's actual yard
+    // location. So alongside the stop-proximity check, also treat a
+    // vehicle as off-duty once its trip's own schedule says it should
+    // already be finished AND it hasn't materially moved in
+    // STATIONARY_WINDOW_MS — a real depot-parked bus doesn't move at all,
+    // where even a bus stuck in heavy traffic still creeps forward more
+    // than STATIONARY_RADIUS_M over a full three minutes. Gated on being
+    // past the trip's scheduled finish so a bus stopped at a red light or
+    // held at a mid-route stop earlier in a trip is never caught by this.
+    const lastStoptime = bestTrip.stoptimes[bestTrip.stoptimes.length - 1]
+    const scheduledEnd = lastStoptime.scheduledArrival || lastStoptime.scheduledDeparture
+    const pastScheduledEnd = nowSec > scheduledEnd
+    const stationary =
+      history.length >= 2 &&
+      now - history[0].t >= STATIONARY_WINDOW_MS &&
+      history.every((p) => distanceMeters(p.lat, p.lng, gv.lat, gv.lng) < STATIONARY_RADIUS_M)
+
+    // Showing it with delaySeconds: 0 (or, once far enough past
+    // MAX_TRIP_OVERRUN_SEC's matching window, a bogus large delay) is
+    // exactly the depot bug this matcher exists to prevent. Drop it from
+    // the board entirely instead — it reappears once it actually pulls out
+    // for a new trip and stops being stationary.
+    if (match.nearFinalStop || (pastScheduledEnd && stationary)) continue
     vehicles.push({
       vehicleId: gv.id,
       tripId: bestTrip.gtfsId,
@@ -229,6 +270,7 @@ async function computeDelays(): Promise<DelaysResponse> {
     })
   }
   vehicleTripMemory = nextTripMemory
+  vehiclePositionHistory = nextPositionHistory
 
   // When many vehicles on a route are genuinely delayed, real GPS position
   // stops correlating well with the static schedule — the exact condition
