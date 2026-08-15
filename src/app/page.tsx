@@ -271,7 +271,10 @@ function HomeContent() {
     () => (delayData.data?.vehicles || []).filter((v) => journeyTripIds.has(v.tripId)),
     [delayData.data?.vehicles, journeyTripIds],
   )
-  const { toast, dismiss: dismissToast } = useDelayToast(journeyDelayVehicles)
+  // Keyed on the selected route so switching to a different (possibly
+  // already-delayed) route doesn't itself read as "newly delayed" — only
+  // a delay that develops while you're actually looking at this route does.
+  const { toast, dismiss: dismissToast } = useDelayToast(journeyDelayVehicles, selectedRoute?.id ?? null)
 
 const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.data?.vehicles)
  
