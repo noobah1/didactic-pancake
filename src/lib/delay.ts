@@ -382,7 +382,7 @@ export function matchVehicleToTrip(
   // Exception: a vehicle sitting at either end of the trip — stop 0 (hasn't
   // pulled out yet) or the final stop (already arrived) — isn't "running
   // late" in any rider-facing sense. This is the one proximity case worth
-  // gating on despite the no-zeroing rule above. Without the stop-0 half, a
+  // gating on despite the no-zeroing rule above. Without the origin half, a
   // bus held at the depot past its scheduled departure racks up delay
   // against the *next* stop's schedule the whole time it's still parked.
   // Without the final-stop half, a bus (or tram, or trolleybus — every mode
@@ -392,19 +392,33 @@ export function matchVehicleToTrip(
   // MAX_TRIP_OVERRUN_SEC still counts the trip as a live match — a parked
   // vehicle reported as getting later every second it sits still.
   //
-  // Checked as a direct distance to the trip's own final stop, independent
-  // of atStopIdx's "nearest stop wins" search above — real depot termini
-  // are frequently modeled as two adjacent, near-duplicate stops (e.g. two
+  // Checked as a direct distance to the trip's own first/last stop —
+  // whichever one this trip actually has, no matter the line — independent
+  // of atStopIdx's "nearest stop wins" search above. Real depots are
+  // frequently modeled as two adjacent, near-duplicate stops (e.g. two
   // stops both literally named "Mustamäe" a block apart, one for boarding
-  // and one marking the yard itself), so the true final stop can lose the
+  // and one marking the yard itself), so the true endpoint can lose the
   // "nearest" contest to its own neighbor while the vehicle is still
-  // unambiguously parked at the depot — confirmed live: a stationary
-  // trolleybus 100m from the second-to-last stop and 147m from the actual
-  // final stop kept accumulating delay because atStopIdx locked onto the
-  // marginally-closer neighbor instead.
+  // unambiguously parked there — confirmed live: a stationary trolleybus
+  // 100m from the second-to-last stop and 147m from the actual final stop
+  // kept accumulating delay because atStopIdx locked onto the
+  // marginally-closer neighbor instead. Every route's depot sits in a
+  // different spot, so this checks each trip's own recorded first/last
+  // stop rather than any hardcoded location.
+  //
+  // Gated on the search window already reaching that end (searchFrom===0 /
+  // searchTo===stoptimes.length-1) so a loop or out-and-back route passing
+  // near its own origin or terminus mid-trip — while the schedule still
+  // expects it somewhere else entirely — doesn't get its genuine lateness
+  // masked just for being geometrically nearby.
+  const firstStop = stoptimes[0].stop
   const lastStop = stoptimes[stoptimes.length - 1].stop
-  const nearFinalStop = distanceMeters(vLat, vLng, lastStop.lat, lastStop.lon) < TERMINUS_STOP_RADIUS_M
-  const delaySeconds = atStopIdx === 0 || nearFinalStop ? 0 : nowSec - scheduledTimeSec
+  const nearOrigin =
+    searchFrom === 0 && distanceMeters(vLat, vLng, firstStop.lat, firstStop.lon) < TERMINUS_STOP_RADIUS_M
+  const nearFinalStop =
+    searchTo === stoptimes.length - 1 &&
+    distanceMeters(vLat, vLng, lastStop.lat, lastStop.lon) < TERMINUS_STOP_RADIUS_M
+  const delaySeconds = nearOrigin || nearFinalStop ? 0 : nowSec - scheduledTimeSec
 
   return { afterStopIndex: bestSegIdx, fraction: bestFraction, atStopIndex: atStopIdx, delaySeconds }
 }

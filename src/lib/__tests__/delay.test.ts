@@ -82,4 +82,42 @@ describe('matchVehicleToTrip', () => {
     expect(match.atStopIndex).toBe(depotDuplicateStoptimes.length - 2)
     expect(match.delaySeconds).toBe(0)
   })
+
+  it('reports zero delay when parked closer to a near-duplicate second stop than the true origin', () => {
+    // Mirror of the above at the start of the trip: stop 1 sits right next
+    // to stop 0, and the vehicle is closer to stop 1. Still before the
+    // trip's scheduled departure, so it hasn't actually pulled out yet.
+    const originDuplicateStoptimes: DelayStoptime[] = [
+      {
+        scheduledArrival: 1000,
+        scheduledDeparture: 1000,
+        stop: { name: 'Origin depot (actual)', lat: 59.4, lon: 24.7 },
+      },
+      {
+        scheduledArrival: 1020,
+        scheduledDeparture: 1020,
+        stop: { name: 'Origin depot (near)', lat: 59.4003, lon: 24.7003 },
+      },
+      ...stoptimes.slice(1),
+    ]
+    const match = matchVehicleToTrip(originDuplicateStoptimes, 59.4003, 24.7003, 900)
+    expect(match.atStopIndex).not.toBe(0)
+    expect(match.delaySeconds).toBe(0)
+  })
+
+  it('does not mask real lateness for a vehicle that is merely geometrically near the origin mid-trip', () => {
+    // A longer, spread-out trip where one mid-route stop (index 6)
+    // happens to sit at almost the same coordinates as the origin (a
+    // loop-ish shape). The vehicle is there, and the schedule clearly
+    // expects it to be mid-route by now (nowSec lands well past that
+    // window) — this should report its real lateness, not get zeroed just
+    // because it's geometrically near stop 0's position.
+    const loopStoptimes: DelayStoptime[] = Array.from({ length: 14 }, (_, i) => ({
+      scheduledArrival: 1000 + i * 100,
+      scheduledDeparture: 1000 + i * 100 + (i === 13 ? 0 : 20),
+      stop: i === 6 ? { name: 'Loop-back near origin', lat: 59.4, lon: 24.7 } : { name: `Stop ${i}`, lat: 59.4 + i * 0.01, lon: 24.7 + i * 0.01 },
+    }))
+    const match = matchVehicleToTrip(loopStoptimes, 59.4, 24.7, 1750)
+    expect(match.delaySeconds).toBeGreaterThan(0)
+  })
 })
