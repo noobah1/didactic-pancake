@@ -307,6 +307,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           vehicle={selectedVehicle}
           vehicles={vehicleData.data?.vehicles}
           onClose={() => setSelectedVehicle(null)}
+          onLateChange={setSelectedVehicleDelayed}
         />
       )}
 

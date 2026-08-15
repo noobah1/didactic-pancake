@@ -10,6 +10,11 @@ interface TimetablePanelProps {
   vehicle: VehiclePosition
   vehicles?: VehiclePosition[]
   onClose: () => void
+  // Reports the live "is this vehicle currently late" status as it's
+  // learned/updated from each poll, so callers (e.g. the map's red route
+  // highlight) can track the real-time status instead of freezing whatever
+  // was true at the moment the vehicle was selected.
+  onLateChange?: (late: boolean) => void
 }
 
 interface TripStopsResponse {
@@ -45,7 +50,7 @@ function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
   return stops.slice(from)
 }
 
-export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelProps) {
+export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange }: TimetablePanelProps) {
   const [expanded, setExpanded] = useState(true)
   const [showAllStops, setShowAllStops] = useState(false)
   const [stops, setStops] = useState<TripStopInfo[] | null>(null)
@@ -133,6 +138,15 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
     const t = setInterval(() => setTick((n) => n + 1), 15_000)
     return () => clearInterval(t)
   }, [])
+
+  // Keep the caller's "is this vehicle late" status in sync with each live
+  // poll — without this, a caller that only reads the status once at
+  // selection time (e.g. to decide whether to draw the map route red) would
+  // keep showing "late" forever even after this panel's own data shows the
+  // vehicle back on schedule.
+  useEffect(() => {
+    onLateChange?.(delaySeconds != null && delaySeconds >= LATE_BUFFER_SEC)
+  }, [delaySeconds, onLateChange])
 
   const nowSec = getNowSeconds()
   const trimmedStops = useMemo(() => stops ? trimStops(stops) : [], [stops])
