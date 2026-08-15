@@ -516,11 +516,14 @@ export function computeStatusFromGPS(
   return { stops: stopsWithDelay, afterStopIndex: bestSegIdx, fraction: bestFraction, delaySeconds }
 }
 
-// How far ahead/behind a leg's own scheduled window this fallback will still
-// attempt a position match — same reasoning as ROUTE_PLAN_MATCH_WINDOW_SEC's
-// pre-departure half, kept as a separate constant since this one gates a
-// GPS proximity search rather than whether to attempt a match at all.
-const LEG_MATCH_PRE_DEPARTURE_MS = 5 * 60 * 1000
+// How far ahead of a leg's scheduled departure this fallback will still
+// attempt a position match. Must match ROUTE_PLAN_MATCH_WINDOW_SEC exactly —
+// RouteCard (and any other caller) decides whether a leg is even worth
+// attempting using that constant, so a tighter value here silently produced
+// "Scheduled" for every leg between the two windows (5-20 min out) even
+// though a live vehicle for that exact line was already GPS-tracked and
+// could plausibly be it. Confirmed live: lines running 15-30 min out showed
+// no delay/marker match at all despite an active vehicle on the same route.
 
 export interface RoutePlanLeg {
   mode: string
@@ -560,7 +563,7 @@ export function findVehicleForLeg<T extends MatchableVehicle>(
   if (!leg.route) return null
   const startMs = new Date(leg.startTime).getTime()
   const endMs = new Date(leg.endTime).getTime()
-  if (nowMs < startMs - LEG_MATCH_PRE_DEPARTURE_MS || nowMs > endMs + MAX_TRIP_OVERRUN_SEC * 1000) return null
+  if (nowMs < startMs - ROUTE_PLAN_MATCH_WINDOW_SEC * 1000 || nowMs > endMs + MAX_TRIP_OVERRUN_SEC * 1000) return null
 
   const legCoords = leg.legGeometry?.points ? decodePolyline(leg.legGeometry.points) : null
   const frac = endMs > startMs ? Math.max(0, Math.min(1, (nowMs - startMs) / (endMs - startMs))) : 0
