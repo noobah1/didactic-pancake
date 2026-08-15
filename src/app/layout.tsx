@@ -27,19 +27,20 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#1D4ED8' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
-  ],
+  themeColor: '#1D4ED8',
   width: 'device-width',
   initialScale: 1,
 }
 
-// Applies the saved theme (or the OS preference, if set to "system"/unset)
-// before first paint. Runs as a blocking inline script so there's no flash
-// of the wrong theme while React hydrates — useTheme() (use-theme.ts) picks
-// up from whatever class this already applied and keeps it live afterward.
-const themeInitScript = `(function(){try{var p=localStorage.getItem('theme');var d=p==='dark'||((!p||p==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})()`
+// Applies the saved theme before first paint — light unless the user
+// explicitly switched to dark last time. Deliberately ignores the device's
+// own color-scheme setting: a phone's own night-schedule dark mode used to
+// carry straight through to this app unannounced, which read as broken
+// rather than intentional. Runs as a blocking inline script so there's no
+// flash of the wrong theme while React hydrates — useTheme() (use-theme.ts)
+// picks up from whatever class this already applied and keeps it live
+// afterward on manual toggles.
+const themeInitScript = `(function(){try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})()`
 
 export default function RootLayout({
   children,

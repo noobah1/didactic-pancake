@@ -2,25 +2,27 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-export type ThemePreference = 'light' | 'dark' | 'system'
+// No "follow device" mode — the app used to default to it, but a phone's
+// own night-schedule dark mode meant this app went dark right along with
+// it, unannounced, which read as broken rather than intentional. Defaults
+// to light and only changes on an explicit manual toggle now.
+export type ThemePreference = 'light' | 'dark'
 
 const STORAGE_KEY = 'theme'
 
-function systemPrefersDark(): boolean {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-}
-
 function applyTheme(pref: ThemePreference) {
-  const dark = pref === 'dark' || (pref === 'system' && systemPrefersDark())
-  document.documentElement.classList.toggle('dark', dark)
+  document.documentElement.classList.toggle('dark', pref === 'dark')
+  // Keep the browser chrome (address bar on mobile) matching — layout.tsx's
+  // static viewport export only covers the initial light default.
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', pref === 'dark' ? '#0f172a' : '#1D4ED8')
 }
 
 // Kept in sync with the inline script in layout.tsx, which sets the class
 // before first paint (avoiding a flash of the wrong theme) — this hook picks
 // up whatever that script already applied rather than re-deciding from
-// scratch, then keeps it live afterward (toggle changes, OS scheme changes).
+// scratch, then keeps it live afterward on manual toggles.
 export function useTheme() {
-  const [preference, setPreferenceState] = useState<ThemePreference>('system')
+  const [preference, setPreferenceState] = useState<ThemePreference>('light')
 
   useEffect(() => {
     // Read the real stored preference after mount, not as the initial state
@@ -30,20 +32,11 @@ export function useTheme() {
     // localStorage there) and mismatch the client's first hydration pass.
     const stored = localStorage.getItem(STORAGE_KEY) as ThemePreference | null
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPreferenceState(stored ?? 'system')
+    setPreferenceState(stored === 'dark' ? 'dark' : 'light')
   }, [])
 
   useEffect(() => {
     applyTheme(preference)
-    if (preference !== 'system') return
-
-    // "Follow the device" isn't a one-time read — the OS/browser can flip
-    // its own scheme (day/night schedule, manual toggle) while the app
-    // stays open, and the app should track that live, not just at load.
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = () => applyTheme('system')
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
   }, [preference])
 
   const setPreference = useCallback((pref: ThemePreference) => {
