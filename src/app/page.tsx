@@ -255,8 +255,19 @@ function HomeContent() {
       // the primary tripId match already being unreliable for frequent
       // lines with many near-simultaneous trip instances.
       const expectedLine = leg.mode === 'tram' ? leg.route.replace(/^T/i, '') : leg.route
+      // Tallinn's unified GTFS feed has no separate route_type for
+      // trolleybus or night bus — both are tagged mode BUS, same as
+      // regular buses (see the same comment in delays/route.ts and
+      // trip-stops/route.ts) — so the planner can never tell them apart
+      // either: every trolleybus/night-bus leg comes back with
+      // leg.mode === 'bus'. Requiring an exact mode match therefore never
+      // matched any real trolleybus or night-bus vehicle (which report
+      // their true mode in the live GPS feed), even though the physical
+      // vehicle running that leg is genuinely one of them. When OTP says
+      // "bus", accept any of the three real modes it could actually be.
+      const acceptableModes: string[] = leg.mode === 'bus' ? ['bus', 'trolleybus', 'nightbus'] : [leg.mode]
       const candidates = (vehicleData.data?.vehicles || []).filter(
-        (v) => v.mode === leg.mode && v.line === expectedLine,
+        (v) => acceptableModes.includes(v.mode) && v.line === expectedLine,
       )
       let best: VehiclePosition | null = null
       let bestDist = Infinity
