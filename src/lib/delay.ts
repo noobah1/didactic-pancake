@@ -406,18 +406,25 @@ export function matchVehicleToTrip(
   // different spot, so this checks each trip's own recorded first/last
   // stop rather than any hardcoded location.
   //
-  // Gated on the search window already reaching that end (searchFrom===0 /
-  // searchTo===stoptimes.length-1) so a loop or out-and-back route passing
-  // near its own origin or terminus mid-trip — while the schedule still
-  // expects it somewhere else entirely — doesn't get its genuine lateness
-  // masked just for being geometrically nearby.
+  // Deliberately NOT gated on the search window reaching that end (an
+  // earlier version required searchFrom===0 / searchTo===stoptimes.length-1,
+  // meant to stop a loop/out-and-back route from masking genuine lateness
+  // just for passing near its own origin mid-trip). That gate broke the
+  // exact scenario this whole check exists for: a vehicle stuck well past
+  // its own scheduled departure hasn't followed the schedule at all, so the
+  // time-predicted window naturally lands nowhere near the origin — it
+  // assumes normal progression, which is precisely what isn't happening.
+  // Confirmed live: a bus sitting ~150m from its trip's origin, 30 minutes
+  // past its scheduled departure, kept reporting ~1650s "delay" because the
+  // window had already moved on to searching near the trip's end. A
+  // same-route vehicle genuinely mid-trip and coincidentally near its own
+  // endpoint's coordinates is a real but rare shape for this network
+  // (point-to-point lines, not loops) — worth accepting versus leaving the
+  // common, repeatedly-confirmed depot case broken.
   const firstStop = stoptimes[0].stop
   const lastStop = stoptimes[stoptimes.length - 1].stop
-  const nearOrigin =
-    searchFrom === 0 && distanceMeters(vLat, vLng, firstStop.lat, firstStop.lon) < TERMINUS_STOP_RADIUS_M
-  const nearFinalStop =
-    searchTo === stoptimes.length - 1 &&
-    distanceMeters(vLat, vLng, lastStop.lat, lastStop.lon) < TERMINUS_STOP_RADIUS_M
+  const nearOrigin = distanceMeters(vLat, vLng, firstStop.lat, firstStop.lon) < TERMINUS_STOP_RADIUS_M
+  const nearFinalStop = distanceMeters(vLat, vLng, lastStop.lat, lastStop.lon) < TERMINUS_STOP_RADIUS_M
   const delaySeconds = nearOrigin || nearFinalStop ? 0 : nowSec - scheduledTimeSec
 
   return { afterStopIndex: bestSegIdx, fraction: bestFraction, atStopIndex: atStopIdx, delaySeconds }

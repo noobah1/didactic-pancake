@@ -105,19 +105,36 @@ describe('matchVehicleToTrip', () => {
     expect(match.delaySeconds).toBe(0)
   })
 
-  it('does not mask real lateness for a vehicle that is merely geometrically near the origin mid-trip', () => {
-    // A longer, spread-out trip where one mid-route stop (index 6)
-    // happens to sit at almost the same coordinates as the origin (a
-    // loop-ish shape). The vehicle is there, and the schedule clearly
-    // expects it to be mid-route by now (nowSec lands well past that
-    // window) — this should report its real lateness, not get zeroed just
-    // because it's geometrically near stop 0's position.
+  it('reports zero delay for a vehicle stuck near the origin long after the whole trip should have finished', () => {
+    // The real bug this guards against: a bus ~150m from its trip's origin,
+    // still sitting there ~30 minutes after its scheduled departure —
+    // confirmed live (bus 59, "Balti jaam"). The time-predicted window
+    // naturally assumes normal progression and lands near the trip's *end*
+    // by this point (nowSec is even past the final stop's schedule), so an
+    // earlier version of this check — gated on the window reaching back to
+    // stop 0 — never even looked near the origin and kept reporting the gap
+    // between nowSec and the trip's last stop as ever-growing delay.
+    const nowFarPastEverything = stoptimes[stoptimes.length - 1].scheduledArrival + 600
+    const match = matchVehicleToTrip(stoptimes, 59.4, 24.7, nowFarPastEverything)
+    expect(match.delaySeconds).toBe(0)
+  })
+
+  it('accepts the rare false-positive tradeoff: a loop route coincidentally near its own origin mid-trip reads as zero delay too', () => {
+    // Documents a known, accepted tradeoff rather than a hidden gap: this
+    // network is point-to-point lines, not loops, so a mid-route stop
+    // landing this close to the trip's own origin is not expected in
+    // practice. An earlier version tried to guard against it (gated on the
+    // search window reaching stop 0) but that gate broke the far more
+    // common, repeatedly-confirmed depot case above — see the test right
+    // above this one. If this ever becomes a real problem for an actual
+    // route, revisit; until then, catching genuine depot layovers reliably
+    // matters more than protecting a shape this network doesn't have.
     const loopStoptimes: DelayStoptime[] = Array.from({ length: 14 }, (_, i) => ({
       scheduledArrival: 1000 + i * 100,
       scheduledDeparture: 1000 + i * 100 + (i === 13 ? 0 : 20),
       stop: i === 6 ? { name: 'Loop-back near origin', lat: 59.4, lon: 24.7 } : { name: `Stop ${i}`, lat: 59.4 + i * 0.01, lon: 24.7 + i * 0.01 },
     }))
     const match = matchVehicleToTrip(loopStoptimes, 59.4, 24.7, 1750)
-    expect(match.delaySeconds).toBeGreaterThan(0)
+    expect(match.delaySeconds).toBe(0)
   })
 })
