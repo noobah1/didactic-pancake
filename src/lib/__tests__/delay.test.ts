@@ -1,4 +1,4 @@
-import { matchVehicleToTrip, DelayStoptime } from '../delay'
+import { matchVehicleToTrip, findBestTrip, DelayStoptime, DelayTrip } from '../delay'
 
 // Simple 3-stop trip: origin -> mid -> terminus. Stops are placed a couple
 // hundred meters apart along latitude so distance math is easy to reason
@@ -149,5 +149,41 @@ describe('matchVehicleToTrip', () => {
     }))
     const match = matchVehicleToTrip(loopStoptimes, 59.4, 24.7, 1750)
     expect(match.delaySeconds).toBe(0)
+  })
+})
+
+describe('findBestTrip', () => {
+  it('falls back to matching an intermediate stop when the destination sign names a general area short of the real terminus', () => {
+    // Mirrors a real, reproducible case: bus line 1's destination sign
+    // reads "Viimsi" (the area), but the GTFS terminus further down that
+    // same direction is "Krillimäe" — "Viimsi" never equals, contains, or
+    // is contained by any trip's *last* stop name on this line, on any
+    // trip, ever. It does show up as an intermediate stop's name on the
+    // correct-direction trips though.
+    const viimsiBoundTrip: DelayTrip = {
+      gtfsId: 'trip-viimsi-bound',
+      stoptimes: [
+        { scheduledArrival: 990, scheduledDeparture: 990, stop: { name: 'Vana-Pääsküla depot', lat: 59.4, lon: 24.7 } },
+        { scheduledArrival: 1010, scheduledDeparture: 1010, stop: { name: 'Viru', lat: 59.43, lon: 24.75 } },
+        { scheduledArrival: 1030, scheduledDeparture: 1030, stop: { name: 'Viimsi vallamaja', lat: 59.46, lon: 24.83 } },
+        { scheduledArrival: 1050, scheduledDeparture: 1050, stop: { name: 'Krillimäe', lat: 59.47, lon: 24.84 } },
+      ],
+    }
+    const oppositeDirectionTrip: DelayTrip = {
+      gtfsId: 'trip-opposite-direction',
+      stoptimes: [
+        { scheduledArrival: 995, scheduledDeparture: 995, stop: { name: 'Krillimäe', lat: 59.47, lon: 24.84 } },
+        { scheduledArrival: 1015, scheduledDeparture: 1015, stop: { name: 'Viru', lat: 59.43, lon: 24.75 } },
+        { scheduledArrival: 1035, scheduledDeparture: 1035, stop: { name: 'Vana-Pääsküla', lat: 59.4, lon: 24.7 } },
+      ],
+    }
+    // No GPS position supplied — forces the pure "closest departure to now"
+    // tie-break (step 3), which without destination narrowing would pick
+    // whichever trip's first departure happens to be nearer nowSec (995,
+    // the wrong direction) over the correct one (990). Destination
+    // narrowing down to only the correct-direction trip must win instead.
+    const nowSec = 1000
+    const best = findBestTrip([viimsiBoundTrip, oppositeDirectionTrip], nowSec, 'Viimsi')
+    expect(best?.gtfsId).toBe('trip-viimsi-bound')
   })
 })

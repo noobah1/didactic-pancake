@@ -196,7 +196,27 @@ export function findBestTrip<T extends DelayTrip>(
       const lastStop = t.stoptimes[t.stoptimes.length - 1].stop.name.toLowerCase()
       return lastStop === destLower || lastStop.includes(destLower) || destLower.includes(lastStop)
     })
-    if (matched.length > 0) directionTrips = matched
+    if (matched.length > 0) {
+      directionTrips = matched
+    } else {
+      // The live feed's destination sign sometimes names a general area
+      // (e.g. "Viimsi") rather than the GTFS trip's actual precise terminus
+      // further down the same line (e.g. "Krillimäe", with "Viimsi
+      // vallamaja", "Viimsi kool" etc. as intermediate stops in between) —
+      // no last-stop match exists at all for that direction, ever, on every
+      // single trip. Fall back to checking every stop along the trip: a
+      // destination name that shows up anywhere on a trip's own stop list
+      // is still strong direction evidence, just weaker than an exact
+      // terminus match, so this only kicks in once the terminus check has
+      // already come up completely empty.
+      const viaMatched = activeTrips.filter((t) =>
+        t.stoptimes.some((st) => {
+          const stopName = st.stop.name.toLowerCase()
+          return stopName === destLower || stopName.includes(destLower) || destLower.includes(stopName)
+        }),
+      )
+      if (viaMatched.length > 0) directionTrips = viaMatched
+    }
   }
 
   // Step 2: Among direction-matched trips, use GPS position (+ heading as a
