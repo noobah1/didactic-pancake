@@ -174,6 +174,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   const mapReadyRef = useRef(false)
   const incidentLayerIdsRef = useRef<string[]>([])
   const showRouteShapeRef = useRef<(v: VehiclePosition, opts?: { delayHighlight?: boolean }) => void>(() => {})
+  const highlightDelayRef = useRef(highlightDelay)
+  highlightDelayRef.current = highlightDelay
   const onVehicleClickRef = useRef(onVehicleClick)
   const vehiclesRef = useRef(vehicles)
   vehiclesRef.current = vehicles
@@ -440,13 +442,19 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   // Fly to and highlight a vehicle selected externally (e.g. from the issues
   // panel) — a marker click already draws the route shape itself, so only
   // trigger it here when the selection didn't originate from that click.
+  // Deliberately keyed on selectedVehicle only (not highlightDelay) — this
+  // draws the route and flies the camera once, for the selection itself;
+  // reacting to every later highlightDelay change here would re-fly/re-zoom
+  // the map every time the live delay status updates, which happens
+  // periodically while a vehicle stays selected. Color updates from a
+  // changing highlightDelay are handled by the effect below instead.
   useEffect(() => {
     const map = mapRef.current
     if (!selectedVehicle || !map || !mapReadyRef.current) return
 
     const routeKey = `${selectedVehicle.mode}-${selectedVehicle.line}-${selectedVehicle.id}`
     if (activeRouteRef.current !== routeKey) {
-      showRouteShapeRef.current(selectedVehicle, { delayHighlight: highlightDelay })
+      showRouteShapeRef.current(selectedVehicle, { delayHighlight: highlightDelayRef.current })
     }
     // Pan-only (no zoom change) leaves long routes — trains especially — at
     // whatever wide, city-scale zoom was already active, so the line running
@@ -458,7 +466,34 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       zoom: Math.max(map.getZoom(), 15),
       duration: 1000,
     })
-  }, [selectedVehicle, highlightDelay])
+  }, [selectedVehicle])
+
+  // Keep the already-drawn route's color in sync as highlightDelay changes
+  // live (e.g. the selected vehicle recovers to on-schedule while its
+  // timetable panel stays open) — repaint in place, no re-fetch or re-fly.
+  // Without this, a route drawn red on selection stayed red forever even
+  // after the vehicle was confirmed back on schedule, because the effect
+  // above only ever draws once per selection (see activeRouteRef guard).
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current || !selectedVehicle || !activeRouteRef.current) return
+
+    const routeKey = `${selectedVehicle.mode}-${selectedVehicle.line}-${selectedVehicle.id}`
+    if (activeRouteRef.current !== routeKey) return
+
+    const color = highlightDelay ? '#DC2626' : MODE_COLORS[selectedVehicle.mode]
+    if (map.getLayer(ROUTE_LINE_LAYER)) {
+      map.setPaintProperty(ROUTE_LINE_LAYER, 'line-color', color)
+    }
+    if (map.getLayer(ROUTE_STOPS_LAYER)) {
+      map.setPaintProperty(ROUTE_STOPS_LAYER, 'circle-stroke-color', [
+        'match', ['get', 'status'],
+        'passed', '#6B7280',
+        'current', '#F59E0B',
+        color,
+      ])
+    }
+  }, [highlightDelay, selectedVehicle])
 
   // Ring the selected vehicle's own marker so it's obvious which one the
   // timetable/route-shape belongs to, without disturbing maplibre's own
