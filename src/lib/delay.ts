@@ -333,11 +333,22 @@ export function matchVehicleToTrip(
   // one can be in range at once — take the nearest, not just the first one
   // hit while scanning in index order (that used to pick an earlier, farther
   // stop over a much closer later one).
+  //
+  // The trip's own first/last stop gets a wider radius: depots/yards (see
+  // GPS_TYPE_MAP's trolleybus depot comment in constants.ts) are where
+  // vehicles actually idle between duties, and the yard itself can sit
+  // farther from the passenger-facing stop pole than a normal curbside
+  // dwell — 150m was tight enough to miss it and misread "parked at the
+  // depot on break" as "still approaching, getting later every second".
+  const TERMINUS_STOP_RADIUS_M = 350
+  const MID_ROUTE_STOP_RADIUS_M = 150
   let atStopIdx = -1
   let atStopDist = Infinity
   for (let i = searchFrom; i <= searchTo; i++) {
+    const isTerminus = i === 0 || i === stoptimes.length - 1
+    const radius = isTerminus ? TERMINUS_STOP_RADIUS_M : MID_ROUTE_STOP_RADIUS_M
     const d = distanceMeters(vLat, vLng, stoptimes[i].stop.lat, stoptimes[i].stop.lon)
-    if (d < 150 && d < atStopDist) {
+    if (d < radius && d < atStopDist) {
       atStopIdx = i
       atStopDist = d
     }
@@ -368,15 +379,20 @@ export function matchVehicleToTrip(
   // necessarily reached) any stop, then let it reappear once past — a
   // flicker that looked like "now it says on time" for a bus that never
   // stopped being late.
-  // Exception: a vehicle still sitting at stop 0 — the trip's origin —
-  // hasn't actually pulled out yet. This is the one proximity case worth
-  // gating on despite the no-zeroing rule above: origin stops double as
-  // depots/layover points (see GPS_TYPE_MAP's trolleybus depot comment in
-  // constants.ts), and a bus dwelling there before departure isn't "running
-  // late" in any rider-facing sense — it just hasn't started. Without this,
-  // a bus held at the depot past its scheduled departure racks up delay
+  // Exception: a vehicle sitting at either end of the trip — stop 0 (hasn't
+  // pulled out yet) or the final stop (already arrived) — isn't "running
+  // late" in any rider-facing sense. This is the one proximity case worth
+  // gating on despite the no-zeroing rule above. Without the stop-0 half, a
+  // bus held at the depot past its scheduled departure racks up delay
   // against the *next* stop's schedule the whole time it's still parked.
-  const delaySeconds = atStopIdx === 0 ? 0 : nowSec - scheduledTimeSec
+  // Without the final-stop half, a bus (or tram, or trolleybus — every mode
+  // shares this same matcher) that finished its trip on time and is now
+  // idling at the depot before its next duty keeps accumulating apparent
+  // delay against that same already-served last stop for as long as
+  // MAX_TRIP_OVERRUN_SEC still counts the trip as a live match — a parked
+  // vehicle reported as getting later every second it sits still.
+  const isAtTerminus = atStopIdx === 0 || atStopIdx === stoptimes.length - 1
+  const delaySeconds = isAtTerminus ? 0 : nowSec - scheduledTimeSec
 
   return { afterStopIndex: bestSegIdx, fraction: bestFraction, atStopIndex: atStopIdx, delaySeconds }
 }
