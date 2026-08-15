@@ -81,6 +81,9 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
 
 export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCardProps) {
   const transitLegs = route.legs.filter((l) => l.mode !== 'walk')
+  const walkMinutes = Math.round(
+    route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0) / 60,
+  )
   const totalMinutes = Math.round(route.duration / 60)
   const startTime = formatTime(route.startTime)
   const endTime = formatTime(route.endTime)
@@ -120,18 +123,29 @@ export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCar
               <span className="text-xs font-bold">Walk</span>
             </span>
           ) : (
-            transitLegs.map((leg, i) => (
-              <span key={i} className="flex items-center gap-1">
-                {i > 0 && <span className="text-gray-400 text-xs">&rarr;</span>}
-                <span
-                  className="px-2 py-0.5 rounded text-xs font-bold text-white"
-                  style={{ backgroundColor: MODE_COLORS[leg.mode === 'walk' ? 'bus' : leg.mode] }}
-                  title={MODE_LABELS[leg.mode === 'walk' ? 'bus' : leg.mode]}
-                >
-                  {leg.route || leg.mode}
+            <>
+              {transitLegs.map((leg, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  {i > 0 && <span className="text-gray-400 text-xs">&rarr;</span>}
+                  <span
+                    className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                    style={{ backgroundColor: MODE_COLORS[leg.mode === 'walk' ? 'bus' : leg.mode] }}
+                    title={MODE_LABELS[leg.mode === 'walk' ? 'bus' : leg.mode]}
+                  >
+                    {leg.route || leg.mode}
+                  </span>
                 </span>
-              </span>
-            ))
+              ))}
+              {walkMinutes > 0 && (
+                <span
+                  className="flex items-center gap-0.5 text-xs text-gray-400 shrink-0"
+                  title="Includes walking"
+                >
+                  <Footprints size={12} />
+                  {walkMinutes}min
+                </span>
+              )}
+            </>
           )}
         </div>
         <span className="font-bold text-sm">{totalMinutes} min</span>
