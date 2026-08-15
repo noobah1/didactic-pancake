@@ -599,12 +599,28 @@ export function findVehicleForLeg<T extends MatchableVehicle>(
   // vehicle could legitimately be any of the three.
   const acceptableModes: string[] = leg.mode === 'bus' ? ['bus', 'trolleybus', 'nightbus'] : [leg.mode]
 
+  // Before departure, the assigned vehicle is frequently still finishing its
+  // *previous* trip somewhere on approach, not yet parked at this leg's
+  // origin stop — expected position above is necessarily a single point (the
+  // origin), so a flat 500m/100° gate that's right for a moving mid-leg
+  // vehicle wrongly rejects one that's still minutes away inbound, or mid
+  // turnaround-loop at the terminus (heading briefly pointed anywhere).
+  // Grows with how far out the departure still is (~10 m/s, a reasonable
+  // in-city average) and caps well short of swallowing an unrelated vehicle
+  // on the same line. Confirmed live: a live vehicle 10 minutes from its
+  // next departure, already assigned a *different* trip on the same route by
+  // the citywide delay matcher (see findBestTrip's own doc comment on this
+  // ambiguity), sat ~4km from the flat-gate's expected point.
+  const preDepartureMs = Math.max(0, startMs - nowMs)
+  const distanceTolerance = nowMs < startMs ? Math.min(500 + (preDepartureMs / 1000) * 10, 5000) : 500
+  const headingTolerance = nowMs < startMs ? 150 : 100
+
   let best: T | null = null
   let bestDist = Infinity
   for (const v of candidates) {
     if (!acceptableModes.includes(v.mode) || v.line !== expectedLine) continue
     const dist = distanceMeters(v.lat, v.lng, expected.lat, expected.lng)
-    if (dist > 500 || headingDiff(v.heading, expectedHeading) > 100) continue
+    if (dist > distanceTolerance || headingDiff(v.heading, expectedHeading) > headingTolerance) continue
     if (dist < bestDist) {
       bestDist = dist
       best = v
