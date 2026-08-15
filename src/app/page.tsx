@@ -245,8 +245,18 @@ function HomeContent() {
         expectedHeading = calcHeading(aLat, aLng, bLat, bLng)
       }
 
+      // OTP's own route shortName carries a T-prefix for trams (e.g. "T4"),
+      // but the live GPS feed's line field never does (just "4") — every
+      // other place in this app that compares the two normalizes this (see
+      // the same T-prefix handling in trip-stops/route.ts, route-shape/
+      // route.ts, delays/route.ts). This fallback never did, so v.line
+      // could never equal leg.route for any tram leg — the position-based
+      // fallback silently matched nothing for every tram route, on top of
+      // the primary tripId match already being unreliable for frequent
+      // lines with many near-simultaneous trip instances.
+      const expectedLine = leg.mode === 'tram' ? leg.route.replace(/^T/i, '') : leg.route
       const candidates = (vehicleData.data?.vehicles || []).filter(
-        (v) => v.mode === leg.mode && v.line === leg.route,
+        (v) => v.mode === leg.mode && v.line === expectedLine,
       )
       let best: VehiclePosition | null = null
       let bestDist = Infinity
