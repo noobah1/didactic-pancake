@@ -17,8 +17,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { TransportMode, VehiclePosition } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef } from '@/lib/constants'
-import { OVERVIEW_THRESHOLD_SEC, MAX_TRIP_OVERRUN_SEC, distanceMeters, calcHeading, headingDiff } from '@/lib/delay'
-import { decodePolyline } from '@/lib/decode-polyline'
+import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useVehicles } from '@/hooks/use-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
@@ -173,19 +172,9 @@ function HomeContent() {
   // transit leg (by tripId) — GPS-tracked modes come from the delay feed,
   // rail/ferry (no live GPS) fall back to the schedule-interpolated position
   // already in the main vehicles feed — so you can see where your bus/tram/
-  // train currently is, not just the planned line on the map.
-  //
-  // The exact tripId match can miss even when the right vehicle is right
-  // there on screen — e.g. the live feed's trip identity is momentarily out
-  // of sync with the plan's. When that happens, fall back to finding the
-  // same line, heading the same way as the leg, positioned near where the
-  // schedule says this specific trip should be RIGHT NOW — not just anywhere
-  // along the corridor. Matching "anywhere on the line" used to pick up a
-  // totally different run of the same number (e.g. one already further down
-  // the route, making a bus that hasn't departed yet look like it had
-  // already left). Gated to a plausible time window around the leg for the
-  // same reason — outside that window, any same-line vehicle found nearby is
-  // necessarily a different trip, not this one.
+  // train currently is, not just the planned line on the map. When the exact
+  // tripId doesn't turn up a match, findVehicleForLeg (shared with RouteCard's
+  // delay badge) falls back to a position+heading match instead.
   const nowMs = new Date().getTime()
   const journeyVehicles = useMemo(() => {
     if (!selectedRoute) return []
@@ -214,71 +203,7 @@ function HomeContent() {
         }
       }
 
-      if (!leg.route) continue
-      const startMs = new Date(leg.startTime).getTime()
-      const endMs = new Date(leg.endTime).getTime()
-      const PRE_DEPARTURE_GRACE_MS = 5 * 60 * 1000
-      const POST_ARRIVAL_GRACE_MS = MAX_TRIP_OVERRUN_SEC * 1000
-      if (nowMs < startMs - PRE_DEPARTURE_GRACE_MS || nowMs > endMs + POST_ARRIVAL_GRACE_MS) continue
-
-      const legCoords = leg.legGeometry?.points ? decodePolyline(leg.legGeometry.points) : null
-      const frac = endMs > startMs ? Math.max(0, Math.min(1, (nowMs - startMs) / (endMs - startMs))) : 0
-
-      let expected = { lat: leg.from.lat, lng: leg.from.lng }
-      let expectedHeading = calcHeading(leg.from.lat, leg.from.lng, leg.to.lat, leg.to.lng)
-      if (legCoords && legCoords.length >= 2) {
-        const segDists: number[] = [0]
-        let total = 0
-        for (let i = 1; i < legCoords.length; i++) {
-          total += distanceMeters(legCoords[i - 1][1], legCoords[i - 1][0], legCoords[i][1], legCoords[i][0])
-          segDists.push(total)
-        }
-        const target = frac * total
-        let idx = 0
-        while (idx < segDists.length - 2 && segDists[idx + 1] < target) idx++
-        const segStart = segDists[idx]
-        const segEnd = segDists[idx + 1]
-        const segFrac = segEnd > segStart ? (target - segStart) / (segEnd - segStart) : 0
-        const [aLng, aLat] = legCoords[idx]
-        const [bLng, bLat] = legCoords[idx + 1]
-        expected = { lat: aLat + segFrac * (bLat - aLat), lng: aLng + segFrac * (bLng - aLng) }
-        expectedHeading = calcHeading(aLat, aLng, bLat, bLng)
-      }
-
-      // OTP's own route shortName carries a T-prefix for trams (e.g. "T4"),
-      // but the live GPS feed's line field never does (just "4") — every
-      // other place in this app that compares the two normalizes this (see
-      // the same T-prefix handling in trip-stops/route.ts, route-shape/
-      // route.ts, delays/route.ts). This fallback never did, so v.line
-      // could never equal leg.route for any tram leg — the position-based
-      // fallback silently matched nothing for every tram route, on top of
-      // the primary tripId match already being unreliable for frequent
-      // lines with many near-simultaneous trip instances.
-      const expectedLine = leg.mode === 'tram' ? leg.route.replace(/^T/i, '') : leg.route
-      // Tallinn's unified GTFS feed has no separate route_type for
-      // trolleybus or night bus — both are tagged mode BUS, same as
-      // regular buses (see the same comment in delays/route.ts and
-      // trip-stops/route.ts) — so the planner can never tell them apart
-      // either: every trolleybus/night-bus leg comes back with
-      // leg.mode === 'bus'. Requiring an exact mode match therefore never
-      // matched any real trolleybus or night-bus vehicle (which report
-      // their true mode in the live GPS feed), even though the physical
-      // vehicle running that leg is genuinely one of them. When OTP says
-      // "bus", accept any of the three real modes it could actually be.
-      const acceptableModes: string[] = leg.mode === 'bus' ? ['bus', 'trolleybus', 'nightbus'] : [leg.mode]
-      const candidates = (vehicleData.data?.vehicles || []).filter(
-        (v) => acceptableModes.includes(v.mode) && v.line === expectedLine,
-      )
-      let best: VehiclePosition | null = null
-      let bestDist = Infinity
-      for (const v of candidates) {
-        const dist = distanceMeters(v.lat, v.lng, expected.lat, expected.lng)
-        if (dist > 500 || headingDiff(v.heading, expectedHeading) > 100) continue
-        if (dist < bestDist) {
-          bestDist = dist
-          best = v
-        }
-      }
+      const best = findVehicleForLeg(leg, vehicleData.data?.vehicles || [], nowMs)
       if (best) found.push(best)
     }
     return found
@@ -307,7 +232,7 @@ function HomeContent() {
   const { toast, dismiss: dismissToast } = useDelayToast(journeyDelayVehicles, selectedRoute?.id ?? null)
 
 const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.data?.vehicles)
- 
+
   return (
     <main className="h-dvh relative overflow-hidden">
       {/* Fullscreen map base layer */}

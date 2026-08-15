@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Footprints } from 'lucide-react'
 import { RouteResult, RouteLeg, TransportMode } from '@/lib/types'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
-import { ROUTE_PLAN_MATCH_WINDOW_SEC } from '@/lib/delay'
+import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
 
 const GPS_MODES = new Set<TransportMode>(['bus', 'tram', 'trolleybus', 'nightbus'])
@@ -39,11 +39,11 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
           >
             {leg.route || leg.mode}
           </span>
-          <span className="text-xs text-gray-500">{formatTime(leg.startTime)}</span>
-          <span className="text-xs text-gray-600">{leg.from.name} &rarr; {leg.to.name}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{formatTime(leg.startTime)}</span>
+          <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name} &rarr; {leg.to.name}</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-gray-400">{Math.round(leg.duration / 60)} min</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{Math.round(leg.duration / 60)} min</span>
           {stops.length > 0 && (
             <svg
               className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -58,20 +58,20 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
         <div className="ml-1 pl-2 border-l-2 mb-1" style={{ borderColor: color }}>
           <div className="flex items-center gap-2 py-0.5">
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs font-medium">{formatTime(leg.startTime)}</span>
-            <span className="text-xs text-gray-600">{leg.from.name}</span>
+            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.startTime)}</span>
+            <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name}</span>
           </div>
           {stops.map((stop, i) => (
             <div key={i} className="flex items-center gap-2 py-0.5">
-              <span className="w-1 h-1 rounded-full bg-gray-400" />
-              <span className="text-xs text-gray-400">{stop.departure ? formatTime(stop.departure) : ''}</span>
-              <span className="text-xs text-gray-500">{stop.name}</span>
+              <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-500" />
+              <span className="text-xs text-gray-400 dark:text-gray-500">{stop.departure ? formatTime(stop.departure) : ''}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{stop.name}</span>
             </div>
           ))}
           <div className="flex items-center gap-2 py-0.5">
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs font-medium">{formatTime(leg.endTime)}</span>
-            <span className="text-xs text-gray-600">{leg.to.name}</span>
+            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.endTime)}</span>
+            <span className="text-xs text-gray-600 dark:text-gray-300">{leg.to.name}</span>
           </div>
         </div>
       )}
@@ -97,10 +97,20 @@ export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCar
   const knownDelays = transitLegs
     .filter((leg) =>
       GPS_MODES.has(leg.mode as TransportMode) &&
-      leg.tripId &&
       Math.abs(new Date(leg.startTime).getTime() - nowMs) <= ROUTE_PLAN_MATCH_WINDOW_SEC * 1000,
     )
-    .map((leg) => delayVehicles?.find((v) => v.tripId === leg.tripId))
+    .map((leg) => {
+      // Exact tripId match first, but it frequently misses even for a
+      // vehicle that's genuinely running and delayed right now — OTP's
+      // schedule-based "next trip" pick and the live GPS matcher's
+      // position-based pick can each independently and correctly land on a
+      // different physical run of the same route (see findVehicleForLeg).
+      // Without the fallback, this card defaulted to "Scheduled" far more
+      // often than the trip was actually unmatched, in cases where a rider
+      // would clearly see their bus was already running late.
+      const exact = leg.tripId ? delayVehicles?.find((v) => v.tripId === leg.tripId) : undefined
+      return exact ?? findVehicleForLeg(leg, delayVehicles || [], nowMs)
+    })
     .filter((d): d is DelayedVehicle => d != null)
   const maxDelaySeconds = knownDelays.length ? Math.max(...knownDelays.map((d) => d.delaySeconds)) : null
   const delayMinutes = maxDelaySeconds !== null ? Math.round(maxDelaySeconds / 60) : null
@@ -112,7 +122,9 @@ export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCar
       onClick={onSelect}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect() }}
       className={`w-full text-left p-3 rounded-lg border transition-colors cursor-pointer ${
-        selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50'
+        selected
+          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
     >
       <div className="flex items-center justify-between">
@@ -126,7 +138,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCar
             <>
               {transitLegs.map((leg, i) => (
                 <span key={i} className="flex items-center gap-1">
-                  {i > 0 && <span className="text-gray-400 text-xs">&rarr;</span>}
+                  {i > 0 && <span className="text-gray-400 dark:text-gray-500 text-xs">&rarr;</span>}
                   <span
                     className="px-2 py-0.5 rounded text-xs font-bold text-white"
                     style={{ backgroundColor: MODE_COLORS[leg.mode === 'walk' ? 'bus' : leg.mode] }}
@@ -138,7 +150,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCar
               ))}
               {walkMinutes > 0 && (
                 <span
-                  className="flex items-center gap-0.5 text-xs text-gray-400 shrink-0"
+                  className="flex items-center gap-0.5 text-xs text-gray-400 dark:text-gray-500 shrink-0"
                   title="Includes walking"
                 >
                   <Footprints size={12} />
@@ -148,26 +160,26 @@ export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCar
             </>
           )}
         </div>
-        <span className="font-bold text-sm">{totalMinutes} min</span>
+        <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{totalMinutes} min</span>
       </div>
       <div className="flex items-center justify-between mt-1">
-        <span className="text-xs text-gray-500">{startTime} &rarr; {endTime}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{startTime} &rarr; {endTime}</span>
         {transitLegs.length > 0 && (
           delayMinutes === null ? (
-            <span className="text-xs text-gray-400 font-medium">Scheduled</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Scheduled</span>
           ) : delayMinutes > 0 ? (
-            <span className="text-xs text-amber-600 font-medium">{delayMinutes}min delay</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{delayMinutes}min delay</span>
           ) : (
-            <span className="text-xs text-green-600 font-medium">on time</span>
+            <span className="text-xs text-green-600 dark:text-green-400 font-medium">on time</span>
           )
         )}
       </div>
       {selected && (
-        <div className="mt-2 flex flex-col divide-y divide-gray-100">
+        <div className="mt-2 flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
           {route.legs.map((leg, i) => (
             <div key={i}>
               {leg.mode === 'walk' ? (
-                <div className="flex items-center gap-2 py-1.5 text-xs text-gray-400">
+                <div className="flex items-center gap-2 py-1.5 text-xs text-gray-400 dark:text-gray-500">
 
 
 

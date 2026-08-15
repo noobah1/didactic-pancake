@@ -1,4 +1,5 @@
 import { TripStopInfo } from './types'
+import { decodePolyline } from './decode-polyline'
 
 // Grace period before marking a stop late/passed (matches TimetablePanel's own buffer)
 export const LATE_BUFFER_SEC = 59
@@ -513,4 +514,98 @@ export function computeStatusFromGPS(
   })
 
   return { stops: stopsWithDelay, afterStopIndex: bestSegIdx, fraction: bestFraction, delaySeconds }
+}
+
+// How far ahead/behind a leg's own scheduled window this fallback will still
+// attempt a position match — same reasoning as ROUTE_PLAN_MATCH_WINDOW_SEC's
+// pre-departure half, kept as a separate constant since this one gates a
+// GPS proximity search rather than whether to attempt a match at all.
+const LEG_MATCH_PRE_DEPARTURE_MS = 5 * 60 * 1000
+
+export interface RoutePlanLeg {
+  mode: string
+  route?: string
+  from: { lat: number; lng: number }
+  to: { lat: number; lng: number }
+  startTime: string
+  endTime: string
+  legGeometry?: { points: string } | null
+}
+
+export interface MatchableVehicle {
+  mode: string
+  line: string
+  lat: number
+  lng: number
+  heading: number
+}
+
+// Finds the real vehicle physically running a planned transit leg, when its
+// exact tripId doesn't turn up a match (see findBestTrip's own comments on
+// why GPS-vs-trip identity is inherently ambiguous for busy lines — this is
+// the same problem one level up: OTP's schedule-based "next trip" pick and
+// the live GPS matcher's position-based pick can each independently and
+// correctly land on a different physical run of the same route). Finds the
+// same line, heading the same way as the leg, positioned near where the
+// schedule says this specific trip should be RIGHT NOW — not just anywhere
+// along the corridor, which used to pick up a totally different run of the
+// same number. Gated to a plausible time window around the leg for the same
+// reason — outside that window, any same-line vehicle found nearby is
+// necessarily a different trip, not this one.
+export function findVehicleForLeg<T extends MatchableVehicle>(
+  leg: RoutePlanLeg,
+  candidates: T[],
+  nowMs: number,
+): T | null {
+  if (!leg.route) return null
+  const startMs = new Date(leg.startTime).getTime()
+  const endMs = new Date(leg.endTime).getTime()
+  if (nowMs < startMs - LEG_MATCH_PRE_DEPARTURE_MS || nowMs > endMs + MAX_TRIP_OVERRUN_SEC * 1000) return null
+
+  const legCoords = leg.legGeometry?.points ? decodePolyline(leg.legGeometry.points) : null
+  const frac = endMs > startMs ? Math.max(0, Math.min(1, (nowMs - startMs) / (endMs - startMs))) : 0
+
+  let expected = { lat: leg.from.lat, lng: leg.from.lng }
+  let expectedHeading = calcHeading(leg.from.lat, leg.from.lng, leg.to.lat, leg.to.lng)
+  if (legCoords && legCoords.length >= 2) {
+    const segDists: number[] = [0]
+    let total = 0
+    for (let i = 1; i < legCoords.length; i++) {
+      total += distanceMeters(legCoords[i - 1][1], legCoords[i - 1][0], legCoords[i][1], legCoords[i][0])
+      segDists.push(total)
+    }
+    const target = frac * total
+    let idx = 0
+    while (idx < segDists.length - 2 && segDists[idx + 1] < target) idx++
+    const segStart = segDists[idx]
+    const segEnd = segDists[idx + 1]
+    const segFrac = segEnd > segStart ? (target - segStart) / (segEnd - segStart) : 0
+    const [aLng, aLat] = legCoords[idx]
+    const [bLng, bLat] = legCoords[idx + 1]
+    expected = { lat: aLat + segFrac * (bLat - aLat), lng: aLng + segFrac * (bLng - aLng) }
+    expectedHeading = calcHeading(aLat, aLng, bLat, bLng)
+  }
+
+  // OTP's own route shortName carries a T-prefix for trams (e.g. "T4"), but
+  // the live GPS feed's line field never does (just "4").
+  const expectedLine = leg.mode === 'tram' ? (leg.route as string).replace(/^T/i, '') : leg.route
+  // Tallinn's unified GTFS feed has no separate route_type for trolleybus or
+  // night bus — both are tagged mode BUS, same as regular buses — so the
+  // planner can never tell them apart either: every trolleybus/night-bus leg
+  // comes back with leg.mode === 'bus'. When OTP says "bus", the real
+  // vehicle could legitimately be any of the three.
+  const acceptableModes: string[] = leg.mode === 'bus' ? ['bus', 'trolleybus', 'nightbus'] : [leg.mode]
+
+  let best: T | null = null
+  let bestDist = Infinity
+  for (const v of candidates) {
+    if (!acceptableModes.includes(v.mode) || v.line !== expectedLine) continue
+    const dist = distanceMeters(v.lat, v.lng, expected.lat, expected.lng)
+    if (dist > 500 || headingDiff(v.heading, expectedHeading) > 100) continue
+    if (dist < bestDist) {
+      bestDist = dist
+      best = v
+    }
+  }
+  return best
 }
