@@ -258,7 +258,20 @@ function HomeContent() {
     (v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC,
   ).length
 
-  const { toast, dismiss: dismissToast } = useDelayToast(delayData.data?.vehicles || [])
+  // Toast pop-ups should only surface delays on the trip you've actually
+  // selected — not every newly-delayed vehicle citywide (that's what the
+  // Issues panel / OVERVIEW_THRESHOLD_SEC count are for). Without this, a
+  // toast fired for any late bus anywhere in the city regardless of
+  // relevance to the current user.
+  const journeyTripIds = useMemo(
+    () => new Set((selectedRoute?.legs || []).map((leg) => leg.tripId).filter((id): id is string => !!id)),
+    [selectedRoute],
+  )
+  const journeyDelayVehicles = useMemo(
+    () => (delayData.data?.vehicles || []).filter((v) => journeyTripIds.has(v.tripId)),
+    [delayData.data?.vehicles, journeyTripIds],
+  )
+  const { toast, dismiss: dismissToast } = useDelayToast(journeyDelayVehicles)
 
 const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.data?.vehicles)
  

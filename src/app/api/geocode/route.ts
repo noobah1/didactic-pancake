@@ -28,14 +28,30 @@ interface GeoResult {
   lng: number
 }
 
-let transitStopsCache: { train: Map<string, OtpStop>; ferry: Map<string, OtpStop>; bus: Map<string, OtpStop>; tram: Map<string, OtpStop>; timestamp: number } | null = null
-const TRANSIT_STOPS_CACHE_TTL = 600_000
+interface TransitStopsCache {
+  train: Map<string, OtpStop>
+  ferry: Map<string, OtpStop>
+  bus: Map<string, OtpStop>
+  tram: Map<string, OtpStop>
+  timestamp: number
+}
 
-async function loadTransitStops() {
-  const now = Date.now()
-  if (transitStopsCache && now - transitStopsCache.timestamp < TRANSIT_STOPS_CACHE_TTL) {
-    return transitStopsCache
-  }
+let transitStopsCache: TransitStopsCache | null = null
+let transitStopsRefresh: Promise<TransitStopsCache | null> | null = null
+// Stop names/locations only change when the GTFS feed itself is rebuilt
+// (an infra-triggered event, not something that happens mid-session), so
+// this can be long. It used to be 10 minutes, which meant the first
+// autocomplete keystroke after any 10-minute gap had to block on
+// re-fetching every stop in the country before answering — the main
+// source of "trip finding feels slow" complaints, since geocoding gates
+// the search. Kept finite (not Infinity) so a stale cache still recovers
+// on its own if the graph is ever reloaded without a server restart.
+const TRANSIT_STOPS_CACHE_TTL = 6 * 60 * 60_000
+// How long a cache entry can be served stale while a refresh happens in the
+// background — keeps every request fast even right after TTL expiry.
+const TRANSIT_STOPS_STALE_TTL = 24 * 60 * 60_000
+
+async function fetchTransitStops() {
   try {
     const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
       method: 'POST',
@@ -68,11 +84,39 @@ async function loadTransitStops() {
         for (const stop of pattern.stops) tramStops.set(stop.name.toLowerCase(), stop)
       }
     }
-    transitStopsCache = { train: trainStops, ferry: ferryStops, bus: busStops, tram: tramStops, timestamp: now }
+    transitStopsCache = { train: trainStops, ferry: ferryStops, bus: busStops, tram: tramStops, timestamp: Date.now() }
     return transitStopsCache
   } catch {
     return transitStopsCache
   }
+}
+
+async function loadTransitStops() {
+  const now = Date.now()
+  const age = transitStopsCache ? now - transitStopsCache.timestamp : Infinity
+
+  if (age < TRANSIT_STOPS_CACHE_TTL) {
+    return transitStopsCache
+  }
+
+  // Dedup concurrent refreshes — several autocomplete requests can land
+  // while one refresh is already in flight.
+  if (!transitStopsRefresh) {
+    transitStopsRefresh = fetchTransitStops().finally(() => {
+      transitStopsRefresh = null
+    })
+  }
+
+  // Cache merely expired (not yet stale-expired): serve the last known-good
+  // result immediately and let the refresh above finish in the background,
+  // so this request never pays for the nationwide re-fetch.
+  if (age < TRANSIT_STOPS_STALE_TTL) {
+    return transitStopsCache
+  }
+
+  // No usable cache at all (cold start, or stale past the point of trusting
+  // it) — this request has to wait for a real answer.
+  return transitStopsRefresh
 }
 
 async function searchTransitStops(query: string): Promise<GeoResult[]> {
@@ -107,7 +151,9 @@ async function searchTransitStops(query: string): Promise<GeoResult[]> {
 async function searchEstonianAddresses(query: string): Promise<GeoResult[]> {
   try {
     const url = 'https://inaadress.maaamet.ee/inaadress/gazetteer?address=' + encodeURIComponent(query) + '&results=8&lang=et'
-    const res = await fetch(url)
+    // Bounded so a slow external gazetteer can't stall the whole
+    // autocomplete response — transit stop results still come back on time.
+    const res = await fetch(url, { signal: AbortSignal.timeout(2500) })
     if (!res.ok) return []
     const data = await res.json()
     return (data.addresses || [])

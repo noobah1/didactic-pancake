@@ -1,0 +1,22 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and redeploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # The key on the other end is restricted (via authorized_keys
+          # command=) to only ever run scripts/deploy.sh, so this is the
+          # only command that will actually execute regardless of what's
+          # sent here.
+          script: /opt/app/scripts/deploy.sh
+          script_stop: true
