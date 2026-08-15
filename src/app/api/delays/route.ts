@@ -133,11 +133,18 @@ let vehicleTripMemory = new Map<string, string>()
 // computeDelays), so a vehicle that drops off the feed doesn't accumulate
 // history forever.
 let vehiclePositionHistory = new Map<string, { lat: number; lng: number; t: number }[]>()
-// How long a vehicle needs to sit within STATIONARY_RADIUS_M of itself to
-// count as parked, not just paused at a light or briefly boxed in by
-// traffic — long enough that normal stop-and-go doesn't false-positive.
+// How long a vehicle needs to stay within STATIONARY_RADIUS_M of its own
+// recent positions to count as parked, not just paused at a light or
+// briefly boxed in by traffic — long enough that normal stop-and-go
+// doesn't false-positive. Confirmed live: a real depot-parked bus still
+// occasionally jitters past a tight (60m) radius from any single reference
+// point — multipath off other parked buses/yard buildings — so the check
+// below uses the point cloud's overall spread rather than each sample
+// against just the latest one, and the radius has room for that jitter
+// while still being far tighter than a bus could travel, even crawling in
+// heavy traffic, over a full three minutes.
 const STATIONARY_WINDOW_MS = 3 * 60_000
-const STATIONARY_RADIUS_M = 60
+const STATIONARY_RADIUS_M = 120
 
 async function fetchScheduleData(): Promise<GqlRoute[]> {
   const now = Date.now()
@@ -246,10 +253,14 @@ async function computeDelays(): Promise<DelaysResponse> {
     const lastStoptime = bestTrip.stoptimes[bestTrip.stoptimes.length - 1]
     const scheduledEnd = lastStoptime.scheduledArrival || lastStoptime.scheduledDeparture
     const pastScheduledEnd = nowSec > scheduledEnd
+    let maxSpread = 0
+    for (let i = 0; i < history.length; i++) {
+      for (let j = i + 1; j < history.length; j++) {
+        maxSpread = Math.max(maxSpread, distanceMeters(history[i].lat, history[i].lng, history[j].lat, history[j].lng))
+      }
+    }
     const stationary =
-      history.length >= 2 &&
-      now - history[0].t >= STATIONARY_WINDOW_MS &&
-      history.every((p) => distanceMeters(p.lat, p.lng, gv.lat, gv.lng) < STATIONARY_RADIUS_M)
+      history.length >= 2 && now - history[0].t >= STATIONARY_WINDOW_MS && maxSpread < STATIONARY_RADIUS_M
 
     // Showing it with delaySeconds: 0 (or, once far enough past
     // MAX_TRIP_OVERRUN_SEC's matching window, a bogus large delay) is
