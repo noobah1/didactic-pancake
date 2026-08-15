@@ -716,6 +716,16 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     const map = mapRef.current
     if (!map || !vehicles) return
 
+    // Marker outlines are DOM elements maplibre positions over the canvas —
+    // untouched by the dark-mode canvas filter (deliberately; see its own
+    // comment in globals.css), so a hardcoded white ring would stay bright
+    // white and stand out oddly against a dark map. Checked once per poll
+    // rather than reacted to live: cheap, and vehicle markers churn often
+    // enough (created/recreated as vehicles enter/leave the feed) that a
+    // toggle catches up within a poll or two without needing its own effect.
+    const isDark = document.documentElement.classList.contains('dark')
+    const markerOutlineColor = isDark ? '#1f2937' : 'white'
+
     const currentIds = new Set<string>()
 
     vehicles
@@ -736,6 +746,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.backgroundColor = MODE_COLORS[vehicle.mode]
           el.style.opacity = vehicle.estimated ? '0.55' : '1'
           el.style.borderStyle = vehicle.estimated ? 'dashed' : 'solid'
+          el.style.borderColor = markerOutlineColor
           el.title = vehicle.estimated
             ? `${vehicle.mode} ${vehicle.line} → ${vehicle.destination} (estimated from schedule — not live tracked)`
             : `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
@@ -759,7 +770,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.padding = '0 4px'
           el.style.borderRadius = '9px'
           el.style.backgroundColor = MODE_COLORS[vehicle.mode]
-          el.style.border = vehicle.estimated ? '2px dashed white' : '2px solid white'
+          el.style.border = vehicle.estimated ? `2px dashed ${markerOutlineColor}` : `2px solid ${markerOutlineColor}`
           el.style.opacity = vehicle.estimated ? '0.55' : '1'
           el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
           el.style.cursor = 'pointer'
@@ -866,6 +877,12 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
+
+    // Same reasoning as the vehicle-marker effect above: these pin/marker
+    // outlines are DOM elements, untouched by the dark-mode canvas filter,
+    // so a hardcoded white ring would stand out oddly against a dark map.
+    const isDark = document.documentElement.classList.contains('dark')
+    const markerOutlineColor = isDark ? '#1f2937' : 'white'
 
     const cleanup = () => {
       // Remove stop layers/source
@@ -1078,7 +1095,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         el.style.padding = '0 6px'
         el.style.borderRadius = '14px'
         el.style.backgroundColor = MODE_COLORS[jv.mode]
-        el.style.border = '3px solid white'
+        el.style.border = `3px solid ${markerOutlineColor}`
         el.style.display = 'flex'
         el.style.alignItems = 'center'
         el.style.justifyContent = 'center'
