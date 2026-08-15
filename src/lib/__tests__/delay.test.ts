@@ -49,6 +49,19 @@ describe('matchVehicleToTrip', () => {
     expect(match.delaySeconds).toBeGreaterThan(0)
   })
 
+  it('interpolates delay from position along the current segment, not just the next stop\'s raw arrival', () => {
+    // Vehicle is geometrically halfway between the mid-route stop (departs
+    // 1120) and the terminus (arrives 1200) — a 80s leg, so halfway should
+    // have happened at 1160. "Now" is 1200, the terminus's own scheduled
+    // arrival — comparing that directly against the terminus's raw arrival
+    // (the old behavior) reads as exactly on time, even though the vehicle
+    // is still only halfway there and is actually 40s behind.
+    const halfwayLat = 59.41 + (59.42 - 59.41) / 2
+    const halfwayLon = 24.71 + (24.72 - 24.71) / 2
+    const match = matchVehicleToTrip(stoptimes, halfwayLat, halfwayLon, 1200)
+    expect(match.delaySeconds).toBeCloseTo(40, 0)
+  })
+
   // Real depots are frequently modeled as two near-duplicate stops close
   // together — e.g. two GTFS stops both literally named "Mustamäe" a block
   // apart — one for boarding, one marking the yard. A vehicle parked

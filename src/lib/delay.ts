@@ -366,11 +366,27 @@ export function matchVehicleToTrip(
     bestFraction = atStopIdx === 0 ? 0 : 1
   }
 
-  // Calculate actual delay based on GPS position vs schedule.
-  // Use the next upcoming stop for delay calculation — more accurate.
+  // Calculate actual delay based on GPS position vs schedule. Interpolate the
+  // scheduled time at the vehicle's actual fractional position along its
+  // current segment — the one between the stop it just left and the stop
+  // it's heading to — rather than comparing "now" straight against the next
+  // stop's raw scheduled arrival. The raw-arrival version ignored how far
+  // the vehicle had actually progressed toward that stop: right after
+  // leaving a stop exactly on time (fraction≈0), it read as "early" by
+  // roughly the whole segment's travel time, gradually correcting itself as
+  // the vehicle neared the next stop, then jumping again at every stop
+  // crossing as the reference stop moved further away — never smoothly
+  // tracking the vehicle's real position relative to schedule the way a
+  // live delay figure should.
   const nextStopIdx = bestSegIdx + 1
-  const refStop = nextStopIdx < stoptimes.length ? stoptimes[nextStopIdx] : stoptimes[bestSegIdx]
-  const scheduledTimeSec = refStop.scheduledArrival
+  let scheduledTimeSec: number
+  if (nextStopIdx < stoptimes.length) {
+    const segStart = stoptimes[bestSegIdx].scheduledDeparture
+    const segEnd = stoptimes[nextStopIdx].scheduledArrival
+    scheduledTimeSec = segStart + bestFraction * (segEnd - segStart)
+  } else {
+    scheduledTimeSec = stoptimes[bestSegIdx].scheduledArrival
+  }
   // Always the raw GPS-time-vs-schedule gap for the reference stop — no
   // proximity-based zeroing. A moving vehicle passes within meters of nearly
   // every stop it serves, and even the dedicated at-stop check (atStopIdx)
