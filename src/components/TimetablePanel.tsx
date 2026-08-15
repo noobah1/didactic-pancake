@@ -77,13 +77,27 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange }: Tim
 
     const doFetch = (lat: number, lng: number) => {
       let url: string
-      if (lockedTripId && isScheduled) {
-        // Only lock trip ID for scheduled vehicles (OTP trips with colon in ID)
-        url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`
-      } else if (isScheduled) {
-        url = `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${lat}&lng=${lng}`
+      if (isScheduled) {
+        // Scheduled (interpolated) vehicles: the id itself is already the
+        // exact trip, so once locked, keep using that same id directly —
+        // no matching ambiguity here at all.
+        const tripIdToUse = lockedTripId || vehicle.id
+        url = `/api/trip-stops?tripId=${encodeURIComponent(tripIdToUse)}&lat=${lat}&lng=${lng}`
       } else {
+        // Live GPS vehicles: always re-match by line/mode/GPS (this is the
+        // only method that can compute a real GPS-based delay — a locked
+        // tripId lookup never does), but once a trip has matched once, pass
+        // it as a *preference* so findBestTrip's continuity bonus keeps
+        // picking the same trip run to run, exactly like /api/delays does
+        // for its own polling. Without this, this panel and the delay board
+        // ran two completely independent, unstable matches for the same
+        // physical vehicle — each poll re-guessing from scratch — and could
+        // land on two different trips with two different delay numbers for
+        // what's actually the same bus.
         url = `/api/trip-stops?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}&destination=${encodeURIComponent(vehicle.destination)}&lat=${lat}&lng=${lng}&heading=${vehicle.heading}`
+        if (lockedTripId) {
+          url += `&preferredTripId=${encodeURIComponent(lockedTripId)}`
+        }
       }
 
       fetch(url)

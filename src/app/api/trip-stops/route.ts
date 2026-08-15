@@ -289,6 +289,7 @@ export async function GET(request: Request) {
   const vehicleLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null
   const vehicleLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null
   const vehicleHeading = searchParams.get('heading') ? parseFloat(searchParams.get('heading')!) : null
+  const preferredTripId = searchParams.get('preferredTripId')
 
   const nowSec = getServiceSeconds()
 
@@ -380,7 +381,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Route not found' }, { status: 404 })
       }
 
-      const bestTrip = findBestTrip(allTrips, nowSec, destination, vehicleLat, vehicleLng, vehicleHeading)
+      const bestTrip = findBestTrip(allTrips, nowSec, destination, vehicleLat, vehicleLng, vehicleHeading, preferredTripId)
       if (!bestTrip) {
         return NextResponse.json({ error: 'No active trip found for this route' }, { status: 404 })
       }
