@@ -19,7 +19,7 @@ export function IssuesButton({ active, count, onClick }: IssuesButtonProps) {
           ? 'bg-amber-100 border-amber-500'
           : hasIssues
             ? 'bg-white border-amber-400 hover:bg-amber-50'
-            : 'bg-white/90 border-gray-300 hover:bg-gray-100'
+            : 'bg-white border-transparent hover:bg-gray-50'
       }`}
       title={active ? 'Hide issues' : `Show issues (${count})`}
     >
