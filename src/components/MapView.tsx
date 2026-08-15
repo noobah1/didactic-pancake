@@ -157,19 +157,9 @@ interface MapViewProps {
   incidents?: ServiceAlert[]
   cities?: CityDef[]
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
-  // Picks the basemap at creation time only — the parent remounts this
-  // whole component (via a key keyed on theme) rather than live-swapping
-  // styles on an existing map instance. maplibre's setStyle() wipes every
-  // source/layer this component adds across its many effects, and this
-  // component's own layer-adding logic isn't written to redo itself on a
-  // style reload — a full remount sidesteps needing it to be. A real
-  // CARTO dark style (not a CSS filter on the canvas) means overlay layers
-  // like stop-circle markers and the route-progress dot keep their real
-  // colors instead of getting dragged along by a filter meant for the tiles.
-  darkMode?: boolean
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, onVehicleClick, darkMode }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -525,9 +515,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: darkMode
-        ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-        : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
       center: [TALLINN_CENTER.lng, TALLINN_CENTER.lat],
       zoom: DEFAULT_ZOOM,
       attributionControl: false,
@@ -693,10 +681,6 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       mapRef.current = null
       mapReadyRef.current = false
     }
-  // darkMode is deliberately read only once here, at map creation — the
-  // parent remounts this whole component on theme change instead of this
-  // effect reacting to it live (see the darkMode prop's own comment).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Fly to city/cities when selection changes

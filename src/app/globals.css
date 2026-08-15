@@ -17,20 +17,26 @@ body {
   color: #e5e7eb;
 }
 
-/* Dark map: dim the rendered canvas rather than swapping to a whole separate
-   vector style — MapView holds a lot of manually-managed layer/source/marker
-   state a live style swap would need to carefully re-add after every reload.
-   This targets only the WebGL canvas, so DOM markers/popups (positioned over
-   the canvas, never drawn onto it) are untouched and keep their real colors.
-   Deliberately just brightness/contrast, NOT invert()+hue-rotate() (an
-   earlier version used that combination) — stop-circle markers and the
-   route-progress dot are also drawn onto this same canvas (GL paint layers,
-   not DOM elements), and inverting turned their white fills black and
-   rotated their brand colors to unrelated hues, clashing with the untouched
-   DOM vehicle markers right next to them. Plain dimming darkens everything
-   without touching any hue, so nothing on the canvas mismatches. */
+/* Dark map: dim the rendered canvas rather than swapping to a real dark
+   vector style. A real style swap (tried and reverted) needs either a live
+   setStyle() on the existing map — which wipes every source/layer this
+   700+-line component adds across ~16 effects, none written to redo that
+   after a style reload — or remounting the whole component on theme change,
+   which surfaced a latent bug where several effects' cleanup functions call
+   map methods after an earlier effect's cleanup has already called
+   map.remove(), crashing reliably on every toggle. A canvas filter avoids
+   both: it only ever touches pixels already drawn by the one persistent map
+   instance, never its lifecycle. Brightness pushed low for a properly dark,
+   near-black ground (Google Maps dark mode territory) — deliberately still
+   no invert()/hue-rotate(), since stop-circle markers and the route-progress
+   dot are GL paint layers drawn onto this same canvas (not DOM elements like
+   the colored vehicle pills), and inverting hue previously flipped their
+   white fills to black and rotated their brand colors to clash with the
+   untouched DOM markers right next to them. Contrast/saturate boosted to
+   compensate so roads and water stay distinguishable at this brightness
+   instead of crushing into a flat void. */
 .dark .maplibregl-canvas {
-  filter: brightness(0.55) contrast(1.1) saturate(0.9);
+  filter: brightness(0.28) contrast(1.35) saturate(1.25);
 }
 
 /* Zoom +/- and the locate-me button are maplibre's own native controls,
