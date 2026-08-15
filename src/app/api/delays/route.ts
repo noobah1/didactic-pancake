@@ -7,7 +7,18 @@ import { VehiclePosition } from '@/lib/types'
 
 const GPS_CACHE_TTL = 5_000
 const SCHEDULE_CACHE_TTL = 10 * 60_000 // static schedule doesn't change intraday
-const RESULT_CACHE_TTL = 20_000 // matches the client poll interval
+// Deliberately shorter than the client's own 20s poll interval (see
+// POLL_INTERVALS.delays), not equal to it. Equal-and-unsynchronized meant a
+// client poll could land just before each server-side refresh and end up
+// looking at a result computed nearly a full poll cycle earlier — up to
+// ~40s stale end-to-end (this cache's age plus the wait for the client's
+// next poll) on every single request, not just as an occasional edge case.
+// A vehicle that's actively getting later shows that lag directly as "the
+// delay board says 3 minutes, but it's clearly been 4 by now." Short
+// enough that, by the time the client's next 20s poll arrives, this cache
+// has almost certainly refreshed at least once — long enough to still
+// absorb bursts of near-simultaneous requests without recomputing for each.
+const RESULT_CACHE_TTL = 8_000
 // Real bunched buses on the same trip sit within meters of each other. Beyond
 // this, two vehicles matched to the same trip are not the same bus — the
 // match is unreliable for both, not just one of them.
