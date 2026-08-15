@@ -151,13 +151,15 @@ interface MapViewProps {
   vehicles?: VehiclePosition[]
   activeModes?: TransportMode[]
   selectedRoute?: RouteResult | null
+  journeyVehicles?: VehiclePosition[]
   selectedVehicle?: VehiclePosition | null
+  highlightDelay?: boolean
   incidents?: ServiceAlert[]
   cities?: CityDef[]
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVehicle, incidents, cities, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -166,10 +168,15 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
   const stopMarkersRef = useRef<maplibregl.Marker[]>([])
   const planLayerIdsRef = useRef<string[]>([])
   const planMarkerRef = useRef<maplibregl.Marker[]>([])
+  const journeyMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
+  const journeyVehiclesRef = useRef(journeyVehicles)
+  journeyVehiclesRef.current = journeyVehicles
   const mapReadyRef = useRef(false)
   const incidentLayerIdsRef = useRef<string[]>([])
-  const showRouteShapeRef = useRef<(v: VehiclePosition) => void>(() => {})
+  const showRouteShapeRef = useRef<(v: VehiclePosition, opts?: { delayHighlight?: boolean }) => void>(() => {})
   const onVehicleClickRef = useRef(onVehicleClick)
+  const vehiclesRef = useRef(vehicles)
+  vehiclesRef.current = vehicles
   const vehicleDotTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
 
@@ -198,7 +205,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
   }, [])
 
   const showRouteShape = useCallback(
-    async (vehicle: VehiclePosition) => {
+    async (vehicle: VehiclePosition, opts?: { delayHighlight?: boolean }) => {
       const map = mapRef.current
       if (!map || !mapReadyRef.current) return
 
@@ -275,7 +282,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
         // If route changed while we were fetching, abort
         if (activeRouteRef.current !== routeKey) return
 
-        const color = MODE_COLORS[vehicle.mode]
+        // Only paint the route red when opened via the delay list — a plain
+        // marker click always shows the route in its normal mode color.
+        const color = opts?.delayHighlight ? '#DC2626' : MODE_COLORS[vehicle.mode]
 
         let stopFeatures: GeoJSON.Feature<GeoJSON.Point>[]
         let lineCoords: [number, number][] = []
@@ -427,6 +436,43 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
       clearRouteShape()
     }
   }, [selectedVehicle, clearRouteShape])
+
+  // Fly to and highlight a vehicle selected externally (e.g. from the issues
+  // panel) — a marker click already draws the route shape itself, so only
+  // trigger it here when the selection didn't originate from that click.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!selectedVehicle || !map || !mapReadyRef.current) return
+
+    const routeKey = `${selectedVehicle.mode}-${selectedVehicle.line}-${selectedVehicle.id}`
+    if (activeRouteRef.current !== routeKey) {
+      showRouteShapeRef.current(selectedVehicle, { delayHighlight: highlightDelay })
+    }
+    // Pan-only (no zoom change) leaves long routes — trains especially — at
+    // whatever wide, city-scale zoom was already active, so the line running
+    // off toward a far-away endpoint dominates the view instead of the
+    // vehicle itself. Zoom in to a close view of the vehicle, but never zoom
+    // out if the user was already closer than that.
+    map.flyTo({
+      center: [selectedVehicle.lng, selectedVehicle.lat],
+      zoom: Math.max(map.getZoom(), 15),
+      duration: 1000,
+    })
+  }, [selectedVehicle, highlightDelay])
+
+  // Ring the selected vehicle's own marker so it's obvious which one the
+  // timetable/route-shape belongs to, without disturbing maplibre's own
+  // position transform on the element.
+  useEffect(() => {
+    markersRef.current.forEach((marker, id) => {
+      const el = marker.getElement()
+      const isSelected = selectedVehicle?.id === id
+      el.style.boxShadow = isSelected
+        ? `0 0 0 3px ${MODE_COLORS[selectedVehicle.mode]}, 0 1px 4px rgba(0,0,0,0.4)`
+        : '0 1px 3px rgba(0,0,0,0.3)'
+      el.style.zIndex = isSelected ? '2' : ''
+    })
+  }, [selectedVehicle, vehicles])
 
   // Initialize map
   useEffect(() => {
@@ -624,6 +670,12 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
     }
   }, [cities])
 
+  // When a route is selected, only its own trips should show on the map —
+  // every other vehicle is noise while you're following one journey.
+  const routeTripIds = selectedRoute
+    ? new Set(selectedRoute.legs.map((l) => l.tripId).filter((id): id is string => !!id))
+    : null
+
   // Update vehicle markers
   useEffect(() => {
     const map = mapRef.current
@@ -632,15 +684,26 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
     const currentIds = new Set<string>()
 
     vehicles
-      .filter((v) => activeModes.includes(v.mode))
+      .filter((v) => activeModes.includes(v.mode) && (!routeTripIds || routeTripIds.has(v.id)))
       .forEach((vehicle) => {
         currentIds.add(vehicle.id)
         const existing = markersRef.current.get(vehicle.id)
 
         if (existing) {
           existing.setLngLat([vehicle.lng, vehicle.lat])
+
+          // Fleet numbers get reassigned across lines/modes throughout the
+          // day — refresh the pill's text/color/tooltip too, not just its
+          // position, or a marker that's been on screen a while can keep
+          // showing whatever line it was first created with.
+          const el = existing.getElement()
+          if (el.textContent !== vehicle.line) el.textContent = vehicle.line
+          el.style.backgroundColor = MODE_COLORS[vehicle.mode]
+          el.title = `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
+
           const arrowEntry = arrowMarkersRef.current.get(vehicle.id)
           if (arrowEntry) {
+            arrowEntry.getElement().style.borderBottomColor = MODE_COLORS[vehicle.mode]
             const pillWidth = Math.max(18, vehicle.line.length * 7 + 8)
             const offsetDist = Math.max(pillWidth / 2, 11) + 4
             const rad = (vehicle.heading * Math.PI) / 180
@@ -673,7 +736,11 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
 
           el.addEventListener('click', (e) => {
             e.stopPropagation()
-            showRouteShapeRef.current(vehicle)
+            // The vehicle closed over here is a snapshot from marker creation
+            // time — this marker gets repositioned in place on every poll, so
+            // look up the current position instead of clicking a stale one.
+            const current = vehiclesRef.current?.find((v) => v.id === vehicle.id) ?? vehicle
+            showRouteShapeRef.current(current)
           })
 
           const marker = new maplibregl.Marker({ element: el })
@@ -734,7 +801,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
     // Feed vehicle positions into the cluster source
     if (map.getSource(VEHICLE_CLUSTER_SOURCE)) {
       const features: GeoJSON.Feature<GeoJSON.Point>[] = vehicles
-        .filter((v) => activeModes.includes(v.mode))
+        .filter((v) => activeModes.includes(v.mode) && (!routeTripIds || routeTripIds.has(v.id)))
         .map((v) => ({
           type: 'Feature' as const,
           properties: { vehicleId: v.id },
@@ -745,7 +812,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
         features,
       })
     }
-  }, [vehicles, activeModes, showRouteShape])
+  }, [vehicles, activeModes, showRouteShape, selectedRoute])
 
   // Draw planned route on map
   useEffect(() => {
@@ -767,6 +834,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
       planLayerIdsRef.current = []
       planMarkerRef.current.forEach((m) => m.remove())
       planMarkerRef.current = []
+      journeyMarkersRef.current.forEach((m) => m.remove())
+      journeyMarkersRef.current.clear()
     }
 
     const draw = () => {
@@ -862,10 +931,14 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
           data: { type: 'FeatureCollection', features: stopFeatures },
         })
 
+        // Intermediate stops are only useful once you're zoomed in close enough
+        // to actually be near them — showing every stop on the overview fit is
+        // just clutter. Start/end (A/B markers below) always stay visible.
         map.addLayer({
           id: PLAN_STOPS_LAYER,
           type: 'circle',
           source: PLAN_STOPS_SOURCE,
+          minzoom: 14,
           paint: {
             'circle-radius': 5,
             'circle-color': '#ffffff',
@@ -878,6 +951,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
           id: PLAN_STOPS_LABEL_LAYER,
           type: 'symbol',
           source: PLAN_STOPS_SOURCE,
+          minzoom: 15,
           layout: {
             'text-field': ['get', 'name'],
             'text-size': 12,
@@ -944,19 +1018,55 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
         planMarkerRef.current.push(bMarker)
       }
 
-      // Fit map to show the entire route
+      // The actual live vehicle(s) running this journey's legs — a bigger,
+      // pulsing marker so "where's my bus" is answered at a glance instead of
+      // hunting for it among every other vehicle on the map.
+      for (const jv of journeyVehiclesRef.current || []) {
+        const el = document.createElement('div')
+        el.className = 'journey-vehicle-marker'
+        el.style.setProperty('--pulse-color', `${MODE_COLORS[jv.mode]}99`)
+        el.style.minWidth = '28px'
+        el.style.height = '28px'
+        el.style.padding = '0 6px'
+        el.style.borderRadius = '14px'
+        el.style.backgroundColor = MODE_COLORS[jv.mode]
+        el.style.border = '3px solid white'
+        el.style.display = 'flex'
+        el.style.alignItems = 'center'
+        el.style.justifyContent = 'center'
+        el.style.color = 'white'
+        el.style.fontSize = '12px'
+        el.style.fontWeight = '800'
+        el.style.fontFamily = 'system-ui, sans-serif'
+        el.style.whiteSpace = 'nowrap'
+        el.textContent = jv.line
+        el.title = `Your ${jv.mode} ${jv.line} → ${jv.destination}`
+
+        const marker = new maplibregl.Marker({ element: el }).setLngLat([jv.lng, jv.lat]).addTo(map)
+        journeyMarkersRef.current.set(jv.id, marker)
+      }
+
+      // Fit map to show the entire route (and the live vehicle(s) on it) —
+      // top padding is measured from the actual floating search/results UI
+      // instead of a guessed constant, so the route never ends up hidden
+      // behind it, especially on phone where that panel's height varies a lot.
       const allCoords: [number, number][] = []
       selectedRoute.legs.forEach((leg) => {
         if (leg.legGeometry?.points) {
           allCoords.push(...decodePolyline(leg.legGeometry.points))
         }
       })
+      for (const jv of journeyVehiclesRef.current || []) {
+        allCoords.push([jv.lng, jv.lat])
+      }
       if (allCoords.length > 0) {
         const bounds = allCoords.reduce(
           (b, c) => b.extend(c as [number, number]),
           new maplibregl.LngLatBounds(allCoords[0], allCoords[0]),
         )
-        map.fitBounds(bounds, { padding: { top: 220, bottom: 80, left: 60, right: 60 } })
+        const uiEl = document.getElementById('floating-ui-column')
+        const topPadding = uiEl ? uiEl.getBoundingClientRect().bottom + 16 : 220
+        map.fitBounds(bounds, { padding: { top: topPadding, bottom: 80, left: 60, right: 60 } })
       }
     }
 
@@ -968,6 +1078,15 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
 
     return cleanup
   }, [selectedRoute])
+
+  // Reposition the journey's live vehicle marker(s) in place as GPS/schedule
+  // data refreshes — deliberately separate from the draw effect above so a
+  // routine position update doesn't also re-fit/re-center the camera.
+  useEffect(() => {
+    for (const jv of journeyVehicles || []) {
+      journeyMarkersRef.current.get(jv.id)?.setLngLat([jv.lng, jv.lat])
+    }
+  }, [journeyVehicles])
 
   // Incident overlay effect
   useEffect(() => {
@@ -992,7 +1111,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
     const fetchRouteShape = async (
       routeName: string,
     ): Promise<{ patterns: RouteShapePattern[] } | null> => {
-      for (const mode of ['bus', 'tram', 'train', 'ferry', 'trolleybus']) {
+      for (const mode of ['bus', 'tram', 'train', 'ferry', 'trolleybus', 'nightbus']) {
         const res = await fetch(
           `/api/route-shape?line=${encodeURIComponent(routeName)}&mode=${mode}`,
         )

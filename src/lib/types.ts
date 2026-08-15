@@ -1,4 +1,4 @@
-export type TransportMode = 'bus' | 'tram' | 'train' | 'ferry' | 'trolleybus'
+export type TransportMode = 'bus' | 'tram' | 'train' | 'ferry' | 'trolleybus' | 'nightbus'
 
 export interface VehiclePosition {
   id: string
@@ -30,8 +30,6 @@ export interface RouteLeg {
   tripId?: string
   intermediateStops?: LegPlace[]
   legGeometry?: { points: string } // encoded polyline
-  realtime?: boolean
-  delay?: number // seconds
 }
 
 export interface LegPlace {
@@ -61,6 +59,7 @@ export interface TripStopInfo {
   scheduledArrival: number   // seconds since midnight
   scheduledDeparture: number // seconds since midnight
   status: 'passed' | 'current' | 'upcoming'
+  delaySeconds?: number // absent = no live GPS evidence, NEVER default to 0
 }
 
 export interface SearchFilters {

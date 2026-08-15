@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { X } from 'lucide-react'
 import { VehiclePosition, TripStopInfo } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
+import { LATE_BUFFER_SEC } from '@/lib/delay'
 
 interface TimetablePanelProps {
   vehicle: VehiclePosition
@@ -17,6 +18,7 @@ interface TripStopsResponse {
   mode: string
   stops: TripStopInfo[]
   currentTimeSeconds: number
+  delaySeconds?: number // absent = no live GPS evidence
 }
 
 function formatTime(seconds: number): string {
@@ -45,7 +47,9 @@ function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
 
 export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelProps) {
   const [expanded, setExpanded] = useState(true)
+  const [showAllStops, setShowAllStops] = useState(false)
   const [stops, setStops] = useState<TripStopInfo[] | null>(null)
+  const [delaySeconds, setDelaySeconds] = useState<number | undefined>(undefined)
   const [matchedTripId, setMatchedTripId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,6 +89,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
         .then((result: TripStopsResponse) => {
           if (!cancelled) {
             setStops(result.stops)
+            setDelaySeconds(result.delaySeconds)
             setLoading(false)
             setError(null)
             // Lock in the matched trip so it never flips
@@ -130,28 +135,45 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
   }, [])
 
   const nowSec = getNowSeconds()
-  const visibleStops = useMemo(() => stops ? trimStops(stops) : [], [stops])
+  const trimmedStops = useMemo(() => stops ? trimStops(stops) : [], [stops])
 
   // GPS determines which stop is next (based on where the bus actually is)
   const nextStop = stops?.find((s) => s.status === 'upcoming')
   const currentStop = stops?.find((s) => s.status === 'current')
 
-  // Lateness: GPS says bus hasn't reached the stop yet + schedule says it should have (+ 59s buffer)
-  // No prediction — just facts: is the bus there or not, and is the time past?
-  let arrivalInfo: { minutes: number; late: boolean } | null = null
+  // Compact view: up to 5 stops centered on where the bus is now. Full route is opt-in.
+  const compactStops = useMemo(() => {
+    if (trimmedStops.length <= 5) return trimmedStops
+    const anchorIdx = trimmedStops.findIndex((s) => s.status === 'current' || s.status === 'upcoming')
+    if (anchorIdx === -1) return trimmedStops.slice(-5)
+    const start = Math.max(0, Math.min(anchorIdx - 1, trimmedStops.length - 5))
+    return trimmedStops.slice(start, start + 5)
+  }, [trimmedStops])
+  const visibleStops = showAllStops ? trimmedStops : compactStops
+
+  // scheduledArrival is always the true published schedule (never shifted) —
+  // add delaySeconds back in explicitly to get the live ETA. Lateness itself
+  // comes straight from the server's delaySeconds (GPS position vs original
+  // schedule), not from re-deriving it by comparing times.
+  let arrivalInfo: { minutes: number; late: boolean; hasLiveData: boolean } | null = null
   if (nextStop) {
-    const diff = nextStop.scheduledArrival - nowSec
-    if (diff >= -59) {
-      // Within 59s buffer = on time
-      arrivalInfo = { minutes: Math.max(0, Math.ceil(diff / 60)), late: false }
+    const etaMinutes = Math.max(0, Math.ceil((nextStop.scheduledArrival + (delaySeconds ?? 0) - nowSec) / 60))
+    if (delaySeconds != null && delaySeconds >= LATE_BUFFER_SEC) {
+      arrivalInfo = { minutes: Math.round(delaySeconds / 60), late: true, hasLiveData: true }
     } else {
-      // GPS shows bus isn't at the stop yet AND more than 59s past schedule = late
-      arrivalInfo = { minutes: Math.ceil(Math.abs(diff) / 60), late: true }
+      arrivalInfo = { minutes: etaMinutes, late: false, hasLiveData: delaySeconds != null }
     }
   }
 
+  // Only surface a headline when something's actually wrong — on-time/arriving
+  // is the default expectation and doesn't need announcing.
+  const headline =
+    !currentStop && nextStop && arrivalInfo?.late && arrivalInfo.minutes > 0
+      ? { text: `${arrivalInfo.minutes} min late` }
+      : null
+
   return (
-    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 w-80 max-h-[70vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
+    <div className="absolute bottom-3 left-3 z-50 w-64 max-h-[38vh] sm:max-h-[55vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3 text-white shrink-0"
@@ -187,33 +209,27 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
 
       {/* expanding-contracting */}
       <div
-        className={`flex items-center gap-1 overflow-hidden transition-all duration-200 ${
+        className={`flex flex-col overflow-hidden transition-all duration-200 ${
           expanded ? 'max-h-[70vh]' : 'max-h-0'
         }`}
       >
       
-        {/* Next stop arrival banner — hidden when bus is at a station */}
-        {arrivalInfo && nextStop && !currentStop && (
-          <div className={`px-4 py-2 text-sm font-medium shrink-0 ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-            {arrivalInfo.late && arrivalInfo.minutes > 0 ? (
-              <>
-                <span className="font-bold">{nextStop.name}</span> &mdash; {arrivalInfo.minutes} min late
-              </>
-            ) : arrivalInfo.late ? (
-              <>
-                <span className="font-bold">{nextStop.name}</span> &mdash; on time
-              </>
-            ) : (
-              <>
-                <span className="font-bold">{nextStop.name}</span> &mdash; in {arrivalInfo.minutes} min
-              </>
-            )}
+        {/* Delay status — compact, at the top, no repeated "At X" text */}
+        {!loading && !error && headline && (
+          <div className="px-4 pt-3 pb-1 text-sm font-semibold shrink-0 text-red-600">
+            {headline.text}
           </div>
         )}
-        {currentStop && (
-          <div className="px-4 py-2 text-sm font-medium bg-amber-50 text-amber-700 shrink-0">
-            At <span className="font-bold">{currentStop.name}</span>
-          </div>
+
+        {/* Collapse back to 5 stops without scrolling past the full list first */}
+        {!loading && !error && showAllStops && trimmedStops.length > compactStops.length && (
+          <button
+            type="button"
+            onClick={() => setShowAllStops(false)}
+            className="mx-4 mb-1 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 shrink-0 text-left"
+          >
+            Show fewer stops
+          </button>
         )}
 
         {/* Content */}
@@ -237,7 +253,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
 
                 let minutesAway: number | null = null
                 if (stop.status === 'upcoming') {
-                  const diff = stop.scheduledArrival - nowSec
+                  const diff = stop.scheduledArrival + (stop.delaySeconds ?? 0) - nowSec
                   minutesAway = Math.ceil(diff / 60)
                 }
 
@@ -278,7 +294,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-gray-400">
-                            {formatTime(stop.scheduledArrival)} &rarr; {formatTime(stop.scheduledDeparture)}
+                            {formatTime(stop.scheduledArrival)}
                           </span>
                           {isCurrent && (
                             <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
@@ -286,8 +302,16 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
                             </span>
                           )}
                           {isNextStop && arrivalInfo && (
-                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${arrivalInfo.late && arrivalInfo.minutes > 0 ? 'text-red-700 bg-red-100' : 'text-green-700 bg-green-100'}`}>
-                              {arrivalInfo.late && arrivalInfo.minutes > 0 ? `${arrivalInfo.minutes} min late` : arrivalInfo.late ? 'on time' : `${arrivalInfo.minutes} min`}
+                            <span
+                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                                arrivalInfo.late
+                                  ? 'text-red-700 bg-red-100'
+                                  : arrivalInfo.hasLiveData
+                                    ? 'text-green-700 bg-green-100'
+                                    : 'text-gray-500 bg-gray-100'
+                              }`}
+                            >
+                              {arrivalInfo.late ? `${arrivalInfo.minutes} min late` : `${arrivalInfo.minutes} min`}
                             </span>
                           )}
                           {!isPassed && !isCurrent && !isNextStop && minutesAway !== null && minutesAway > 0 && (
@@ -303,6 +327,16 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
                 )
               })}
             </div>
+          )}
+
+          {!loading && !error && trimmedStops.length > compactStops.length && (
+            <button
+              type="button"
+              onClick={() => setShowAllStops(!showAllStops)}
+              className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-t border-gray-100"
+            >
+              {showAllStops ? 'Show less' : `Show full route (${trimmedStops.length} stops)`}
+            </button>
           )}
         </div>
       </div>

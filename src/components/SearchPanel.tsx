@@ -106,7 +106,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               type="datetime-local"
               value={dateTime}
               onChange={(e) => setDateTime(e.target.value)}
-              className="px-2 py-3 bg-white border border-gray-300 rounded-full text-xs shadow-md"
+              className="px-2 py-3 bg-white border border-gray-300 rounded-full text-base sm:text-xs shadow-md"
             />
             {dateTime && (
               <button

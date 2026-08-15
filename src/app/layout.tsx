@@ -1,5 +1,6 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import './globals.css'
 
 const geistSans = Geist({
@@ -15,6 +16,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'LiveTravel',
   description: 'Public transport route planner for Estonia',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'LiveTravel',
+  },
+  icons: {
+    apple: '/icons/apple-touch-icon.png',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#1D4ED8',
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -24,7 +39,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="et">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ServiceWorkerRegistration />
+        {children}
+      </body>
     </html>
   )
 }

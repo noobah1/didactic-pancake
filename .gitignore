@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# stray local backup copy of the repo — not part of the project
+/Transport app/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

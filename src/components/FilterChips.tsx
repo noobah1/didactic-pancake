@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Bus, BusFront, TramFront, TrainFront, Ship, SlidersHorizontal } from 'lucide-react'
+import { Bus, BusFront, TramFront, TrainFront, Ship, Moon, SlidersHorizontal } from 'lucide-react'
 import { TransportMode } from '@/lib/types'
 import { MODE_LABELS, MODE_COLORS, ALL_MODES } from '@/lib/constants'
 
@@ -11,6 +11,7 @@ const MODE_ICONS: Record<TransportMode, React.ComponentType<{ size?: number }>> 
   train: TrainFront,
   ferry: Ship,
   trolleybus: BusFront,
+  nightbus: Moon,
 }
 
 interface FilterChipsProps {

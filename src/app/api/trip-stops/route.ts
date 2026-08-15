@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
-import { OTP_BASE_URL } from '@/lib/constants'
+import { OTP_BASE_URL, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from '@/lib/constants'
 import { TripStopInfo } from '@/lib/types'
+import { LATE_BUFFER_SEC, computeStatusFromGPS, findBestTrip } from '@/lib/delay'
+import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
 
 // Direct lookup by trip ID — includes pattern geometry for route line
 const TRIP_STOPS_QUERY = `
@@ -24,6 +26,7 @@ query RouteTrips($name: String!, $modes: [Mode!], $date: String!) {
   routes(name: $name, transportModes: $modes) {
     shortName
     mode
+    agency { gtfsId }
     patterns {
       patternGeometry { points }
       tripsForDate(serviceDate: $date) {
@@ -49,6 +52,7 @@ const MODE_MAP: Record<string, string> = {
   train: 'RAIL',
   ferry: 'FERRY',
   trolleybus: 'BUS',
+  nightbus: 'BUS',
 }
 interface GqlStoptime {
   scheduledArrival: number
@@ -64,20 +68,6 @@ interface GqlTrip {
   _patternGeometry?: string // attached during route matching
 }
 
-function getSecondsSinceMidnight(): number {
-  const now = new Date()
-  const parts = now
-    .toLocaleTimeString('en-GB', { timeZone: 'Europe/Tallinn', hour12: false })
-    .split(':')
-  return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
-}
-
-function getTodayDate(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Tallinn' })
-}
-
-const BUFFER_SEC = 59 // grace period before marking late/passed
-
 function computeStatus(
   stoptimes: GqlStoptime[],
   nowSec: number,
@@ -88,9 +78,9 @@ function computeStatus(
 
     let status: 'passed' | 'current' | 'upcoming' = 'upcoming'
 
-    if (nowSec >= dep + BUFFER_SEC) {
+    if (nowSec >= dep + LATE_BUFFER_SEC) {
       status = 'passed'
-    } else if (nowSec >= arr && nowSec < dep + BUFFER_SEC) {
+    } else if (nowSec >= arr && nowSec < dep + LATE_BUFFER_SEC) {
       status = 'current'
     } else if (i > 0) {
       const prevDep = stoptimes[i - 1].scheduledDeparture
@@ -111,157 +101,6 @@ function computeStatus(
   })
 }
 
-// Project point onto line segment, return fraction (0-1) along segment
-function projectOntoSegment(
-  pLat: number, pLon: number,
-  aLat: number, aLon: number,
-  bLat: number, bLon: number,
-): { fraction: number; dist: number } {
-  const dx = bLon - aLon
-  const dy = bLat - aLat
-  const lenSq = dx * dx + dy * dy
-  if (lenSq === 0) return { fraction: 0, dist: distanceMeters(pLat, pLon, aLat, aLon) }
-  let t = ((pLon - aLon) * dx + (pLat - aLat) * dy) / lenSq
-  t = Math.max(0, Math.min(1, t))
-  const projLat = aLat + t * dy
-  const projLon = aLon + t * dx
-  return { fraction: t, dist: distanceMeters(pLat, pLon, projLat, projLon) }
-}
-
-// Use GPS position + schedule time to determine which stops are passed/current/upcoming
-function computeStatusFromGPS(
-  stoptimes: GqlStoptime[],
-  vLat: number,
-  vLng: number,
-  nowSec: number,
-): { stops: TripStopInfo[]; afterStopIndex: number; fraction: number } {
-  // Use time as a hint but search wider — GPS position is the truth
-  let timeSegIdx = -1
-  for (let i = 0; i < stoptimes.length - 1; i++) {
-    const dep = stoptimes[i].scheduledDeparture
-    const nextArr = stoptimes[i + 1].scheduledArrival
-    if (nowSec >= dep && nowSec <= nextArr) { timeSegIdx = i; break }
-    if (nowSec >= stoptimes[i].scheduledArrival && nowSec < dep) { timeSegIdx = Math.max(0, i - 1); break }
-  }
-  if (timeSegIdx < 0 && stoptimes.length >= 2) {
-    const lastDep = stoptimes[stoptimes.length - 1].scheduledDeparture
-    if (nowSec >= lastDep) timeSegIdx = stoptimes.length - 2
-  }
-// Constrain the geometric search to a window around the time-predicted
-  // segment, so the matcher can't lock onto a geometrically-nearer point on a
-  // different part of a looping/overlapping route.
-  const WINDOW = 3 // stops on either side of the time-predicted segment
-  const CLOSE_ENOUGH_M = 300 // if best-in-window is within this, trust it outright
-
-  let searchFrom = 0
-  let searchTo = stoptimes.length - 1
-  if (timeSegIdx >= 0) {
-    searchFrom = Math.max(0, timeSegIdx - WINDOW)
-    searchTo = Math.min(stoptimes.length - 1, timeSegIdx + WINDOW)
-  }
-
-  let bestSegIdx = timeSegIdx >= 0 ? timeSegIdx : 0
-  let bestDist = Infinity
-  let bestFraction = 0
-
-  for (let i = searchFrom; i < searchTo; i++) {
-    const a = stoptimes[i].stop
-    const b = stoptimes[i + 1].stop
-    const proj = projectOntoSegment(vLat, vLng, a.lat, a.lon, b.lat, b.lon)
-    if (proj.dist < bestDist) {
-      bestDist = proj.dist
-      bestSegIdx = i
-      bestFraction = proj.fraction
-    }
-  }
-
-  // Only fall back to a full-route search if the windowed search came up bad
-  // (vehicle genuinely far from where the schedule says it should be — e.g.
-  // real delay/detour — not a matching artifact).
-  if (bestDist > CLOSE_ENOUGH_M) {
-    for (let i = 0; i < stoptimes.length - 1; i++) {
-      if (i >= searchFrom && i < searchTo) continue // already checked
-      const a = stoptimes[i].stop
-      const b = stoptimes[i + 1].stop
-      const proj = projectOntoSegment(vLat, vLng, a.lat, a.lon, b.lat, b.lon)
-      if (proj.dist < bestDist) {
-        bestDist = proj.dist
-        bestSegIdx = i
-        bestFraction = proj.fraction
-      }
-    }
-  }
-
-  // Check if vehicle is very close to a stop (within 150m), constrained to the
-  // same window so a loop line can't snap to the wrong occurrence of a stop
-  let atStopIdx = -1
-  for (let i = searchFrom; i <= searchTo; i++) {
-    const d = distanceMeters(vLat, vLng, stoptimes[i].stop.lat, stoptimes[i].stop.lon)
-    if (d < 150) {
-      atStopIdx = i
-      break
-    }
-  }
-
-  if (atStopIdx >= 0 && Math.abs(atStopIdx - bestSegIdx) <= 1) {
-    bestSegIdx = Math.max(0, atStopIdx - 1)
-    bestFraction = atStopIdx === 0 ? 0 : 1
-  }
-  for (let i = searchFrom; i <= searchTo; i++) {
-    const d = distanceMeters(vLat, vLng, stoptimes[i].stop.lat, stoptimes[i].stop.lon)
-    if (d < 150) {
-      atStopIdx = i
-      break
-    }
-  }
-
-  if (atStopIdx >= 0 && Math.abs(atStopIdx - bestSegIdx) <= 1) {
-    bestSegIdx = Math.max(0, atStopIdx - 1)
-    bestFraction = atStopIdx === 0 ? 0 : 1
-  }
-
-  const stops: TripStopInfo[] = stoptimes.map((st, i) => {
-    let status: 'passed' | 'current' | 'upcoming' = 'upcoming'
-    if (i < bestSegIdx || (i === bestSegIdx && bestFraction > 0.9)) {
-      status = 'passed'
-    } else if (i === bestSegIdx) {
-      status = 'passed'
-    } else if (atStopIdx >= 0 && i === atStopIdx) {
-      status = 'current'
-    }
-    return {
-      name: st.stop.name,
-      lat: st.stop.lat,
-      lng: st.stop.lon,
-      stopId: st.stop.gtfsId,
-      scheduledArrival: st.scheduledArrival,
-      scheduledDeparture: st.scheduledDeparture,
-      status,
-    }
-  })
-
-  // Calculate actual delay based on GPS position vs schedule
-  // Use the next upcoming stop for delay calculation — more accurate
-  const nextStopIdx = bestSegIdx + 1
-  const refStop = nextStopIdx < stoptimes.length ? stoptimes[nextStopIdx] : stoptimes[bestSegIdx]
-  const scheduledTimeSec = refStop.scheduledArrival
-  // Only count delay if vehicle hasn't reached the stop yet
-  const distToNext = nextStopIdx < stoptimes.length 
-    ? distanceMeters(vLat, vLng, stoptimes[nextStopIdx].stop.lat, stoptimes[nextStopIdx].stop.lon)
-    : Infinity
-  const delaySec = distToNext > 100 ? nowSec - scheduledTimeSec : 0
-  const stopsWithDelay: TripStopInfo[] = stops.map((stop, i) => {
-    if (stop.status === 'passed') return stop
-    return {
-      ...stop,
-      scheduledArrival: stop.scheduledArrival + delaySec,
-      scheduledDeparture: stop.scheduledDeparture + delaySec,
-    }
-  })
-
-  return { stops: stopsWithDelay, afterStopIndex: bestSegIdx, fraction: bestFraction }
-}
-
 function buildResponse(
   trip: GqlTrip,
   nowSec: number,
@@ -269,12 +108,15 @@ function buildResponse(
   mode?: string,
   vLat?: number | null,
   vLng?: number | null,
+  hasRealGps?: boolean,
 ) {
   const geometry = trip._patternGeometry || trip.pattern?.patternGeometry?.points || null
 
-  // Use GPS to determine stop status when position is available
-  if (vLat != null && vLng != null && trip.stoptimes.length >= 2) {
-    const { stops, afterStopIndex, fraction } = computeStatusFromGPS(trip.stoptimes, vLat, vLng, nowSec)
+  // Use GPS to determine stop status only when the position is real live GPS
+  // (never for interpolated/scheduled positions — those would report a false
+  // "confirmed on time" delaySeconds of 0 instead of no live evidence at all).
+  if (hasRealGps && vLat != null && vLng != null && trip.stoptimes.length >= 2) {
+    const { stops, afterStopIndex, fraction, delaySeconds } = computeStatusFromGPS(trip.stoptimes, vLat, vLng, nowSec)
     return {
       tripId: trip.gtfsId,
       line: line || trip.route?.shortName || '',
@@ -283,10 +125,11 @@ function buildResponse(
       currentTimeSeconds: nowSec,
       geometry,
       vehiclePosition: { afterStopIndex, fraction },
+      delaySeconds,
     }
   }
 
-  // Time-based for scheduled vehicles (no GPS)
+  // Time-based for scheduled vehicles (no real GPS)
   const stops = computeStatus(trip.stoptimes, nowSec)
   return {
     tripId: trip.gtfsId,
@@ -299,128 +142,6 @@ function buildResponse(
   }
 }
 
-// Haversine distance in meters between two points
-function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000
-  const toRad = (d: number) => (d * Math.PI) / 180
-  const dLat = toRad(lat2 - lat1)
-  const dLon = toRad(lon2 - lon1)
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-// Score a trip by how close the vehicle's GPS position is to where the trip should be right now
-function tripPositionScore(trip: GqlTrip, nowSec: number, vLat: number, vLng: number): number {
-  let bestDist = Infinity
-  let bestTimeDiff = Infinity
-  for (let i = 0; i < trip.stoptimes.length - 1; i++) {
-    const a = trip.stoptimes[i].stop
-    const b = trip.stoptimes[i + 1].stop
-    const proj = projectOntoSegment(vLat, vLng, a.lat, a.lon, b.lat, b.lon)
-    if (proj.dist < bestDist) {
-      bestDist = proj.dist
-      const segStart = trip.stoptimes[i].scheduledDeparture
-      const segEnd = trip.stoptimes[i + 1].scheduledArrival
-      const interpolatedTime = segStart + proj.fraction * (segEnd - segStart)
-      bestTimeDiff = Math.abs(nowSec - interpolatedTime)
-    }
-  }
-  // Distance in meters + a heavy per-second time penalty, so trips sharing
-  // identical geometry are disambiguated by schedule instead of tying at 0.
-  return bestDist + bestTimeDiff * 5
-}
-
-// Calculate heading (degrees) from point A to point B
-function calcHeading(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const dLng = ((lon2 - lon1) * Math.PI) / 180
-  const rLat1 = (lat1 * Math.PI) / 180
-  const rLat2 = (lat2 * Math.PI) / 180
-  const y = Math.sin(dLng) * Math.cos(rLat2)
-  const x = Math.cos(rLat1) * Math.sin(rLat2) - Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLng)
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
-}
-
-// Get the general heading of a trip (first stop to last stop)
-function tripHeading(trip: GqlTrip): number {
-  const first = trip.stoptimes[0].stop
-  const last = trip.stoptimes[trip.stoptimes.length - 1].stop
-  return calcHeading(first.lat, first.lon, last.lat, last.lon)
-}
-
-// Angular difference between two headings (0-180)
-function headingDiff(a: number, b: number): number {
-  const diff = Math.abs(a - b) % 360
-  return diff > 180 ? 360 - diff : diff
-}
-
-// Find the best matching trip from a route's trips for a GPS vehicle
-function findBestTrip(
-  trips: GqlTrip[],
-  nowSec: number,
-  destination?: string | null,
-  vehicleLat?: number | null,
-  vehicleLng?: number | null,
-  vehicleHeading?: number | null,
-): GqlTrip | null {
-  // Filter to trips currently running (between first departure and last arrival)
-  const activeTrips = trips.filter((t) => {
-    if (t.stoptimes.length < 2) return false
-    const firstDep = t.stoptimes[0].scheduledDeparture
-    const lastArr = t.stoptimes[t.stoptimes.length - 1].scheduledArrival
-      || t.stoptimes[t.stoptimes.length - 1].scheduledDeparture
-    return nowSec >= firstDep && nowSec <= lastArr + BUFFER_SEC
-  })
-
-  if (activeTrips.length === 0) return null
-
-  // Step 1: Filter by destination to get the correct direction
-  let directionTrips = activeTrips
-  if (destination) {
-    const destLower = destination.toLowerCase().trim()
-    const matched = activeTrips.filter((t) => {
-      const lastStop = t.stoptimes[t.stoptimes.length - 1].stop.name.toLowerCase()
-      return lastStop === destLower || lastStop.includes(destLower) || destLower.includes(lastStop)
-    })
-    if (matched.length > 0) directionTrips = matched
-  }
-
-  // Step 2: If destination didn't narrow it down, use heading to filter direction
-  if (directionTrips.length === activeTrips.length && vehicleHeading != null && activeTrips.length >= 2) {
-    const withHeading = activeTrips.filter((t) => headingDiff(vehicleHeading, tripHeading(t)) < 90)
-    if (withHeading.length > 0) directionTrips = withHeading
-  }
-
-  // Step 3: Among direction-matched trips, use GPS position to pick the best one
-  if (vehicleLat != null && vehicleLng != null) {
-    let bestTrip = directionTrips[0]
-    let bestDist = Infinity
-    for (const trip of directionTrips) {
-      const dist = tripPositionScore(trip, nowSec, vehicleLat, vehicleLng)
-      if (dist < bestDist) {
-        bestDist = dist
-        bestTrip = trip
-      }
-    }
-    return bestTrip
-  }
-
-  // Step 4: No GPS — pick the trip closest to current time
-  if (directionTrips.length === 1) return directionTrips[0]
-
-  let bestTrip = directionTrips[0]
-  let bestDiff = Infinity
-  for (const trip of directionTrips) {
-    const diff = Math.abs(nowSec - trip.stoptimes[0].scheduledDeparture)
-    if (diff < bestDiff) {
-      bestDiff = diff
-      bestTrip = trip
-    }
-  }
-  return bestTrip
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const tripId = searchParams.get('tripId')
@@ -431,7 +152,7 @@ export async function GET(request: Request) {
   const vehicleLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null
   const vehicleHeading = searchParams.get('heading') ? parseFloat(searchParams.get('heading')!) : null
 
-  const nowSec = getSecondsSinceMidnight()
+  const nowSec = getServiceSeconds()
 
   // Method 1: Direct trip ID lookup (scheduled vehicles)
   if (tripId) {
@@ -457,7 +178,9 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Trip not found' }, { status: 404 })
       }
 
-      return NextResponse.json(buildResponse(trip, nowSec, undefined, undefined, vehicleLat, vehicleLng))
+      // Method 1 positions are interpolated/scheduled, never real GPS —
+      // never claim a confirmed delay for them.
+      return NextResponse.json(buildResponse(trip, nowSec, undefined, undefined, vehicleLat, vehicleLng, false))
     } catch (error) {
       console.error('Failed to fetch trip stops:', error)
       return NextResponse.json({ error: 'Failed to fetch trip stops' }, { status: 502 })
@@ -475,7 +198,7 @@ export async function GET(request: Request) {
     const routeName = mode === 'tram' && !/^T/i.test(line) ? `T${line}` : line
 
     try {
-      const date = getTodayDate()
+      const date = getServiceDate()
       const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -492,10 +215,28 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: data.errors[0].message }, { status: 502 })
       }
 
-      const routes = data.data?.routes || []
-      if (routes.length === 0) {
+      const substringMatches: { shortName: string; mode: string; agency?: { gtfsId: string } | null; patterns: { patternGeometry?: { points: string } | null; tripsForDate: GqlTrip[] }[] }[] =
+        data.data?.routes || []
+      if (substringMatches.length === 0) {
         return NextResponse.json({ error: 'Route not found' }, { status: 404 })
       }
+
+      // OTP's routes(name:) is a substring match, not exact — querying "2"
+      // also returns "20".."28" (anything whose shortName contains "2").
+      // Narrow to an exact (case-insensitive) shortName match first — the
+      // wide substring set is only a fallback for the rare shortName that
+      // doesn't compare equal cleanly (e.g. trailing whitespace in the feed).
+      const exactMatches = substringMatches.filter((r) => r.shortName.toLowerCase() === routeName.toLowerCase())
+      const allRoutes = exactMatches.length > 0 ? exactMatches : substringMatches
+
+      // Method 2 only ever matches a live Tallinn GPS vehicle (bus, tram,
+      // trolleybus, nightbus — nothing else has live GPS) — scope candidates
+      // to Tallinn's own operator so a same-numbered route from an unrelated
+      // town never wins the GPS-position match (see
+      // TALLINN_TRANSPORT_AGENCY_GTFS_ID). Fall back to the unfiltered list
+      // if the agency id ever stops matching anything.
+      const tallinnRoutes = allRoutes.filter((r) => r.agency?.gtfsId === TALLINN_TRANSPORT_AGENCY_GTFS_ID)
+      const routes = tallinnRoutes.length > 0 ? tallinnRoutes : allRoutes
 
       // Collect all trips from all patterns, attaching pattern geometry to each trip
       const allTrips: GqlTrip[] = []
@@ -514,7 +255,8 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'No active trip found for this route' }, { status: 404 })
       }
 
-      return NextResponse.json(buildResponse(bestTrip, nowSec, line, otpMode, vehicleLat, vehicleLng))
+      // Method 2 vehicles are matched from real live GPS positions.
+      return NextResponse.json(buildResponse(bestTrip, nowSec, line, otpMode, vehicleLat, vehicleLng, true))
     } catch (error) {
       console.error('Failed to match trip:', error)
       return NextResponse.json({ error: 'Failed to match trip' }, { status: 502 })

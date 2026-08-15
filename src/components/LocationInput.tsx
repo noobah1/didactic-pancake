@@ -79,7 +79,7 @@ export function LocationInput({
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => results.length > 0 && setShowDropdown(true)}
           placeholder={`${label}: ${placeholder}`}
-          className="w-full px-3 py-3 text-sm focus:outline-none"
+          className="w-full px-3 py-3 text-base sm:text-sm focus:outline-none"
         />
         {allowMyLocation && (
           <button

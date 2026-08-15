@@ -10,10 +10,11 @@ const MODE_TO_OTP: Record<TransportMode, string> = {
   train: 'RAIL',
   ferry: 'FERRY',
   trolleybus: 'BUS',
+  nightbus: 'BUS',
 }
 
 const PLAN_QUERY = `
-query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean) {
+query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean, $banned: InputBanned) {
   plan(
     from: $from,
     to: $to,
@@ -21,7 +22,8 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
     numItineraries: $numItineraries,
     date: $date,
     time: $time,
-    arriveBy: $arriveBy
+    arriveBy: $arriveBy,
+    banned: $banned
   ) {
     itineraries {
       duration
@@ -30,8 +32,8 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
       walkDistance
       legs {
         mode
-        start { scheduledTime estimated { time delay } }
-        end { scheduledTime estimated { time delay } }
+        start { scheduledTime estimated { time } }
+        end { scheduledTime estimated { time } }
         from {
           name
           lat
@@ -50,7 +52,6 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
         route { shortName }
         trip { gtfsId }
         legGeometry { points }
-        realTime
         intermediatePlaces {
           name
           lat
@@ -67,7 +68,7 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
 
 interface GqlTime {
   scheduledTime: string
-  estimated?: { time: string; delay?: number } | null
+  estimated?: { time: string } | null
 }
 
 interface GqlPlace {
@@ -89,7 +90,6 @@ interface GqlLeg {
   route?: { shortName: string } | null
   trip?: { gtfsId: string } | null
   legGeometry?: { points: string } | null
-  realTime?: boolean
   intermediatePlaces?: GqlPlace[] | null
 }
 
@@ -108,6 +108,7 @@ export async function GET(request: Request) {
   const modesParam = searchParams.get('modes')
   const dateTime = searchParams.get('dateTime')
   const arriveBy = searchParams.get('arriveBy') === 'true'
+  const bannedTrips = searchParams.get('bannedTrips')
 
   if (!fromPlace || !toPlace) {
     return NextResponse.json({ error: 'fromPlace and toPlace are required' }, { status: 400 })
@@ -142,6 +143,13 @@ export async function GET(request: Request) {
 
   if (arriveBy) {
     variables.arriveBy = true
+  }
+
+  // "Get alternatives" on a delay warning bans the specific trip(s) running
+  // late instead of just re-issuing the identical query, which would almost
+  // always come back with the exact same top itinerary.
+  if (bannedTrips) {
+    variables.banned = { trips: bannedTrips }
   }
 
   try {
@@ -189,8 +197,6 @@ export async function GET(request: Request) {
           tripId: leg.trip?.gtfsId || undefined,
           intermediateStops: leg.intermediatePlaces?.map(mapPlace) || undefined,
           legGeometry: leg.legGeometry || undefined,
-          realtime: leg.realTime || false,
-          delay: leg.start.estimated?.delay || 0,
         }),
       ),
     }))

@@ -4,6 +4,19 @@ export const OTP_BASE_URL = process.env.OTP_BASE_URL || 'http://localhost:8080'
 export const GPS_FEED_URL = 'https://transport.tallinn.ee/gps.txt'
 export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org'
 
+// Tallinn's bus/tram/trolleybus/nightbus fleet (the only modes with live GPS —
+// see GPS_TYPE_MAP below) is run by a single agency, but the national GTFS
+// feed this OTP graph is built from bundles in dozens of unrelated regional
+// operators too, and low route numbers ("1".."30") are reused nationwide —
+// e.g. shortName "2" alone matches Tallinn's trolleybus 2 AND ~10 other
+// towns' unrelated bus 2. Any OTP route lookup meant to match a live Tallinn
+// GPS vehicle must be scoped to this agency, or it can silently match a
+// same-numbered route from a completely different town — producing wrong
+// delay numbers, a vehicle whose matched trip flips between two unrelated
+// routes, or "no schedule found" when the real match loses a confidence
+// tiebreak against an unrelated look-alike.
+export const TALLINN_TRANSPORT_AGENCY_GTFS_ID = '1:10312960'
+
 export const TALLINN_CENTER = { lat: 59.437, lng: 24.7536 }
 export const DEFAULT_ZOOM = 13
 
@@ -84,18 +97,23 @@ export const POLL_INTERVALS = {
   vehiclePositions: 7_000, // ms
   tripUpdates: 30_000,
   serviceAlerts: 60_000,
+  delays: 20_000,
 }
 
 // Mapping from gps.txt type codes to our transport modes
 // Verified against live feed: type 1 = trolleybus (lines terminate at Kopli/Kadriorg/
 // Kaubamaja/Balti jaam, Tallinn's trolleybus depots), type 2 = bus (majority),
-// type 3 = tram (lines 1-5)
+// type 3 = tram (lines 1-5). Type 7 = night bus, per the official field
+// description published on Tallinn's open-data catalog entry for this feed
+// (transport type 1-trolleybus, 2-bus, 3-tram, 7-night bus) — only runs late
+// night/early morning, so it won't show in every live sample.
 export const GPS_TYPE_MAP: Record<string, TransportMode> = {
   '1': 'trolleybus',
   '2': 'bus',
   '3': 'tram',
   '4': 'train',
   '5': 'ferry',
+  '7': 'nightbus',
 }
 
 export const MODE_COLORS: Record<TransportMode, string> = {
@@ -104,6 +122,7 @@ export const MODE_COLORS: Record<TransportMode, string> = {
   train: '#FF9800',
   ferry: '#9C27B0',
   trolleybus: '#00008B',
+  nightbus: '#263238',
 }
 
 export const MODE_LABELS: Record<TransportMode, string> = {
@@ -112,6 +131,7 @@ export const MODE_LABELS: Record<TransportMode, string> = {
   train: 'Train',
   ferry: 'Ferry',
   trolleybus: 'Trolleybus',
+  nightbus: 'Night bus',
 }
 
-export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry', 'trolleybus']
+export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry', 'trolleybus', 'nightbus']
