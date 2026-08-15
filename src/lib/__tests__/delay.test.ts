@@ -1,4 +1,4 @@
-import { matchVehicleToTrip, findBestTrip, DelayStoptime, DelayTrip } from '../delay'
+import { matchVehicleToTrip, findBestTrip, findVehicleForLeg, DelayStoptime, DelayTrip, RoutePlanLeg, MatchableVehicle } from '../delay'
 
 // Simple 3-stop trip: origin -> mid -> terminus. Stops are placed a couple
 // hundred meters apart along latitude so distance math is easy to reason
@@ -185,5 +185,31 @@ describe('findBestTrip', () => {
     const nowSec = 1000
     const best = findBestTrip([viimsiBoundTrip, oppositeDirectionTrip], nowSec, 'Viimsi')
     expect(best?.gtfsId).toBe('trip-viimsi-bound')
+  })
+})
+
+describe('findVehicleForLeg', () => {
+  it('matches a leg departing more than 20 minutes out when a live vehicle is a clear, close, well-aligned candidate', () => {
+    // Real, reproduced case: bus 41's Humala -> Balti jaam leg, 24-25
+    // minutes out, with a live vehicle already ~2.4km away and heading
+    // almost exactly the right direction (9° off) — an unambiguous match
+    // by any reasonable measure. Used to come back null purely because
+    // ROUTE_PLAN_MATCH_WINDOW_SEC (20 min) cut the leg off before the
+    // distance/heading checks below ever ran, not because no good
+    // candidate existed.
+    const nowMs = Date.now()
+    const departsInMs = 24.5 * 60 * 1000
+    const leg: RoutePlanLeg = {
+      mode: 'bus',
+      route: '41',
+      from: { lat: 59.4295241, lng: 24.6924688 },
+      to: { lat: 59.4410988, lng: 24.740653 },
+      startTime: new Date(nowMs + departsInMs).toISOString(),
+      endTime: new Date(nowMs + departsInMs + 12 * 60 * 1000).toISOString(),
+    }
+    const closeAndAligned: MatchableVehicle = { mode: 'bus', line: '41', lat: 59.43477, lng: 24.73291, heading: 93 }
+    const farAway: MatchableVehicle = { mode: 'bus', line: '41', lat: 59.45609, lng: 24.57743, heading: 325 }
+    const result = findVehicleForLeg(leg, [farAway, closeAndAligned], nowMs)
+    expect(result).toBe(closeAndAligned)
   })
 })

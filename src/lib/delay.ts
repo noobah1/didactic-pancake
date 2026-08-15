@@ -11,8 +11,19 @@ export const LIVE_BANNER_THRESHOLD_SEC = 60
 // the list constantly, defeating the "what's actually wrong right now" purpose.
 export const OVERVIEW_THRESHOLD_SEC = 180
 // How far ahead/behind "now" a route-planner leg can be and still attempt a live
-// delay match — legs further out have no vehicle running yet to match against.
-export const ROUTE_PLAN_MATCH_WINDOW_SEC = 20 * 60
+// delay match. Was 20 min, on the assumption that legs further out have no
+// vehicle running yet to match against — false often enough to matter: a bus
+// finishing its *previous* run is frequently already GPS-visible, confidently
+// close to (and heading toward) where the next trip departs from, well
+// before that departure. Confirmed live: legs 23-25 min out with an obvious,
+// unambiguous nearby candidate (low distance, near-matching heading) still
+// came back with no live position at all, purely because the window cut
+// them off before the distance/heading checks even ran — not because no
+// good candidate existed. findVehicleForLeg's own distance/heading gating
+// (capped regardless of how far out the departure is) is what actually
+// guards against a false match; this window doesn't need to double as a
+// second, cruder version of that same guard.
+export const ROUTE_PLAN_MATCH_WINDOW_SEC = 30 * 60
 // Minimum score gap (distance-meters + time-seconds*5 + heading-degrees*2)
 // between the best and second-best candidate trip for a GPS-vehicle-to-trip
 // match to be trusted. Empirically, a correct match wins by thousands of
