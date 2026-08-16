@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { Star, X } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { TransportMode } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
+import { useFavorites } from '@/hooks/use-favorites'
 
 interface SearchPanelProps {
   onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => void
@@ -24,11 +26,12 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now')
   const [dateTime, setDateTime] = useState('')
   const [pickerVisible, setPickerVisible] = useState(false)
+  const { favorites, addFavorite, removeFavorite, findFavorite } = useFavorites()
 
-  const handleSearch = () => {
-    if (!fromCoords || !toCoords) return
-    const fromPlace = `${fromCoords.lat},${fromCoords.lng}`
-    const toPlace = `${toCoords.lat},${toCoords.lng}`
+  const handleSearch = (from = fromCoords, to = toCoords) => {
+    if (!from || !to) return
+    const fromPlace = `${from.lat},${from.lng}`
+    const toPlace = `${to.lat},${to.lng}`
     onSearch?.(fromPlace, toPlace, modes, dateTime || undefined, timeMode === 'arrive' ? true : undefined)
   }
 
@@ -39,6 +42,18 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     setToCoords(null)
     onClear?.()
   }
+
+  const handleFavoriteClick = (favorite: (typeof favorites)[number]) => {
+    setFromText(favorite.fromName)
+    setToText(favorite.toName)
+    const from = { lat: favorite.fromLat, lng: favorite.fromLng }
+    const to = { lat: favorite.toLat, lng: favorite.toLng }
+    setFromCoords(from)
+    setToCoords(to)
+    handleSearch(from, to)
+  }
+
+  const activeFavorite = fromCoords && toCoords ? findFavorite(fromCoords.lat, fromCoords.lng, toCoords.lat, toCoords.lng) : null
 
   const hasInput = fromText || toText
 
@@ -87,7 +102,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             </button>
           )}
           <button
-            onClick={handleSearch}
+            onClick={() => handleSearch()}
             disabled={!fromCoords || !toCoords}
             className="w-12 h-12 bg-white dark:bg-gray-800 border-2 border-blue-800 dark:border-blue-500 text-blue-800 dark:text-blue-400 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-lg"
             aria-label="Search routes"
@@ -96,8 +111,55 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
           </button>
+          {fromCoords && toCoords && (
+            <button
+              onClick={() => {
+                if (activeFavorite) removeFavorite(activeFavorite.id)
+                else addFavorite(fromText, fromCoords.lat, fromCoords.lng, toText, toCoords.lat, toCoords.lng)
+              }}
+              className="w-12 h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-md"
+              aria-label={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
+              title={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
+            >
+              <Star
+                size={18}
+                fill={activeFavorite ? '#F59E0B' : 'none'}
+                stroke={activeFavorite ? '#F59E0B' : '#6B7280'}
+                strokeWidth={2}
+              />
+            </button>
+          )}
         </div>
       </div>
+      {!hasInput && favorites.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {favorites.map((favorite) => (
+            <div
+              key={favorite.id}
+              className="flex items-center gap-1 pl-3 pr-1 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full shadow-md"
+            >
+              <button
+                type="button"
+                onClick={() => handleFavoriteClick(favorite)}
+                className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-200 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
+              >
+                <Star size={12} fill="#F59E0B" stroke="#F59E0B" />
+                <span className="max-w-[10rem] truncate">{favorite.fromName}</span>
+                <span className="text-gray-400">&rarr;</span>
+                <span className="max-w-[10rem] truncate">{favorite.toName}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => removeFavorite(favorite.id)}
+                aria-label={`Remove favorite ${favorite.fromName} to ${favorite.toName}`}
+                className="p-0.5 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       {/* Departure time selector + city selector */}
       <div className="flex items-center gap-2">
         {pickerVisible ? (

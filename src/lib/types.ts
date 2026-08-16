@@ -75,3 +75,13 @@ export interface SearchFilters {
   modes: TransportMode[]
   departureTime: 'now' | string // ISO timestamp
 }
+
+export interface FavoriteRoute {
+  id: string
+  fromName: string
+  fromLat: number
+  fromLng: number
+  toName: string
+  toLat: number
+  toLng: number
+}
