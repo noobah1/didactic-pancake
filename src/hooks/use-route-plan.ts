@@ -4,12 +4,14 @@ import { RouteResult, TransportMode } from '@/lib/types'
 interface PlanResponse {
   routes: RouteResult[]
   error?: string
+  notice?: string
 }
 
 export function useRoutePlan() {
   const [routes, setRoutes] = useState<RouteResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const search = useCallback(
     async (
@@ -22,6 +24,7 @@ export function useRoutePlan() {
     ) => {
       setLoading(true)
       setError(null)
+      setNotice(null)
 
       try {
         const params = new URLSearchParams({
@@ -41,6 +44,7 @@ export function useRoutePlan() {
           setRoutes([])
         } else {
           setRoutes(data.routes)
+          setNotice(data.notice || null)
         }
       } catch {
         setError('Route planning service unavailable')
@@ -55,7 +59,8 @@ export function useRoutePlan() {
   const clear = useCallback(() => {
     setRoutes([])
     setError(null)
+    setNotice(null)
   }, [])
 
-  return { routes, loading, error, search, clear }
+  return { routes, loading, error, notice, search, clear }
 }

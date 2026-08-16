@@ -11,12 +11,13 @@ interface RouteResultsProps {
   routes: RouteResult[]
   loading: boolean
   error: string | null
+  notice?: string | null
   selectedId: string | null
   onSelect: (id: string | null) => void
   delayVehicles?: DelayedVehicle[]
 }
 
-export function RouteResults({ routes, loading, error, selectedId, onSelect, delayVehicles }: RouteResultsProps) {
+export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, delayVehicles }: RouteResultsProps) {
   const [sortBy, setSortBy] = useState<SortMode>('duration')
 
   if (loading) {
@@ -58,6 +59,11 @@ export function RouteResults({ routes, loading, error, selectedId, onSelect, del
           </div>
         )}
       </div>
+      {notice && (
+        <div className="mx-3 mb-2 px-2.5 py-1.5 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-xs">
+          {notice}
+        </div>
+      )}
       <div className="flex flex-col gap-2 px-3 pb-3 overflow-y-auto">
       {sorted.map((route) => (
         <RouteCard

@@ -60,7 +60,7 @@ function HomeContent() {
   const testAlerts = searchParams.get('test_alerts') === '1'
 
   const vehicleData = useVehicles(activeModes, activeCities)
-  const { routes, loading, error, search, clear } = useRoutePlan()
+  const { routes, loading, error, notice, search, clear } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
   const delayData = useDelays()
 
@@ -323,6 +323,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
               routes={routes}
               loading={loading}
               error={error}
+              notice={notice}
               selectedId={selectedRouteId}
               onSelect={setSelectedRouteId}
               delayVehicles={delayData.data?.vehicles}
