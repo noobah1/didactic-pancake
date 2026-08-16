@@ -3,6 +3,11 @@ import { TransportMode } from './types'
 export const OTP_BASE_URL = process.env.OTP_BASE_URL || 'http://localhost:8080'
 export const GPS_FEED_URL = 'https://transport.tallinn.ee/gps.txt'
 export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org'
+// Elron's own real-time trains, converted to GTFS-RT by the Transitous
+// project (crowdsourcing.transitous.org) — not published by Elron itself, so
+// treat it as lower-reliability than Tallinn's own feed above: it can change
+// format or go dark without notice.
+export const ELRON_VEHICLE_POSITIONS_URL = 'https://jbb.ghsq.de/gtfs/elron/VehiclePositions'
 
 // Tallinn's bus/tram/trolleybus/nightbus fleet (the only modes with live GPS —
 // see GPS_TYPE_MAP below) is run by a single agency, but the national GTFS
@@ -16,6 +21,16 @@ export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org'
 // routes, or "no schedule found" when the real match loses a confidence
 // tiebreak against an unrelated look-alike.
 export const TALLINN_TRANSPORT_AGENCY_GTFS_ID = '1:10312960'
+
+// Elron's schedule is loaded into the graph twice — once embedded in the
+// national unified feed (agency gtfsId prefix "1:"), once from its own
+// dedicated otp/data/elron.zip (prefix "2:") — confirmed live against the
+// graph: same agency, same routes, different trip counts for today (205 vs
+// 103). elron.zip is committed once and never refreshed by CI (unlike the
+// unified feed, which is re-downloaded weekly — see
+// .github/workflows/build-otp-graph.yml), so it drifts stale; the unified
+// feed's copy is the one that's actually kept current.
+export const ELRON_AGENCY_GTFS_ID = '1:10520953'
 
 export const TALLINN_CENTER = { lat: 59.437, lng: 24.7536 }
 export const DEFAULT_ZOOM = 13

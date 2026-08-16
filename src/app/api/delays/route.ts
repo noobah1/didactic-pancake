@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server'
-import { GPS_FEED_URL, OTP_BASE_URL, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from '@/lib/constants'
+import { transit_realtime } from 'gtfs-realtime-bindings'
+import {
+  GPS_FEED_URL,
+  OTP_BASE_URL,
+  TALLINN_TRANSPORT_AGENCY_GTFS_ID,
+  ELRON_VEHICLE_POSITIONS_URL,
+  ELRON_AGENCY_GTFS_ID,
+} from '@/lib/constants'
 import { parseGpsFeed } from '@/lib/parse-gps'
 import { findBestTrip, matchVehicleToTrip, distanceMeters } from '@/lib/delay'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
@@ -24,21 +31,23 @@ const RESULT_CACHE_TTL = 8_000
 // match is unreliable for both, not just one of them.
 const SAME_TRIP_MAX_SPREAD_M = 500
 
-// Only bus/tram/trolleybus/nightbus have any live GPS signal (Tallinn feed) —
-// train and ferry never enter this endpoint, which alone guarantees they're
-// never shown as "on time" anywhere that consumes this data.
-type GpsMode = 'bus' | 'tram' | 'trolleybus' | 'nightbus'
+// bus/tram/trolleybus/nightbus have live GPS via Tallinn's own feed; train via
+// Elron's (unofficial, see ELRON_VEHICLE_POSITIONS_URL). Ferry never enters
+// this endpoint — no real-time source exists for it — which alone guarantees
+// it's never shown as "on time" anywhere that consumes this data.
+type GpsMode = 'bus' | 'tram' | 'trolleybus' | 'nightbus' | 'train'
 
 // Tallinn's unified GTFS feed tags trolleybus/night-bus routes with GTFS mode
 // BUS (no TROLLEYBUS route_type exists in the data, and night buses aren't a
 // distinct GTFS route_type at all — just a night-only service calendar) —
 // same mapping trip-stops/route.ts already uses. So the bulk schedule query
-// below only needs BUS + TRAM.
+// below only needs BUS + TRAM (+ RAIL, for Elron).
 const VEHICLE_MODE_TO_OTP: Record<GpsMode, string> = {
   bus: 'BUS',
   tram: 'TRAM',
   trolleybus: 'BUS',
   nightbus: 'BUS',
+  train: 'RAIL',
 }
 
 const SCHEDULE_QUERY = `
@@ -59,6 +68,21 @@ query BusTramTrips($date: String!) {
     }
   }
   tram: routes(transportModes: [TRAM]) {
+    shortName
+    mode
+    agency { gtfsId }
+    patterns {
+      tripsForDate(serviceDate: $date) {
+        gtfsId
+        stoptimes {
+          scheduledDeparture
+          scheduledArrival
+          stop { name lat lon }
+        }
+      }
+    }
+  }
+  rail: routes(transportModes: [RAIL]) {
     shortName
     mode
     agency { gtfsId }
@@ -165,15 +189,25 @@ async function fetchScheduleData(): Promise<GqlRoute[]> {
   const data = await response.json()
   if (data.errors?.length) return scheduleCache?.data || []
 
-  const allRoutes: GqlRoute[] = [...(data.data?.bus || []), ...(data.data?.tram || [])]
-  // Every vehicle this endpoint matches comes from Tallinn's live GPS feed —
-  // scope candidates to Tallinn's own operator so a same-numbered route from
-  // an unrelated town never wins the match (see TALLINN_TRANSPORT_AGENCY_GTFS_ID).
-  // Fall back to the unfiltered list if the agency id ever stops matching
-  // anything (e.g. a future graph rebuild renumbers it) instead of silently
-  // returning zero candidates for every route.
-  const tallinnRoutes = allRoutes.filter((r) => r.agency?.gtfsId === TALLINN_TRANSPORT_AGENCY_GTFS_ID)
-  const routes = tallinnRoutes.length > 0 ? tallinnRoutes : allRoutes
+  const busTramRoutes: GqlRoute[] = [...(data.data?.bus || []), ...(data.data?.tram || [])]
+  // Every bus/tram vehicle this endpoint matches comes from Tallinn's live GPS
+  // feed — scope candidates to Tallinn's own operator so a same-numbered
+  // route from an unrelated town never wins the match (see
+  // TALLINN_TRANSPORT_AGENCY_GTFS_ID). Fall back to the unfiltered list if
+  // the agency id ever stops matching anything (e.g. a future graph rebuild
+  // renumbers it) instead of silently returning zero candidates for every
+  // route.
+  const tallinnRoutes = busTramRoutes.filter((r) => r.agency?.gtfsId === TALLINN_TRANSPORT_AGENCY_GTFS_ID)
+  const scopedBusTram = tallinnRoutes.length > 0 ? tallinnRoutes : busTramRoutes
+
+  const railRoutes: GqlRoute[] = data.data?.rail || []
+  // Same scoping, for Elron (see ELRON_AGENCY_GTFS_ID on why this specific
+  // gtfsId — the fresher of two duplicate copies of Elron's schedule in the
+  // graph — was chosen over the other).
+  const elronRoutes = railRoutes.filter((r) => r.agency?.gtfsId === ELRON_AGENCY_GTFS_ID)
+  const scopedRail = elronRoutes.length > 0 ? elronRoutes : railRoutes
+
+  const routes = [...scopedBusTram, ...scopedRail]
   scheduleCache = { data: routes, timestamp: now }
   return routes
 }
@@ -191,6 +225,52 @@ function buildTripsByLine(routes: GqlRoute[]): Record<string, GqlTrip[]> {
   return map
 }
 
+interface ElronVehicle {
+  id: string
+  lat: number
+  lng: number
+}
+
+let elronGpsCache: { data: ElronVehicle[]; timestamp: number } | null = null
+// Longer than Tallinn's own GPS_CACHE_TTL — this is someone else's
+// community-run mirror (see ELRON_VEHICLE_POSITIONS_URL), not our own
+// infrastructure, so there's no reason to hammer it faster than this
+// endpoint's own RESULT_CACHE_TTL can even make use of.
+const ELRON_GPS_CACHE_TTL = 10_000
+
+// Elron's VehiclePositions feed gives position only — no route, destination,
+// or heading (see the trip matching in computeDelays, which pools every
+// active Elron trip and lets position/time alone pick the right one instead
+// of trying to look one up by line). entity.id is NOT a stable per-vehicle
+// key — it's the tripId plus a per-submission timestamp suffix that changes
+// every poll — so vehicle.trip.tripId is used instead, stable for the
+// duration of that trip.
+async function fetchElronVehicles(): Promise<ElronVehicle[]> {
+  const now = Date.now()
+  if (elronGpsCache && now - elronGpsCache.timestamp < ELRON_GPS_CACHE_TTL) {
+    return elronGpsCache.data
+  }
+  try {
+    const response = await fetch(ELRON_VEHICLE_POSITIONS_URL, { cache: 'no-store' })
+    if (!response.ok) return elronGpsCache?.data || []
+    const buffer = new Uint8Array(await response.arrayBuffer())
+    const feed = transit_realtime.FeedMessage.decode(buffer)
+    const vehicles: ElronVehicle[] = []
+    for (const entity of feed.entity) {
+      const tripId = entity.vehicle?.trip?.tripId
+      const position = entity.vehicle?.position
+      if (!tripId || !position) continue
+      vehicles.push({ id: tripId, lat: position.latitude, lng: position.longitude })
+    }
+    elronGpsCache = { data: vehicles, timestamp: now }
+    return vehicles
+  } catch {
+    // Unofficial third-party feed — never let it take the whole delay board
+    // down; fall back to the last good sample (or empty on first failure).
+    return elronGpsCache?.data || []
+  }
+}
+
 async function computeDelays(): Promise<DelaysResponse> {
   const now = Date.now()
 
@@ -200,13 +280,46 @@ async function computeDelays(): Promise<DelaysResponse> {
     const text = await response.text()
     gpsCache = { data: parseGpsFeed(text), timestamp: now }
   }
-  const gpsVehicles = gpsCache.data.filter(
-    (v): v is VehiclePosition & { mode: GpsMode } =>
-      v.mode === 'bus' || v.mode === 'tram' || v.mode === 'trolleybus' || v.mode === 'nightbus',
-  )
+  const elronVehicles = await fetchElronVehicles()
+  const gpsVehicles: (VehiclePosition & { mode: GpsMode })[] = [
+    ...gpsCache.data.filter(
+      (v): v is VehiclePosition & { mode: GpsMode } =>
+        v.mode === 'bus' || v.mode === 'tram' || v.mode === 'trolleybus' || v.mode === 'nightbus',
+    ),
+    // line/destination/heading are unknown for Elron — filled in with
+    // placeholders below and resolved for real after findBestTrip matches a
+    // trip (see the mode === 'train' branch in the loop).
+    ...elronVehicles.map((v) => ({
+      id: v.id,
+      mode: 'train' as const,
+      line: '',
+      destination: '',
+      heading: 0,
+      lat: v.lat,
+      lng: v.lng,
+    })),
+  ]
 
   const routes = await fetchScheduleData()
   const tripsByLine = buildTripsByLine(routes)
+  // Elron's live feed can't tell us which line a train is on (see
+  // fetchElronVehicles), so rather than look trips up per-line like every
+  // other mode, pool every active Elron trip today and let findBestTrip's
+  // position/time scoring alone pick the right one — Elron's lines are
+  // geographically distinct enough (Tallinn–Tartu trains are never near
+  // Tallinn–Pärnu trains) for this to be safe, and its existing confidence
+  // margin/distance floor already refuse an ambiguous match rather than
+  // guess wrong.
+  const railTripPool: GqlTrip[] = []
+  const railTripLine = new Map<string, string>()
+  for (const [key, trips] of Object.entries(tripsByLine)) {
+    if (!key.startsWith('RAIL:')) continue
+    const line = key.slice('RAIL:'.length)
+    for (const trip of trips) {
+      railTripPool.push(trip)
+      railTripLine.set(trip.gtfsId, line)
+    }
+  }
   const nowSec = getServiceSeconds()
 
   const vehicles: DelayedVehicle[] = []
@@ -221,14 +334,23 @@ async function computeDelays(): Promise<DelaysResponse> {
       .filter((p) => now - p.t <= STATIONARY_WINDOW_MS)
     nextPositionHistory.set(gv.id, history)
 
+    const isTrain = gv.mode === 'train'
     const otpMode = VEHICLE_MODE_TO_OTP[gv.mode]
     // Tram route shortNames carry a T-prefix (e.g. "T2") since the GTFS rebuild
     const routeName = gv.mode === 'tram' && !/^T/i.test(gv.line) ? `T${gv.line}` : gv.line
-    const candidates = tripsByLine[`${otpMode}:${routeName}`]
+    const candidates = isTrain ? railTripPool : tripsByLine[`${otpMode}:${routeName}`]
     if (!candidates || candidates.length === 0) continue
 
     const preferredTripId = vehicleTripMemory.get(gv.id) ?? null
-    const bestTrip = findBestTrip(candidates, nowSec, gv.destination, gv.lat, gv.lng, gv.heading, preferredTripId)
+    const bestTrip = findBestTrip(
+      candidates,
+      nowSec,
+      isTrain ? null : gv.destination,
+      gv.lat,
+      gv.lng,
+      isTrain ? null : gv.heading,
+      preferredTripId,
+    )
     if (!bestTrip) continue
     nextTripMemory.set(gv.id, bestTrip.gtfsId)
 
@@ -268,12 +390,18 @@ async function computeDelays(): Promise<DelaysResponse> {
     // the board entirely instead — it reappears once it actually pulls out
     // for a new trip and stops being stationary.
     if (match.nearFinalStop || (pastScheduledEnd && stationary)) continue
+    // Elron gives no line/destination up front — resolve them from the
+    // matched trip itself now that we have one.
+    const line = isTrain ? railTripLine.get(bestTrip.gtfsId) ?? gv.line : gv.line
+    const destination = isTrain
+      ? bestTrip.stoptimes[bestTrip.stoptimes.length - 1].stop.name
+      : gv.destination
     vehicles.push({
       vehicleId: gv.id,
       tripId: bestTrip.gtfsId,
-      line: gv.line,
+      line,
       mode: gv.mode,
-      destination: gv.destination,
+      destination,
       delaySeconds: match.delaySeconds,
       lat: gv.lat,
       lng: gv.lng,
