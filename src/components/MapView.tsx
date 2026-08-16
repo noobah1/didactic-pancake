@@ -1225,10 +1225,16 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
 
       const layerIds: string[] = []
       let routeIndex = 0
+      // One real disruption often affects several routes that share a
+      // corridor (e.g. four regional buses all crossing the same closed
+      // bridge) — draw every affected route's line, but only one warning
+      // icon per actual disruption, not one per (alert, route) pair. That
+      // used to put 4+ overlapping red icons on the map for a single closure,
+      // which is exactly the clutter this is meant to warn about, not add to.
+      const markedAlerts = new Set<ServiceAlert>()
 
       for (const { alert, routeName, patterns } of results) {
         const color = alert.severity === 'severe' ? '#EF4444' : '#D97706'
-        let markerPlaced = false
 
         for (const pattern of patterns) {
           const coords = decodePolyline(pattern.geometry)
@@ -1257,38 +1263,44 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           })
 
           layerIds.push(layerId)
-
-          // Place one warning marker per (alert, route) pair
-          if (!markerPlaced) {
-            markerPlaced = true
-            const mid = coords[Math.floor(coords.length / 2)]
-            const el = document.createElement('div')
-            el.style.width = '28px'
-            el.style.height = '28px'
-            el.style.borderRadius = '50%'
-            el.style.backgroundColor = alert.severity === 'severe' ? '#FEE2E2' : '#FEF3C7'
-            el.style.border = `2px solid ${color}`
-            el.style.display = 'flex'
-            el.style.alignItems = 'center'
-            el.style.justifyContent = 'center'
-            el.style.cursor = 'pointer'
-            el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
-            el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`
-
-            const popup = new maplibregl.Popup({ offset: 15, maxWidth: '250px' }).setHTML(
-              `<div style="padding:4px"><strong style="color:${color}">${escapeHtml(alert.headerText)}</strong>${alert.descriptionText ? `<p style="margin:4px 0 0;font-size:13px;color:#374151">${escapeHtml(alert.descriptionText)}</p>` : ''}<p style="margin:4px 0 0;font-size:11px;color:#6B7280">Affected: ${escapeHtml(routeName)}</p></div>`,
-            )
-
-            const marker = new maplibregl.Marker({ element: el })
-              .setLngLat(mid as [number, number])
-              .setPopup(popup)
-              .addTo(map)
-
-            incidentMarkersRef.current.push(marker)
-          }
-
           routeIndex++
         }
+
+        if (markedAlerts.has(alert)) continue
+        // Prefer the disruption's own real-world location (Tark Tee alerts
+        // carry this — the actual midpoint of the closed/affected road) over
+        // a fallback derived from just this one affected route's shape,
+        // which wouldn't even be the same point for every route sharing the
+        // same disruption.
+        const routeMid = decodePolyline(patterns[0]?.geometry || '')
+        const point: [number, number] | null =
+          alert.lat != null && alert.lng != null
+            ? [alert.lng, alert.lat]
+            : routeMid.length > 0
+              ? (routeMid[Math.floor(routeMid.length / 2)] as [number, number])
+              : null
+        if (!point) continue
+        markedAlerts.add(alert)
+
+        const el = document.createElement('div')
+        el.style.width = '28px'
+        el.style.height = '28px'
+        el.style.borderRadius = '50%'
+        el.style.backgroundColor = alert.severity === 'severe' ? '#FEE2E2' : '#FEF3C7'
+        el.style.border = `2px solid ${color}`
+        el.style.display = 'flex'
+        el.style.alignItems = 'center'
+        el.style.justifyContent = 'center'
+        el.style.cursor = 'pointer'
+        el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
+        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`
+
+        const popup = new maplibregl.Popup({ offset: 15, maxWidth: '250px' }).setHTML(
+          `<div style="padding:4px"><strong style="color:${color}">${escapeHtml(alert.headerText)}</strong>${alert.descriptionText ? `<p style="margin:4px 0 0;font-size:13px;color:#374151">${escapeHtml(alert.descriptionText)}</p>` : ''}<p style="margin:4px 0 0;font-size:11px;color:#6B7280">Affected: ${escapeHtml(alert.affectedRoutes.join(', '))}</p></div>`,
+        )
+
+        const marker = new maplibregl.Marker({ element: el }).setLngLat(point).setPopup(popup).addTo(map)
+        incidentMarkersRef.current.push(marker)
       }
 
       incidentLayerIdsRef.current = layerIds
