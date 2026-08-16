@@ -74,7 +74,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2">
+      <div className="flex gap-4">
         {/* Stacked search boxes */}
         <div className="relative flex-1 flex flex-col gap-2">
           <button
@@ -82,7 +82,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             onClick={handleSwap}
             title="Swap from and to"
             aria-label="Swap from and to"
-            className="absolute top-1/2 right-2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+            className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" />
