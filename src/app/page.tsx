@@ -161,26 +161,47 @@ function HomeContent() {
     setSelectedVehicleDelayed(false)
   }
 
+  // "All" (or none) selected means no city filter is actually active — show
+  // everything nationwide, same as /api/vehicles treats an empty cities param.
+  const showAllCities = activeCities.length === 0 || activeCities.length === CITIES.length
+  // How far a disruption/delayed vehicle can be from a selected city and
+  // still count as belonging to it — wide enough to cover a city's own
+  // fanned-out regional routes, tight enough that another city never bleeds
+  // in (any two of the top-15 cities are 30km+ apart, most far more).
+  // Without this, selecting Tartu still showed Tallinn's own delays/
+  // disruptions mixed in with Tartu's, right alongside every other city's —
+  // impossible to actually read.
+  const CITY_RELEVANCE_RADIUS_M = 30_000
+
   const activeAlerts = useMemo(() => {
     const filtered = (alertData.data?.alerts || []).filter(
       (a) => a.severity !== 'info' && a.affectedRoutes.length > 0,
     )
-    // Located disruptions (Tark Tee) can run into the dozens nationwide —
-    // sort them nearest-first to whatever the user's currently looking at
-    // (their active city filter, Tallinn by default) so the list stays
-    // useful instead of a flat wall of far-away roadworks. Alerts with no
-    // location (OTP-sourced) have nothing to sort by, so they stay put at
-    // the front — they're few and already operator-curated.
-    const reference = activeCities[0] || { lat: TALLINN_CENTER.lat, lng: TALLINN_CENTER.lng }
     const located = filtered.filter((a) => a.lat != null && a.lng != null)
+    // Alerts with no location (OTP-sourced) have nothing to filter/sort by —
+    // they're few and already operator-curated, so they stay in regardless.
     const unlocated = filtered.filter((a) => a.lat == null || a.lng == null)
-    located.sort(
+    const relevant = showAllCities
+      ? located
+      : located.filter((a) =>
+          activeCities.some((c) => distanceMeters(a.lat!, a.lng!, c.lat, c.lng) <= CITY_RELEVANCE_RADIUS_M),
+        )
+    const reference = activeCities[0] || { lat: TALLINN_CENTER.lat, lng: TALLINN_CENTER.lng }
+    relevant.sort(
       (a, b) =>
         distanceMeters(a.lat!, a.lng!, reference.lat, reference.lng) -
         distanceMeters(b.lat!, b.lng!, reference.lat, reference.lng),
     )
-    return [...unlocated, ...located]
-  }, [alertData.data?.alerts, activeCities])
+    return [...unlocated, ...relevant]
+  }, [alertData.data?.alerts, activeCities, showAllCities])
+
+  const activeDelayedVehicles = useMemo(() => {
+    const vehicles = delayData.data?.vehicles || []
+    if (showAllCities) return vehicles
+    return vehicles.filter((v) =>
+      activeCities.some((c) => distanceMeters(v.lat, v.lng, c.lat, c.lng) <= CITY_RELEVANCE_RADIUS_M),
+    )
+  }, [delayData.data?.vehicles, activeCities, showAllCities])
 
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 
@@ -225,7 +246,7 @@ function HomeContent() {
     return found
   }, [selectedRoute, delayData.data?.vehicles, vehicleData.data?.vehicles, nowMs])
 
-  const delayedVehicleCount = (delayData.data?.vehicles || []).filter(
+  const delayedVehicleCount = activeDelayedVehicles.filter(
     (v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC,
   ).length
 
@@ -354,7 +375,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       {/* Issues panel - above the issues button */}
       {showIssues && (
         <IssuesPanel
-          vehicles={delayData.data?.vehicles || []}
+          vehicles={activeDelayedVehicles}
           alerts={activeAlerts}
           onSelectVehicle={handleSelectDelayedVehicle}
           onLocateAlert={setFocusedAlert}
