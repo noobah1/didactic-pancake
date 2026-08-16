@@ -39,6 +39,14 @@ interface Disruption {
 
 interface RouteShape {
   line: string
+  // Regional route numbers are NOT unique nationwide — dozens of unrelated
+  // county operators reuse the same low numbers (confirmed live: route
+  // "334" alone is both a SEBE route near Märjamaa and an unrelated
+  // Hansabuss route starting at Elva, ~150km apart). Carried through so a
+  // matched route can be displayed disambiguated instead of a bare number
+  // that might read as affecting a same-numbered route somewhere else
+  // entirely.
+  agencyName: string
   points: [number, number][] // [lng, lat]
 }
 
@@ -143,11 +151,12 @@ const ROUTE_SHAPES_QUERY = `
 {
   bus: routes(transportModes: [BUS]) {
     shortName
-    agency { gtfsId }
+    agency { gtfsId name }
     patterns { patternGeometry { points } }
   }
   ferry: routes(transportModes: [FERRY]) {
     shortName
+    agency { name }
     patterns { patternGeometry { points } }
   }
 }
@@ -158,7 +167,7 @@ interface GqlPattern {
 }
 interface GqlRoute {
   shortName: string
-  agency?: { gtfsId: string } | null
+  agency?: { gtfsId: string; name: string } | null
   patterns: GqlPattern[]
 }
 
@@ -196,7 +205,9 @@ async function fetchCandidateRouteShapes(): Promise<RouteShape[]> {
           points.push(...decodePolyline(pattern.patternGeometry.points))
         }
       }
-      if (points.length > 0) shapes.push({ line: route.shortName, points })
+      if (points.length > 0) {
+        shapes.push({ line: route.shortName, agencyName: route.agency?.name || 'Unknown operator', points })
+      }
     }
 
     routeShapesCache = { data: shapes, timestamp: now }
@@ -251,6 +262,7 @@ function minDistanceToShape(points: [number, number][], shape: [number, number][
 
 interface RouteChunk {
   line: string
+  agencyName: string
   points: [number, number][]
   bbox: ReturnType<typeof bbox>
 }
@@ -276,7 +288,7 @@ function chunkRouteShapes(shapes: RouteShape[]): RouteChunk[] {
     for (let i = 0; i < route.points.length - 1; i += CHUNK_SIZE) {
       const slice = route.points.slice(i, i + CHUNK_SIZE + 1)
       if (slice.length < 2) continue
-      chunks.push({ line: route.line, points: slice, bbox: bbox(slice) })
+      chunks.push({ line: route.line, agencyName: route.agencyName, points: slice, bbox: bbox(slice) })
     }
   }
   return chunks
@@ -300,15 +312,20 @@ export async function getRoadDisruptionAlerts(): Promise<ServiceAlert[]> {
   const alerts: ServiceAlert[] = []
   for (const d of disruptions) {
     const dBbox = bbox(d.points)
-    const affectedRoutes = new Set<string>()
+    // Keyed by line+agency, not line alone — the same number can be two
+    // unrelated routes from different operators (see RouteShape.agencyName).
+    const affectedRouteKeys = new Set<string>()
+    const affectedRoutes: string[] = []
     for (const chunk of routeChunks) {
-      if (affectedRoutes.has(chunk.line)) continue // already confirmed for this disruption
+      const key = `${chunk.line}|${chunk.agencyName}`
+      if (affectedRouteKeys.has(key)) continue // already confirmed for this disruption
       if (!bboxesOverlap(dBbox, chunk.bbox)) continue
       if (minDistanceToShape(d.points, chunk.points) < MATCH_RADIUS_M) {
-        affectedRoutes.add(chunk.line)
+        affectedRouteKeys.add(key)
+        affectedRoutes.push(`${chunk.line} (${chunk.agencyName})`)
       }
     }
-    if (affectedRoutes.size === 0) continue // nothing a rider would care about
+    if (affectedRoutes.length === 0) continue // nothing a rider would care about
 
     // Midpoint of the affected stretch — good enough for "roughly where is
     // this," which is all a distance-based sort needs.
