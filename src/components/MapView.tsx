@@ -156,10 +156,16 @@ interface MapViewProps {
   highlightDelay?: boolean
   incidents?: ServiceAlert[]
   cities?: CityDef[]
+  // A disruption picked from the issues panel to fly the camera
+  // to — those list it by name (road name, cause), but someone reading
+  // "Nelgi tee: construction" often has no idea where that actually is;
+  // clicking it should show them, the same way selecting a delayed vehicle
+  // already flies the map to it.
+  focusAlert?: ServiceAlert | null
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, focusAlert, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -704,6 +710,13 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       map.fitBounds(bounds, { padding: 80, duration: 1500 })
     }
   }, [cities])
+
+  // Fly to a disruption picked from the issues panel
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !focusAlert || focusAlert.lat == null || focusAlert.lng == null) return
+    map.flyTo({ center: [focusAlert.lng, focusAlert.lat], zoom: 14, duration: 1500 })
+  }, [focusAlert])
 
   // When a route is selected, only its own trips should show on the map —
   // every other vehicle is noise while you're following one journey.

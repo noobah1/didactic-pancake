@@ -15,7 +15,7 @@ import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { TransportMode, VehiclePosition } from '@/lib/types'
+import { TransportMode, VehiclePosition, ServiceAlert } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -55,6 +55,7 @@ function HomeContent() {
   // which has no such trip to hand over.
   const [selectedVehicleInitialTripId, setSelectedVehicleInitialTripId] = useState<string | null>(null)
   const [showIssues, setShowIssues] = useState(false)
+  const [focusedAlert, setFocusedAlert] = useState<ServiceAlert | null>(null)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
 
@@ -267,6 +268,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           highlightDelay={selectedVehicleDelayed}
           incidents={showIssues ? activeAlerts : undefined}
           cities={activeCities}
+          focusAlert={focusedAlert}
           onVehicleClick={handleVehicleClick}
         />
       </ErrorBoundary>
@@ -355,6 +357,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           vehicles={delayData.data?.vehicles || []}
           alerts={activeAlerts}
           onSelectVehicle={handleSelectDelayedVehicle}
+          onLocateAlert={setFocusedAlert}
           onClose={() => setShowIssues(false)}
         />
       )}

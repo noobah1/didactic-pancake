@@ -11,10 +11,13 @@ interface IssuesPanelProps {
   vehicles: DelayedVehicle[]
   alerts: ServiceAlert[]
   onSelectVehicle: (vehicle: DelayedVehicle) => void
+  // Flies the map to a disruption's real location — reading "Nelgi tee:
+  // construction" in a list tells you the road's name, not where it is.
+  onLocateAlert?: (alert: ServiceAlert) => void
   onClose: () => void
 }
 
-export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: IssuesPanelProps) {
+export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onLocateAlert, onClose }: IssuesPanelProps) {
   // Clicking a disruption swaps the whole list for a single full-detail view
   // (prev/next to browse) instead of expanding in place — with dozens of
   // Tark Tee disruptions, an inline accordion still left every other row
@@ -82,7 +85,7 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
                   <button
                     key={alert.id}
                     type="button"
-                    onClick={() => setViewingAlertId(alert.id)}
+                    onClick={() => { setViewingAlertId(alert.id); onLocateAlert?.(alert) }}
                     className="w-full flex items-center gap-2 text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
                   >
                     <span
@@ -121,7 +124,11 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
                       <button
                         type="button"
                         aria-label="Previous disruption"
-                        onClick={() => setViewingAlertId(alerts[(viewingIndex - 1 + alerts.length) % alerts.length].id)}
+                        onClick={() => {
+                          const prev = alerts[(viewingIndex - 1 + alerts.length) % alerts.length]
+                          setViewingAlertId(prev.id)
+                          onLocateAlert?.(prev)
+                        }}
                         className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                       >
                         <ChevronLeft size={16} />
@@ -129,7 +136,11 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
                       <button
                         type="button"
                         aria-label="Next disruption"
-                        onClick={() => setViewingAlertId(alerts[(viewingIndex + 1) % alerts.length].id)}
+                        onClick={() => {
+                          const next = alerts[(viewingIndex + 1) % alerts.length]
+                          setViewingAlertId(next.id)
+                          onLocateAlert?.(next)
+                        }}
                         className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                       >
                         <ChevronRight size={16} />
