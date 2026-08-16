@@ -179,6 +179,15 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   journeyVehiclesRef.current = journeyVehicles
   const mapReadyRef = useRef(false)
   const incidentLayerIdsRef = useRef<string[]>([])
+  // Which alert each drawn incident-line layer belongs to, so the focused
+  // one (picked in the issues panel) can be highlighted and the rest dimmed
+  // — otherwise every disruption's road segment looks identical and you
+  // can't tell which one you just clicked from the "click a disruption"
+  // list, only roughly where it is (the camera flying there isn't enough
+  // when it's flying to a hub with several overlapping lines).
+  const incidentLayerAlertIdRef = useRef<Map<string, string>>(new Map())
+  const focusAlertRef = useRef(focusAlert)
+  focusAlertRef.current = focusAlert
   const showRouteShapeRef = useRef<(v: VehiclePosition, opts?: { delayHighlight?: boolean }) => void>(() => {})
   const highlightDelayRef = useRef(highlightDelay)
   highlightDelayRef.current = highlightDelay
@@ -711,12 +720,40 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     }
   }, [cities])
 
-  // Fly to a disruption picked from the issues panel
+  // Repaints every drawn incident line's opacity/width based on which alert
+  // (if any) is currently focused — called both right after a (re)draw
+  // (below) and whenever the focused alert changes (next effect), so it
+  // stays correct across either triggering it. Deliberately just a paint-
+  // property update on already-drawn layers, not a redraw: cheap, and keeps
+  // this independent of the incident effect's own fetch/redraw cycle.
+  const applyIncidentHighlight = useCallback(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
+    const focused = focusAlertRef.current
+    for (const layerId of incidentLayerIdsRef.current) {
+      if (!map.getLayer(layerId)) continue
+      if (!focused) {
+        map.setPaintProperty(layerId, 'line-opacity', 0.7)
+        map.setPaintProperty(layerId, 'line-width', 6)
+        continue
+      }
+      const isFocused = incidentLayerAlertIdRef.current.get(layerId) === focused.id
+      map.setPaintProperty(layerId, 'line-opacity', isFocused ? 1 : 0.15)
+      map.setPaintProperty(layerId, 'line-width', isFocused ? 9 : 4)
+    }
+  }, [])
+
+  // Fly to a disruption picked from the issues panel, and highlight its
+  // road segment(s) against the rest so it's obvious which one it is —
+  // flying the camera there alone isn't enough at a hub where several
+  // disruptions' lines overlap.
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !focusAlert || focusAlert.lat == null || focusAlert.lng == null) return
+    if (!map) return
+    applyIncidentHighlight()
+    if (!focusAlert || focusAlert.lat == null || focusAlert.lng == null) return
     map.flyTo({ center: [focusAlert.lng, focusAlert.lat], zoom: 14, duration: 1500 })
-  }, [focusAlert])
+  }, [focusAlert, applyIncidentHighlight])
 
   // When a route is selected, only its own trips should show on the map —
   // every other vehicle is noise while you're following one journey.
@@ -1192,6 +1229,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         if (map.getSource(srcId)) map.removeSource(srcId)
       }
       incidentLayerIdsRef.current = []
+      incidentLayerAlertIdRef.current = new Map()
       incidentMarkersRef.current.forEach((m) => m.remove())
       incidentMarkersRef.current = []
     }
@@ -1221,7 +1259,14 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       const fetchTasks = incidents.flatMap((alert) =>
         alert.affectedRoutes.map(async (routeName) => {
           try {
-            const shapeData = await fetchRouteShape(routeName)
+            // affectedRoutes carries the operator name for display (e.g.
+            // "174 (SEBE Aktsiaselts)" — useful in the issues panel when
+            // the same route number runs under different companies), but
+            // /api/route-shape only knows the bare route code and 404s on
+            // anything else — every single lookup was failing on this,
+            // silently, so no incident line has ever actually been drawn.
+            const routeCode = routeName.replace(/\s*\(.*\)\s*$/, '').trim()
+            const shapeData = await fetchRouteShape(routeCode)
             return shapeData ? { alert, routeName, patterns: shapeData.patterns } : null
           } catch {
             return null
@@ -1237,6 +1282,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       if (cancelled) return
 
       const layerIds: string[] = []
+      const layerAlertIds = new Map<string, string>()
       let routeIndex = 0
       // One real disruption often affects several routes that share a
       // corridor (e.g. four regional buses all crossing the same closed
@@ -1276,6 +1322,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           })
 
           layerIds.push(layerId)
+          layerAlertIds.set(layerId, alert.id)
           routeIndex++
         }
 
@@ -1317,6 +1364,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       }
 
       incidentLayerIdsRef.current = layerIds
+      incidentLayerAlertIdRef.current = layerAlertIds
+      applyIncidentHighlight()
     }
 
     if (mapReadyRef.current) {
@@ -1326,7 +1375,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     }
 
     return cleanup
-  }, [incidents])
+  }, [incidents, applyIncidentHighlight])
 
   return <div ref={containerRef} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }} />
 }
