@@ -8,7 +8,6 @@ const logo3 = '/logo3.png'
 import { SearchPanel } from '@/components/SearchPanel'
 import { FilterChips } from '@/components/FilterChips'
 import { RouteResults } from '@/components/RouteResults'
-import { AlertBanner } from '@/components/AlertBanner'
 import { MapView } from '@/components/MapView'
 import { IssuesButton } from '@/components/IssuesButton'
 import { IssuesPanel } from '@/components/IssuesPanel'
@@ -182,24 +181,6 @@ function HomeContent() {
     return [...unlocated, ...located]
   }, [alertData.data?.alerts, activeCities])
 
-  // The banner is a persistent, in-your-face red bar — unlike the issues
-  // panel/map overlay (which someone opens to browse), it shouldn't cycle
-  // through every one of the dozens of nationwide Tark Tee closures just
-  // because one happens to exist somewhere in the country. Only ones
-  // actually near an active city are worth interrupting the view for;
-  // unlocated (OTP-sourced) alerts stay in since they're few and
-  // operator-curated, not regional roadworks noise.
-  const BANNER_RADIUS_M = 40_000
-  const bannerAlerts = useMemo(() => {
-    const references = activeCities.length > 0 ? activeCities : [{ lat: TALLINN_CENTER.lat, lng: TALLINN_CENTER.lng }]
-    return activeAlerts.filter(
-      (a) =>
-        a.lat == null ||
-        a.lng == null ||
-        references.some((c) => distanceMeters(a.lat!, a.lng!, c.lat, c.lng) <= BANNER_RADIUS_M),
-    )
-  }, [activeAlerts, activeCities])
-
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 
   // For the journey you've picked, find the actual live vehicle running each
@@ -299,13 +280,6 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           onClose={() => { setSelectedVehicle(null); setSelectedVehicleInitialTripId(null) }}
           onLateChange={setSelectedVehicleDelayed}
         />
-      )}
-
-      {/* Alert banner - top of viewport */}
-      {bannerAlerts.length > 0 && (
-        <div className="absolute top-0 left-0 right-0 z-40">
-          <AlertBanner alerts={bannerAlerts} />
-        </div>
       )}
 
       {/* Floating UI column - top center. On mobile it spans full width, leaving just
