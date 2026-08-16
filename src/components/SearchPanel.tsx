@@ -85,6 +85,27 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 setToText(name)
                 setToCoords({ lat, lng })
               }}
+              trailing={
+                fromCoords && toCoords ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeFavorite) removeFavorite(activeFavorite.id)
+                      else addFavorite(fromText, fromCoords.lat, fromCoords.lng, toText, toCoords.lat, toCoords.lng)
+                    }}
+                    title={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
+                    aria-label={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
+                    className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
+                  >
+                    <Star
+                      size={18}
+                      fill={activeFavorite ? '#F59E0B' : 'none'}
+                      stroke={activeFavorite ? '#F59E0B' : 'currentColor'}
+                      strokeWidth={2}
+                    />
+                  </button>
+                ) : undefined
+              }
             />
           </div>
         </div>
@@ -111,24 +132,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
           </button>
-          {fromCoords && toCoords && (
-            <button
-              onClick={() => {
-                if (activeFavorite) removeFavorite(activeFavorite.id)
-                else addFavorite(fromText, fromCoords.lat, fromCoords.lng, toText, toCoords.lat, toCoords.lng)
-              }}
-              className="w-12 h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-md"
-              aria-label={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
-              title={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
-            >
-              <Star
-                size={18}
-                fill={activeFavorite ? '#F59E0B' : 'none'}
-                stroke={activeFavorite ? '#F59E0B' : '#6B7280'}
-                strokeWidth={2}
-              />
-            </button>
-          )}
         </div>
       </div>
       {!hasInput && favorites.length > 0 && (

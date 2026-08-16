@@ -10,6 +10,10 @@ interface LocationInputProps {
   onSelect: (name: string, lat: number, lng: number) => void
   onChange: (value: string) => void
   allowMyLocation?: boolean
+  // Rendered in the same row as the input, after it — e.g. the favorite
+  // star toggle, kept next to the field it actually applies to instead of
+  // off in the search panel's separate action-button column.
+  trailing?: React.ReactNode
 }
 
 export function LocationInput({
@@ -19,6 +23,7 @@ export function LocationInput({
   onSelect,
   onChange,
   allowMyLocation,
+  trailing,
 }: LocationInputProps) {
   const [showDropdown, setShowDropdown] = useState(false)
   const [locating, setLocating] = useState(false)
@@ -103,6 +108,7 @@ export function LocationInput({
             )}
           </button>
         )}
+        {trailing}
       </div>
       {locateError && (
         <p className="absolute z-50 w-full mt-1 px-3 py-1.5 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-xs rounded-lg border border-red-200 dark:border-red-800">
