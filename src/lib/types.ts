@@ -53,6 +53,11 @@ export interface ServiceAlert {
   affectedRoutes: string[]
   activePeriodStart?: string
   activePeriodEnd?: string
+  // A representative point for the disruption (e.g. Tark Tee road closures)
+  // so the UI can sort/prioritize by distance to what the user is actually
+  // looking at. Absent for OTP-sourced alerts, which have no single location.
+  lat?: number
+  lng?: number
 }
 
 export interface TripStopInfo {

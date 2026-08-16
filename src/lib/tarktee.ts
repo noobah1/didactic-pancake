@@ -310,6 +310,10 @@ export async function getRoadDisruptionAlerts(): Promise<ServiceAlert[]> {
     }
     if (affectedRoutes.size === 0) continue // nothing a rider would care about
 
+    // Midpoint of the affected stretch — good enough for "roughly where is
+    // this," which is all a distance-based sort needs.
+    const mid = d.points[Math.floor(d.points.length / 2)]
+
     alerts.push({
       id: `tarktee-${d.objectId}`,
       headerText: `${d.roadName}: ${d.cause}`,
@@ -318,6 +322,8 @@ export async function getRoadDisruptionAlerts(): Promise<ServiceAlert[]> {
       affectedRoutes: [...affectedRoutes],
       activePeriodStart: d.dateFrom ? new Date(d.dateFrom).toISOString() : undefined,
       activePeriodEnd: d.dateTo ? new Date(d.dateTo).toISOString() : undefined,
+      lat: mid[1],
+      lng: mid[0],
     })
   }
   return alerts

@@ -17,8 +17,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { TransportMode, VehiclePosition } from '@/lib/types'
-import { ALL_MODES, CITIES, CityDef } from '@/lib/constants'
-import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg } from '@/lib/delay'
+import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
+import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useVehicles } from '@/hooks/use-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
@@ -161,13 +161,26 @@ function HomeContent() {
     setSelectedVehicleDelayed(false)
   }
 
-  const activeAlerts = useMemo(
-    () =>
-      (alertData.data?.alerts || []).filter(
-        (a) => a.severity !== 'info' && a.affectedRoutes.length > 0,
-      ),
-    [alertData.data?.alerts],
-  )
+  const activeAlerts = useMemo(() => {
+    const filtered = (alertData.data?.alerts || []).filter(
+      (a) => a.severity !== 'info' && a.affectedRoutes.length > 0,
+    )
+    // Located disruptions (Tark Tee) can run into the dozens nationwide —
+    // sort them nearest-first to whatever the user's currently looking at
+    // (their active city filter, Tallinn by default) so the list stays
+    // useful instead of a flat wall of far-away roadworks. Alerts with no
+    // location (OTP-sourced) have nothing to sort by, so they stay put at
+    // the front — they're few and already operator-curated.
+    const reference = activeCities[0] || { lat: TALLINN_CENTER.lat, lng: TALLINN_CENTER.lng }
+    const located = filtered.filter((a) => a.lat != null && a.lng != null)
+    const unlocated = filtered.filter((a) => a.lat == null || a.lng == null)
+    located.sort(
+      (a, b) =>
+        distanceMeters(a.lat!, a.lng!, reference.lat, reference.lng) -
+        distanceMeters(b.lat!, b.lng!, reference.lat, reference.lng),
+    )
+    return [...unlocated, ...located]
+  }, [alertData.data?.alerts, activeCities])
 
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 

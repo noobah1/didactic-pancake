@@ -1,6 +1,7 @@
 'use client'
 
-import { X, Navigation } from 'lucide-react'
+import { useState } from 'react'
+import { X, Navigation, ChevronDown, ChevronUp } from 'lucide-react'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -14,6 +15,10 @@ interface IssuesPanelProps {
 }
 
 export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: IssuesPanelProps) {
+  // Accordion, not a checklist — only one disruption's full detail is open
+  // at a time, so browsing dozens of them (Tark Tee) one by one stays a
+  // compact list rather than a wall of expanded description text.
+  const [expandedAlertId, setExpandedAlertId] = useState<string | null>(null)
   const delayedVehicles = vehicles
     .filter((v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC)
     .sort((a, b) => b.delaySeconds - a.delaySeconds)
@@ -66,23 +71,48 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
             )}
             {alerts.length > 0 && (
               <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700 border-t border-gray-100 dark:border-gray-700">
-                {alerts.map((alert) => (
-                  <div key={alert.id} className="px-4 py-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                          alert.severity === 'severe' ? 'bg-red-500' : 'bg-amber-500'
-                        }`}
-                      />
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{alert.headerText}</span>
-                    </div>
-                    {alert.affectedRoutes.length > 0 && (
-                      <span className="text-xs text-gray-400 ml-3">
-                        Lines: {alert.affectedRoutes.join(', ')}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                {alerts.map((alert) => {
+                  const expanded = expandedAlertId === alert.id
+                  return (
+                    <button
+                      key={alert.id}
+                      type="button"
+                      onClick={() => setExpandedAlertId(expanded ? null : alert.id)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            alert.severity === 'severe' ? 'bg-red-500' : 'bg-amber-500'
+                          }`}
+                        />
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200 flex-1 min-w-0 truncate">
+                          {alert.headerText}
+                        </span>
+                        {expanded ? (
+                          <ChevronUp size={12} className="text-gray-400 shrink-0" />
+                        ) : (
+                          <ChevronDown size={12} className="text-gray-400 shrink-0" />
+                        )}
+                      </div>
+                      {alert.affectedRoutes.length > 0 && (
+                        <span className="text-xs text-gray-400 ml-3 block truncate">
+                          Lines: {alert.affectedRoutes.join(', ')}
+                        </span>
+                      )}
+                      {expanded && (
+                        <div className="mt-1.5 ml-3 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                          {alert.descriptionText && <p>{alert.descriptionText}</p>}
+                          {alert.activePeriodEnd && (
+                            <p className="text-gray-400">
+                              Until {new Date(alert.activePeriodEnd).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </>
