@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Navigation, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -15,14 +15,21 @@ interface IssuesPanelProps {
 }
 
 export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: IssuesPanelProps) {
-  // Accordion, not a checklist — only one disruption's full detail is open
-  // at a time, so browsing dozens of them (Tark Tee) one by one stays a
-  // compact list rather than a wall of expanded description text.
-  const [expandedAlertId, setExpandedAlertId] = useState<string | null>(null)
+  // Clicking a disruption swaps the whole list for a single full-detail view
+  // (prev/next to browse) instead of expanding in place — with dozens of
+  // Tark Tee disruptions, an inline accordion still left every other row
+  // visible underneath, which is exactly the "big mess" this avoids.
+  // Tracked by id, not array position — alerts re-poll and can reorder
+  // (Tark Tee's own ordering isn't guaranteed stable between fetches) while
+  // this panel is sitting open, and a raw index would silently start
+  // showing a completely different disruption underneath the user.
+  const [viewingAlertId, setViewingAlertId] = useState<string | null>(null)
   const delayedVehicles = vehicles
     .filter((v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC)
     .sort((a, b) => b.delaySeconds - a.delaySeconds)
   const isEmpty = delayedVehicles.length === 0 && alerts.length === 0
+  const viewingIndex = viewingAlertId != null ? alerts.findIndex((a) => a.id === viewingAlertId) : -1
+  const viewingAlert = viewingIndex >= 0 ? alerts[viewingIndex] : null
 
   return (
     <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col overflow-hidden">
@@ -69,50 +76,94 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onClose }: Issu
                 ))}
               </div>
             )}
-            {alerts.length > 0 && (
+            {alerts.length > 0 && !viewingAlert && (
               <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700 border-t border-gray-100 dark:border-gray-700">
-                {alerts.map((alert) => {
-                  const expanded = expandedAlertId === alert.id
-                  return (
-                    <button
-                      key={alert.id}
-                      type="button"
-                      onClick={() => setExpandedAlertId(expanded ? null : alert.id)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                            alert.severity === 'severe' ? 'bg-red-500' : 'bg-amber-500'
-                          }`}
-                        />
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200 flex-1 min-w-0 truncate">
-                          {alert.headerText}
-                        </span>
-                        {expanded ? (
-                          <ChevronUp size={12} className="text-gray-400 shrink-0" />
-                        ) : (
-                          <ChevronDown size={12} className="text-gray-400 shrink-0" />
-                        )}
-                      </div>
+                {alerts.map((alert) => (
+                  <button
+                    key={alert.id}
+                    type="button"
+                    onClick={() => setViewingAlertId(alert.id)}
+                    className="w-full flex items-center gap-2 text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        alert.severity === 'severe' ? 'bg-red-500' : 'bg-amber-500'
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-200 block truncate">
+                        {alert.headerText}
+                      </span>
                       {alert.affectedRoutes.length > 0 && (
-                        <span className="text-xs text-gray-400 ml-3 block truncate">
+                        <span className="text-xs text-gray-400 block truncate">
                           Lines: {alert.affectedRoutes.join(', ')}
                         </span>
                       )}
-                      {expanded && (
-                        <div className="mt-1.5 ml-3 text-xs text-gray-600 dark:text-gray-300 space-y-1">
-                          {alert.descriptionText && <p>{alert.descriptionText}</p>}
-                          {alert.activePeriodEnd && (
-                            <p className="text-gray-400">
-                              Until {new Date(alert.activePeriodEnd).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
+                    </div>
+                    <ChevronRight size={14} className="text-gray-300 shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {viewingAlert && (
+              <div className="flex flex-col border-t border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                  <button
+                    type="button"
+                    onClick={() => setViewingAlertId(null)}
+                    className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                  >
+                    <ArrowLeft size={13} /> All issues
+                  </button>
+                  {alerts.length > 1 && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span>{viewingIndex + 1}/{alerts.length}</span>
+                      <button
+                        type="button"
+                        aria-label="Previous disruption"
+                        onClick={() => setViewingAlertId(alerts[(viewingIndex - 1 + alerts.length) % alerts.length].id)}
+                        className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Next disruption"
+                        onClick={() => setViewingAlertId(alerts[(viewingIndex + 1) % alerts.length].id)}
+                        className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        viewingAlert.severity === 'severe' ? 'bg-red-500' : 'bg-amber-500'
+                      }`}
+                    />
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                      {viewingAlert.headerText}
+                    </span>
+                  </div>
+                  {viewingAlert.descriptionText && (
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                      {viewingAlert.descriptionText}
+                    </p>
+                  )}
+                  {viewingAlert.affectedRoutes.length > 0 && (
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      Lines: {viewingAlert.affectedRoutes.join(', ')}
+                    </p>
+                  )}
+                  {viewingAlert.activePeriodEnd && (
+                    <p className="mt-1 text-xs text-gray-400">
+                      Until {new Date(viewingAlert.activePeriodEnd).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </>
