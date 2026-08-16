@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
+import { getRoadDisruptionAlerts } from '@/lib/tarktee'
 import { ServiceAlert } from '@/lib/types'
 
 const ALERTS_QUERY = `
@@ -89,7 +90,7 @@ export async function GET(request: Request) {
     const data = await response.json()
     const gqlAlerts: GqlAlert[] = data.data?.alerts || []
 
-    const alerts: ServiceAlert[] = gqlAlerts.map((alert) => ({
+    const otpAlerts: ServiceAlert[] = gqlAlerts.map((alert) => ({
       id: alert.id || String(Math.random()),
       headerText: alert.alertHeaderText || 'Service alert',
       descriptionText: alert.alertDescriptionText || '',
@@ -104,6 +105,12 @@ export async function GET(request: Request) {
         ? new Date(alert.effectiveEndDate * 1000).toISOString()
         : undefined,
     }))
+
+    // Tark Tee is a separate, unofficial-to-this-app third-party source —
+    // never let it take down the existing OTP-sourced alerts.
+    const roadDisruptionAlerts = await getRoadDisruptionAlerts().catch(() => [])
+
+    const alerts: ServiceAlert[] = [...otpAlerts, ...roadDisruptionAlerts]
 
     cache = { data: alerts, timestamp: now }
     return NextResponse.json({ alerts, timestamp: now })
