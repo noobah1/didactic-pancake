@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { RouteResult, TransportMode } from '@/lib/types'
 
 interface PlanResponse {
@@ -51,15 +51,35 @@ function saveStored(state: Omit<StoredState, 'savedAt'>) {
 }
 
 export function useRoutePlan() {
-  const [routes, setRoutes] = useState<RouteResult[]>(() => loadStored()?.routes || [])
+  // Always starts empty — matching what the server rendered — so hydration
+  // never has to reconcile a client-only localStorage read against SSR
+  // output. The stored journey (if any) is applied a moment later in the
+  // mount effect below, purely on the client.
+  const [routes, setRoutes] = useState<RouteResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(() => loadStored()?.notice || null)
-  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(() => loadStored()?.selectedRouteId || null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
+  const isFirstRender = useRef(true)
 
   useEffect(() => {
+    // The mount's own render already matches this (both empty) — saving it
+    // here would just overwrite whatever the hydration effect below is
+    // about to restore, an instant before it gets the chance to.
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     saveStored({ routes, notice, selectedRouteId })
   }, [routes, notice, selectedRouteId])
+
+  useEffect(() => {
+    const stored = loadStored()
+    if (!stored) return
+    setRoutes(stored.routes)
+    setNotice(stored.notice)
+    setSelectedRouteId(stored.selectedRouteId)
+  }, [])
 
   const search = useCallback(
     async (
@@ -111,5 +131,35 @@ export function useRoutePlan() {
     setSelectedRouteId(null)
   }, [])
 
-  return { routes, loading, error, notice, search, clear, selectedRouteId, selectRoute: setSelectedRouteId }
+  // Hydrates a single journey received via a share link — no OTP call
+  // needed, it's already a fully-formed RouteResult, so it goes straight
+  // into the same state a live search would have left behind.
+  const loadSharedRoute = useCallback((route: RouteResult) => {
+    setLoading(false)
+    setError(null)
+    setNotice(null)
+    setRoutes([route])
+    setSelectedRouteId(route.id)
+  }, [])
+
+  const setShareError = useCallback((message: string) => {
+    setLoading(false)
+    setError(message)
+    setNotice(null)
+    setRoutes([])
+    setSelectedRouteId(null)
+  }, [])
+
+  return {
+    routes,
+    loading,
+    error,
+    notice,
+    search,
+    clear,
+    selectedRouteId,
+    selectRoute: setSelectedRouteId,
+    loadSharedRoute,
+    setShareError,
+  }
 }

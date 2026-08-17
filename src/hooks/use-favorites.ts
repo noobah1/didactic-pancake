@@ -88,5 +88,18 @@ export function useFavorites() {
     [favorites, persist],
   )
 
-  return { favorites, addFavorite, removeFavorite, findFavorite }
+  const setReminder = useCallback(
+    (id: string, reminder: { enabled: boolean; time: string; leadMinutes: number }) => {
+      persist(
+        favorites.map((f) =>
+          f.id === id
+            ? { ...f, reminderEnabled: reminder.enabled, reminderTime: reminder.time, reminderLeadMinutes: reminder.leadMinutes }
+            : f,
+        ),
+      )
+    },
+    [favorites, persist],
+  )
+
+  return { favorites, addFavorite, removeFavorite, findFavorite, setReminder }
 }

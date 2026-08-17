@@ -103,4 +103,10 @@ export interface FavoriteRoute {
   toName: string
   toLat: number
   toLng: number
+  // "Leave now" reminder — a push notification some minutes before a usual
+  // leave-by time, independent of the delay-based push in push-checker.ts.
+  // Weekdays only for now (no per-day picker yet).
+  reminderEnabled?: boolean
+  reminderTime?: string // "HH:MM", 24h, Europe/Tallinn wall-clock
+  reminderLeadMinutes?: number // defaults to 10 when unset
 }

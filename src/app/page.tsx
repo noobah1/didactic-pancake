@@ -1,7 +1,7 @@
 'use client'
 import { useJourneyMonitor } from '@/hooks/use-journey-monitor'
 import { DelayBanner } from '@/components/DelayBanner'
-import { useState, useCallback, useMemo, Suspense } from 'react'
+import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 const logo3 = '/logo3.png'
@@ -64,9 +64,38 @@ function HomeContent() {
   const testAlerts = searchParams.get('test_alerts') === '1'
 
   const vehicleData = useVehicles(activeModes, activeCities)
-  const { routes, loading, error, notice, search, clear, selectedRouteId, selectRoute } = useRoutePlan()
+  const { routes, loading, error, notice, search, clear, selectedRouteId, selectRoute, loadSharedRoute, setShareError } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
   const delayData = useDelays()
+
+  // A journey opened from a shared link (see RouteResults' Share button)
+  // arrives as a fully-formed RouteResult, not a search to re-run — pull it
+  // in once on load, then drop the param so it doesn't linger in the URL or
+  // re-fetch on a later refresh (localStorage already has it from here on).
+  const shareId = searchParams.get('share')
+  useEffect(() => {
+    if (!shareId) return
+    let cancelled = false
+    fetch(`/api/share?id=${encodeURIComponent(shareId)}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        if (!cancelled) loadSharedRoute(data.route)
+      })
+      .catch(() => {
+        if (!cancelled) setShareError('This shared journey has expired or could not be found.')
+      })
+      .finally(() => {
+        if (cancelled) return
+        const params = new URLSearchParams(searchParams.toString())
+        params.delete('share')
+        router.replace(`?${params.toString()}`, { scroll: false })
+      })
+    return () => {
+      cancelled = true
+    }
+    // Only ever run for the share id present on first load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareId])
 
   const handleCityToggle = (city: CityDef) => {
     const isActive = activeCities.some((c) => c.id === city.id)

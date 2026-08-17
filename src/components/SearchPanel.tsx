@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, X } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
+import { FavoriteChip } from './FavoriteChip'
 import { TransportMode } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
@@ -29,7 +30,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const [dateTime, setDateTime] = useState('')
   const [pickerVisible, setPickerVisible] = useState(false)
   const [boardText, setBoardText] = useState('')
-  const { favorites, addFavorite, removeFavorite, findFavorite } = useFavorites()
+  const { favorites, addFavorite, removeFavorite, findFavorite, setReminder } = useFavorites()
 
   const handleSearch = (from = fromCoords, to = toCoords) => {
     if (!from || !to) return
@@ -201,29 +202,13 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
       {!hasInput && favorites.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {favorites.map((favorite) => (
-            <div
+            <FavoriteChip
               key={favorite.id}
-              className="flex items-center gap-1 pl-3 pr-1 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full shadow-md"
-            >
-              <button
-                type="button"
-                onClick={() => handleFavoriteClick(favorite)}
-                className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-200 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
-              >
-                <Star size={12} fill="#F59E0B" stroke="#F59E0B" />
-                <span className="max-w-[10rem] truncate">{favorite.fromName}</span>
-                <span className="text-gray-400">&rarr;</span>
-                <span className="max-w-[10rem] truncate">{favorite.toName}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => removeFavorite(favorite.id)}
-                aria-label={`Remove favorite ${favorite.fromName} to ${favorite.toName}`}
-                className="p-0.5 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                <X size={12} />
-              </button>
-            </div>
+              favorite={favorite}
+              onSelect={() => handleFavoriteClick(favorite)}
+              onRemove={() => removeFavorite(favorite.id)}
+              onSetReminder={(reminder) => setReminder(favorite.id, reminder)}
+            />
           ))}
         </div>
       )}

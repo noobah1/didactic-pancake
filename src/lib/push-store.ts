@@ -19,6 +19,10 @@ export interface StoredSubscription {
   // tripId -> when we last pushed about it, so an ongoing delay doesn't
   // re-notify every single check cycle.
   lastNotifiedTripIds: Record<string, number>
+  // favorite id -> the (Europe/Tallinn) date "YYYY-MM-DD" its leave-now
+  // reminder last fired on, so it sends once per day rather than every
+  // check cycle within the notify window.
+  lastReminderDates: Record<string, string>
 }
 
 function readAll(): Record<string, StoredSubscription> {
@@ -45,6 +49,7 @@ export function upsertSubscription(subscription: WebPushSubscription, favorites:
     subscription,
     favorites,
     lastNotifiedTripIds: existing?.lastNotifiedTripIds || {},
+    lastReminderDates: existing?.lastReminderDates || {},
   }
   writeAll(all)
 }
@@ -65,5 +70,14 @@ export function markNotified(endpoint: string, tripId: string, whenMs: number) {
   const entry = all[endpoint]
   if (!entry) return
   entry.lastNotifiedTripIds[tripId] = whenMs
+  writeAll(all)
+}
+
+export function markReminderSent(endpoint: string, favoriteId: string, dateStr: string) {
+  const all = readAll()
+  const entry = all[endpoint]
+  if (!entry) return
+  // Guards a subscriptions.json written before this field existed.
+  entry.lastReminderDates = { ...entry.lastReminderDates, [favoriteId]: dateStr }
   writeAll(all)
 }

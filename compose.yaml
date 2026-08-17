@@ -8,6 +8,7 @@ services:
       NODE_ENV: production
       OTP_BASE_URL: http://otp:8080
       PUSH_DATA_DIR: /data
+      SHARE_DATA_DIR: /share-data
       # Sourced from a .env file next to this compose.yaml on the server —
       # Compose auto-loads it, same as the rest of this project's secrets.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
@@ -16,6 +17,7 @@ services:
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     volumes:
       - ./push-data:/data
+      - ./share-data:/share-data
     ports:
       - 3001:3000
     restart: unless-stopped
