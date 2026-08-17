@@ -1,17 +1,17 @@
-import { OTP_BASE_URL } from '@/lib/constants'
+import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 const TRANSIT_STOPS_QUERY = `
 query {
   rail: routes(transportModes: [RAIL]) {
-    patterns { stops { name lat lon } }
+    patterns { stops { name lat lon gtfsId } }
   }
   ferry: routes(transportModes: [FERRY]) {
-    patterns { stops { name lat lon } }
+    patterns { stops { name lat lon gtfsId } }
   }
   bus: routes(transportModes: [BUS]) {
-    patterns { stops { name lat lon } }
+    patterns { stops { name lat lon gtfsId } }
   }
   tram: routes(transportModes: [TRAM]) {
-    patterns { stops { name lat lon } }
+    patterns { stops { name lat lon gtfsId } }
   }
 }
 `
@@ -20,12 +20,16 @@ interface OtpStop {
   name: string
   lat: number
   lon: number
+  gtfsId: string
 }
 
 interface GeoResult {
   name: string
   lat: number
   lng: number
+  // Only present for an actual transit-stop match (not a plain address) —
+  // the departure board needs OTP's stop id, an address has no such thing.
+  stopId?: string
 }
 
 interface TransitStopsCache {
@@ -57,6 +61,7 @@ async function fetchTransitStops() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: TRANSIT_STOPS_QUERY }),
+      signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
     })
     if (!response.ok) return transitStopsCache
     const data = await response.json()
@@ -129,7 +134,7 @@ async function searchTransitStops(query: string): Promise<GeoResult[]> {
   const add = (stop: OtpStop, label: string) => {
     if (!seen.has(stop.name)) {
       seen.add(stop.name)
-      results.push({ name: `${stop.name} (${label})`, lat: stop.lat, lng: stop.lon })
+      results.push({ name: `${stop.name} (${label})`, lat: stop.lat, lng: stop.lon, stopId: stop.gtfsId })
     }
   }
 
@@ -166,6 +171,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')
   if (!query || query.length < 2) return Response.json({ results: [] })
+  // The departure-board search only ever wants transit stops — an address
+  // has no stopId to look departures up by. Skipping the gazetteer call
+  // there also means it can't stall the response, unlike the general search.
+  if (searchParams.get('type') === 'stop') {
+    return Response.json({ results: (await searchTransitStops(query)).slice(0, 8) })
+  }
   const [stopsResults, addressResults] = await Promise.all([searchTransitStops(query), searchEstonianAddresses(query)])
   return Response.json({ results: [...stopsResults, ...addressResults].slice(0, 8) })
 }

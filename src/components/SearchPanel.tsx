@@ -16,9 +16,11 @@ interface SearchPanelProps {
   onCityToggle?: (city: CityDef) => void
   onCountyToggle?: (countyCities: CityDef[]) => void
   onSetAllCities?: (cities: CityDef[]) => void
+  onViewStopBoard?: (name: string, lat: number, lng: number, stopId: string) => void
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard }: SearchPanelProps) {
+  const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
   const [toText, setToText] = useState('')
   const [fromCoords, setFromCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -26,6 +28,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now')
   const [dateTime, setDateTime] = useState('')
   const [pickerVisible, setPickerVisible] = useState(false)
+  const [boardText, setBoardText] = useState('')
   const { favorites, addFavorite, removeFavorite, findFavorite } = useFavorites()
 
   const handleSearch = (from = fromCoords, to = toCoords) => {
@@ -74,6 +77,41 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
 
   return (
     <div className="flex flex-col gap-2">
+      {onViewStopBoard && (
+        <div className="flex gap-1 self-start bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-full p-0.5 shadow-md border border-gray-300 dark:border-gray-600">
+          <button
+            type="button"
+            onClick={() => setPanelMode('plan')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${panelMode === 'plan' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+          >
+            Plan trip
+          </button>
+          <button
+            type="button"
+            onClick={() => setPanelMode('board')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${panelMode === 'board' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+          >
+            Departures
+          </button>
+        </div>
+      )}
+      {panelMode === 'board' && onViewStopBoard ? (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
+          <LocationInput
+            label="Stop"
+            placeholder="Search for a stop..."
+            value={boardText}
+            onChange={setBoardText}
+            stopsOnly
+            onSelect={(name, lat, lng, stopId) => {
+              if (!stopId) return
+              onViewStopBoard(name, lat, lng, stopId)
+              setBoardText('')
+            }}
+          />
+        </div>
+      ) : (
+      <>
       <div className="flex gap-4">
         {/* Stacked search boxes */}
         <div className="relative flex-1 flex flex-col gap-2">
@@ -239,6 +277,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
         )}
       </div>
+      </>
+      )}
     </div>
   )
 }

@@ -8,7 +8,7 @@
 // ever produce a qualitative "this route has a known disruption right now"
 // flag — Tark Tee has no speed/congestion data, so never treat it as a
 // numeric delay.
-import { OTP_BASE_URL, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from './constants'
+import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, GPS_FEED_TIMEOUT_MS, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from './constants'
 import { decodePolyline } from './decode-polyline'
 import { projectOntoSegment } from './delay'
 import { ServiceAlert } from './types'
@@ -82,6 +82,7 @@ async function queryArcGisLayer(
   })
   const response = await fetch(`${TARKTEE_BASE_URL}/${layer}/MapServer/1/query?${params}`, {
     cache: 'no-store',
+    signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
   })
   if (!response.ok) return []
   const data: ArcGisResponse = await response.json()
@@ -187,6 +188,7 @@ async function fetchCandidateRouteShapes(): Promise<RouteShape[]> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: ROUTE_SHAPES_QUERY }),
       cache: 'no-store',
+      signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
     })
     if (!response.ok) return routeShapesCache?.data || []
     const data = await response.json()

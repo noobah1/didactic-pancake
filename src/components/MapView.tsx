@@ -162,10 +162,14 @@ interface MapViewProps {
   // clicking it should show them, the same way selecting a delayed vehicle
   // already flies the map to it.
   focusAlert?: ServiceAlert | null
+  // A stop picked from the departure-board search — same "fly the camera
+  // there" treatment as focusAlert, so opening the board actually shows
+  // where the stop is instead of leaving the map wherever it already was.
+  focusStop?: { lat: number; lng: number } | null
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, focusAlert, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -611,6 +615,17 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       // Hide individual markers that are inside a cluster
       const updateVisibility = () => {
         if (!map.getSource(VEHICLE_CLUSTER_SOURCE)) return
+        // querySourceFeatures only returns features from tiles that have
+        // already loaded — right after a flyTo/pan into a new area, some
+        // tiles covering the viewport can still be in flight. Treating that
+        // partial result as complete would mark every marker whose tile
+        // hasn't loaded yet as "not found unclustered" and hide it, even
+        // though it's a real, positioned vehicle — that's what was making
+        // markers vanish in specific map areas (ones whose tile happened to
+        // still be loading) rather than only inside actual clusters. Wait
+        // for the source to fully settle; the sourcedata listener below
+        // re-fires this once it does.
+        if (!map.isSourceLoaded(VEHICLE_CLUSTER_SOURCE)) return
         const features = map.querySourceFeatures(VEHICLE_CLUSTER_SOURCE)
         // If source tiles aren't loaded yet, keep current visibility
         if (features.length === 0) return
@@ -754,6 +769,13 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     if (!focusAlert || focusAlert.lat == null || focusAlert.lng == null) return
     map.flyTo({ center: [focusAlert.lng, focusAlert.lat], zoom: 14, duration: 1500 })
   }, [focusAlert, applyIncidentHighlight])
+
+  // Fly to a stop picked from the departure-board search.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !focusStop) return
+    map.flyTo({ center: [focusStop.lng, focusStop.lat], zoom: 16, duration: 1500 })
+  }, [focusStop])
 
   // When a route is selected, only its own trips should show on the map —
   // every other vehicle is noise while you're following one journey.

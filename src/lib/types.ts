@@ -76,6 +76,25 @@ export interface SearchFilters {
   departureTime: 'now' | string // ISO timestamp
 }
 
+export interface StopDeparture {
+  tripId: string
+  line: string
+  mode: TransportMode
+  headsign: string
+  departureEpochSec: number
+  realtime: boolean
+  // Only present when realtime is true — never default to 0, same rule as
+  // TripStopInfo.delaySeconds (absent means no live evidence, not "on time").
+  delaySeconds?: number
+}
+
+export interface StopBoardData {
+  stopName: string
+  lat: number
+  lng: number
+  departures: StopDeparture[]
+}
+
 export interface FavoriteRoute {
   id: string
   fromName: string

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { OTP_BASE_URL, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from '@/lib/constants'
+import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from '@/lib/constants'
 import { TripStopInfo } from '@/lib/types'
 import { LATE_BUFFER_SEC, computeStatusFromGPS, findBestTrip } from '@/lib/delay'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
@@ -101,6 +101,7 @@ async function fetchTallinnRoutes(): Promise<TallinnRouteIndex | null> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: TALLINN_ROUTES_QUERY }),
+      signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
     })
     if (!response.ok) return tallinnRoutesCache
     const data = await response.json()
@@ -163,6 +164,7 @@ async function fetchTripsNationwide(routeName: string, otpMode: string, date: st
       query: ROUTE_TRIPS_QUERY,
       variables: { name: routeName, modes: [otpMode], date },
     }),
+    signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
   })
 
   if (!response.ok) throw new Error(`OTP returned ${response.status}`)
@@ -303,6 +305,7 @@ export async function GET(request: Request) {
           query: TRIP_STOPS_QUERY,
           variables: { tripId },
         }),
+        signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
       })
 
       if (!response.ok) throw new Error(`OTP returned ${response.status}`)
@@ -352,6 +355,7 @@ export async function GET(request: Request) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: buildRoutesByIdQuery(matchedIds), variables: { date } }),
+          signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
         })
         if (!response.ok) throw new Error(`OTP returned ${response.status}`)
         const data = await response.json()

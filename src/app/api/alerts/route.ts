@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { OTP_BASE_URL } from '@/lib/constants'
+import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { getRoadDisruptionAlerts } from '@/lib/tarktee'
 import { ServiceAlert } from '@/lib/types'
 
@@ -81,6 +81,7 @@ export async function GET(request: Request) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: ALERTS_QUERY }),
       cache: 'no-store',
+      signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
     })
 
     if (!response.ok) {

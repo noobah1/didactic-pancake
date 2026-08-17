@@ -55,3 +55,7 @@ otp/data/*.tmp
 # IDE
 .idea/
 otp/graph.obj
+
+# push subscription store — runtime data (compose.yaml mounts this as a
+# volume in production), not part of the project source.
+/push-data/

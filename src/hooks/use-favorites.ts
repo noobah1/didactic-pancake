@@ -1,9 +1,14 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { FavoriteRoute } from '@/lib/types'
 
 const STORAGE_KEY = 'favoriteRoutes'
+// Fired on every persist() so other useFavorites() instances elsewhere in
+// the tree (e.g. use-push-notifications.ts, which needs the latest list to
+// re-sync with the server) notice the change immediately — plain 'storage'
+// events only fire in *other* tabs, never the one that made the write.
+const CHANGE_EVENT = 'favorites-changed'
 // A "same commute" match is by rounded coordinates, not exact equality —
 // re-picking the same stop from search can land a few decimal places off
 // (different geocoder result ordering, a slightly different snap point),
@@ -40,6 +45,17 @@ export function useFavorites() {
   const persist = useCallback((next: FavoriteRoute[]) => {
     setFavorites(next)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(CHANGE_EVENT))
+  }, [])
+
+  useEffect(() => {
+    const onChange = () => setFavorites(readStored())
+    window.addEventListener(CHANGE_EVENT, onChange)
+    window.addEventListener('storage', onChange)
+    return () => {
+      window.removeEventListener(CHANGE_EVENT, onChange)
+      window.removeEventListener('storage', onChange)
+    }
   }, [])
 
   const findFavorite = useCallback(

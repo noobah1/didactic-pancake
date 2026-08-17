@@ -14,8 +14,10 @@ import { IssuesPanel } from '@/components/IssuesPanel'
 import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
+import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { TransportMode, VehiclePosition, ServiceAlert } from '@/lib/types'
+import { NotificationToggle } from '@/components/NotificationToggle'
+import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -25,11 +27,13 @@ import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
 import { useDelayToast } from '@/hooks/use-delay-toast'
 import { useTheme } from '@/hooks/use-theme'
+import { usePushNotifications } from '@/hooks/use-push-notifications'
 
 function HomeContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { preference: themePreference, setPreference: setThemePreference } = useTheme()
+  const { enabled: notificationsEnabled, busy: notificationsBusy, enable: enableNotifications, disable: disableNotifications, supported: pushSupported } = usePushNotifications()
 
   const modesFromUrl = searchParams.get('modes')
   const citiesFromUrl = searchParams.get('cities')
@@ -44,7 +48,6 @@ function HomeContent() {
   const [activeModes, setActiveModes] = useState<TransportMode[]>(
     modesFromUrl ? (modesFromUrl.split(',') as TransportMode[]) : [...ALL_MODES],
   )
-  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
   const [selectedVehicleDelayed, setSelectedVehicleDelayed] = useState(false)
   // The trip the delay board itself already matched this vehicle to, if
@@ -56,11 +59,12 @@ function HomeContent() {
   const [selectedVehicleInitialTripId, setSelectedVehicleInitialTripId] = useState<string | null>(null)
   const [showIssues, setShowIssues] = useState(false)
   const [focusedAlert, setFocusedAlert] = useState<ServiceAlert | null>(null)
+  const [stopBoard, setStopBoard] = useState<StopBoardTarget | null>(null)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
 
   const vehicleData = useVehicles(activeModes, activeCities)
-  const { routes, loading, error, notice, search, clear } = useRoutePlan()
+  const { routes, loading, error, notice, search, clear, selectedRouteId, selectRoute } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
   const delayData = useDelays()
 
@@ -125,12 +129,37 @@ function HomeContent() {
   )
 
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => {
+    setStopBoard(null)
     search(fromPlace, toPlace, modes, dateTime, arriveBy)
   }
 
   const handleClear = () => {
     clear()
-    setSelectedRouteId(null)
+  }
+
+  const handleViewStopBoard = (name: string, lat: number, lng: number, stopId: string) => {
+    clear()
+    setStopBoard({ stopId, name, lat, lng })
+  }
+
+  const handleSelectDeparture = (departure: StopDeparture) => {
+    if (!stopBoard) return
+    // Same trick TimetablePanel/MapView already use for a scheduled (not yet
+    // GPS-tracked) vehicle: an id containing ":" is treated as a direct
+    // OTP tripId lookup rather than a live-GPS line/mode match, so this
+    // opens the full route + stop list exactly like clicking one of those.
+    setSelectedVehicle({
+      id: departure.tripId,
+      mode: departure.mode,
+      line: departure.line,
+      lat: stopBoard.lat,
+      lng: stopBoard.lng,
+      heading: 0,
+      destination: departure.headsign,
+      estimated: true,
+    })
+    setSelectedVehicleInitialTripId(null)
+    setSelectedVehicleDelayed(false)
   }
 
   const handleSelectDelayedVehicle = (vehicle: DelayedVehicle) => {
@@ -290,6 +319,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           incidents={showIssues ? activeAlerts : undefined}
           cities={activeCities}
           focusAlert={focusedAlert}
+          focusStop={stopBoard}
           onVehicleClick={handleVehicleClick}
         />
       </ErrorBoundary>
@@ -313,9 +343,16 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
       >
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} />
         </div>
         <div className="pointer-events-auto mt-8 sm:mt-0">
+          {stopBoard && (
+            <ErrorBoundary
+              fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">Departure board unavailable</div>}
+            >
+              <StopBoard stop={stopBoard} onClose={() => setStopBoard(null)} onSelectDeparture={handleSelectDeparture} />
+            </ErrorBoundary>
+          )}
           <ErrorBoundary
             fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">Route search unavailable</div>}
           >
@@ -325,7 +362,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
               error={error}
               notice={notice}
               selectedId={selectedRouteId}
-              onSelect={setSelectedRouteId}
+              onSelect={selectRoute}
               delayVehicles={delayData.data?.vehicles}
             />
             <DelayBanner
@@ -382,6 +419,17 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           onLocateAlert={setFocusedAlert}
           onClose={() => setShowIssues(false)}
         />
+      )}
+
+      {/* Notification toggle - bottom right, left of the theme toggle */}
+      {pushSupported && (
+        <div className="absolute bottom-6 right-36 z-30 pointer-events-auto">
+          <NotificationToggle
+            enabled={notificationsEnabled}
+            busy={notificationsBusy}
+            onToggle={() => (notificationsEnabled ? disableNotifications() : enableNotifications())}
+          />
+        </div>
       )}
 
       {/* Theme toggle - bottom right, left of the issues button */}

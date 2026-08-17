@@ -7,9 +7,13 @@ interface LocationInputProps {
   label: string
   placeholder: string
   value: string
-  onSelect: (name: string, lat: number, lng: number) => void
+  onSelect: (name: string, lat: number, lng: number, stopId?: string) => void
   onChange: (value: string) => void
   allowMyLocation?: boolean
+  // Restricts search (and results) to transit stops only — used by the
+  // departure-board search, which needs a stopId to look departures up by;
+  // a plain address has no such thing.
+  stopsOnly?: boolean
   // Rendered in the same row as the input, after it — e.g. the favorite
   // star toggle, kept next to the field it actually applies to instead of
   // off in the search panel's separate action-button column.
@@ -23,12 +27,13 @@ export function LocationInput({
   onSelect,
   onChange,
   allowMyLocation,
+  stopsOnly,
   trailing,
 }: LocationInputProps) {
   const [showDropdown, setShowDropdown] = useState(false)
   const [locating, setLocating] = useState(false)
   const [locateError, setLocateError] = useState<string | null>(null)
-  const { results, search, clear } = useGeocode()
+  const { results, search, clear } = useGeocode(stopsOnly)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -47,8 +52,8 @@ export function LocationInput({
     setShowDropdown(true)
   }
 
-  const handleSelect = (result: { name: string; lat: number; lng: number }) => {
-    onSelect(result.name, result.lat, result.lng)
+  const handleSelect = (result: { name: string; lat: number; lng: number; stopId?: string }) => {
+    onSelect(result.name, result.lat, result.lng, result.stopId)
     setShowDropdown(false)
     clear()
   }

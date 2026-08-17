@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { OTP_BASE_URL, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from '@/lib/constants'
+import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from '@/lib/constants'
 
 const ROUTE_SHAPE_QUERY = `
 query RouteShape($name: String!, $modes: [Mode!]) {
@@ -71,6 +71,7 @@ export async function GET(request: Request) {
         query: ROUTE_SHAPE_QUERY,
         variables: { name: routeName, modes: [otpMode] },
       }),
+      signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
     })
 
     if (!response.ok) {

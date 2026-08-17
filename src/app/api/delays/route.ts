@@ -3,6 +3,8 @@ import { transit_realtime } from 'gtfs-realtime-bindings'
 import {
   GPS_FEED_URL,
   OTP_BASE_URL,
+  OTP_FETCH_TIMEOUT_MS,
+  GPS_FEED_TIMEOUT_MS,
   TALLINN_TRANSPORT_AGENCY_GTFS_ID,
   ELRON_VEHICLE_POSITIONS_URL,
   ELRON_AGENCY_GTFS_ID,
@@ -182,6 +184,7 @@ async function fetchScheduleData(): Promise<GqlRoute[]> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: SCHEDULE_QUERY, variables: { date } }),
     cache: 'no-store',
+    signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
   })
 
   if (!response.ok) return scheduleCache?.data || []
@@ -251,7 +254,10 @@ async function fetchElronVehicles(): Promise<ElronVehicle[]> {
     return elronGpsCache.data
   }
   try {
-    const response = await fetch(ELRON_VEHICLE_POSITIONS_URL, { cache: 'no-store' })
+    const response = await fetch(ELRON_VEHICLE_POSITIONS_URL, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
+    })
     if (!response.ok) return elronGpsCache?.data || []
     const buffer = new Uint8Array(await response.arrayBuffer())
     const feed = transit_realtime.FeedMessage.decode(buffer)
@@ -271,11 +277,18 @@ async function fetchElronVehicles(): Promise<ElronVehicle[]> {
   }
 }
 
-async function computeDelays(): Promise<DelaysResponse> {
+// Exported for the push-notification checker (src/lib/push-checker.ts),
+// which calls this directly rather than round-tripping through its own
+// GET handler — same computation, just invoked server-internally instead
+// of over HTTP.
+export async function computeDelays(): Promise<DelaysResponse> {
   const now = Date.now()
 
   if (!gpsCache || now - gpsCache.timestamp > GPS_CACHE_TTL) {
-    const response = await fetch(GPS_FEED_URL, { cache: 'no-store' })
+    const response = await fetch(GPS_FEED_URL, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
+    })
     if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
     const text = await response.text()
     gpsCache = { data: parseGpsFeed(text), timestamp: now }

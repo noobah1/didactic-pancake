@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { GPS_FEED_URL, OTP_BASE_URL } from '@/lib/constants'
+import { GPS_FEED_URL, OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, GPS_FEED_TIMEOUT_MS } from '@/lib/constants'
 import { parseGpsFeed } from '@/lib/parse-gps'
 import { decodePolyline } from '@/lib/decode-polyline'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
@@ -288,6 +288,7 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: SCHEDULED_QUERY, variables: { date } }),
     cache: 'no-store',
+    signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
   })
 
   if (!response.ok) return scheduledCache?.data || []
@@ -373,7 +374,10 @@ export async function GET(request: Request) {
     // Fetch Tallinn live GPS vehicles (only when Tallinn is selected)
     if (includesTallinn) {
       if (!gpsCache || now - gpsCache.timestamp > GPS_CACHE_TTL) {
-        const response = await fetch(GPS_FEED_URL, { cache: 'no-store' })
+        const response = await fetch(GPS_FEED_URL, {
+          cache: 'no-store',
+          signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
+        })
         if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
         const text = await response.text()
         gpsCache = { data: parseGpsFeed(text), timestamp: now }

@@ -4,9 +4,10 @@ interface GeoResult {
   name: string
   lat: number
   lng: number
+  stopId?: string
 }
 
-export function useGeocode() {
+export function useGeocode(stopsOnly = false) {
   const [results, setResults] = useState<GeoResult[]>([])
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -22,7 +23,9 @@ export function useGeocode() {
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`)
+        const params = new URLSearchParams({ q: query })
+        if (stopsOnly) params.set('type', 'stop')
+        const res = await fetch(`/api/geocode?${params}`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
         setResults(data.results || [])
@@ -33,7 +36,7 @@ export function useGeocode() {
         setLoading(false)
       }
     }, 300)
-  }, [])
+  }, [stopsOnly])
 
   const clear = useCallback(() => setResults([]), [])
 

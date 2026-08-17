@@ -35,11 +35,14 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
       ? a.duration - b.duration
       : new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   )
+  // Once a journey is picked, show just that one instead of the whole list
+  // buried underneath it.
+  const visible = selectedId ? sorted.filter((route) => route.id === selectedId) : sorted
 
   return (
     <div className={`flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2 ${selectedId ? 'max-h-[40vh] sm:max-h-[24rem]' : 'max-h-44 sm:max-h-80'}`}>
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Routes</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? 'Your journey' : 'Routes'}</h2>
         {!selectedId && (
           <div className="flex gap-1">
             <button
@@ -65,7 +68,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
         </div>
       )}
       <div className="flex flex-col gap-2 px-3 pb-3 overflow-y-auto">
-      {sorted.map((route) => (
+      {visible.map((route) => (
         <RouteCard
           key={route.id}
           route={route}

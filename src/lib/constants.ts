@@ -2,6 +2,14 @@ import { TransportMode } from './types'
 
 export const OTP_BASE_URL = process.env.OTP_BASE_URL || 'http://localhost:8080'
 export const GPS_FEED_URL = 'https://transport.tallinn.ee/gps.txt'
+// None of the OTP GraphQL calls used to bound how long they'd wait — a slow
+// query (busy interchanges with many overlapping routes/patterns, e.g.
+// Linnahall/Mere puiestee, produce the biggest candidate sets and are the
+// most likely to be slow) just hung the request indefinitely instead of
+// failing fast, which reads to a rider as "the app isn't loading" with no
+// error and no retry, regardless of their own connection speed.
+export const OTP_FETCH_TIMEOUT_MS = 8_000
+export const GPS_FEED_TIMEOUT_MS = 5_000
 export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org'
 // Elron's own real-time trains, converted to GTFS-RT by the Transitous
 // project (crowdsourcing.transitous.org) — not published by Elron itself, so
@@ -113,6 +121,7 @@ export const POLL_INTERVALS = {
   tripUpdates: 30_000,
   serviceAlerts: 60_000,
   delays: 20_000,
+  stopBoard: 20_000, // matches the server-side cache TTL in /api/stop-board
 }
 
 // Mapping from gps.txt type codes to our transport modes
