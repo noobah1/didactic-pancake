@@ -2,26 +2,32 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { StopBoardData, StopDeparture, TransportMode } from '@/lib/types'
 
-const STOP_BOARD_QUERY = `
-query StopBoard($stopId: String!, $numberOfDepartures: Int!) {
-  stop(id: $stopId) {
-    name
-    lat
-    lon
-    stoptimesWithoutPatterns(numberOfDepartures: $numberOfDepartures, omitCanceled: true) {
-      scheduledDeparture
-      realtimeDeparture
-      realtime
-      serviceDay
-      headsign
-      trip {
-        gtfsId
-        route { shortName mode }
-      }
+const STOP_FIELDS = `
+  name
+  lat
+  lon
+  stoptimesWithoutPatterns(numberOfDepartures: $numberOfDepartures, omitCanceled: true) {
+    scheduledDeparture
+    realtimeDeparture
+    realtime
+    serviceDay
+    headsign
+    trip {
+      gtfsId
+      route { shortName mode }
     }
   }
-}
 `
+
+// /api/geocode merges every physical stop sharing a name (separate bus bays,
+// a tram platform across the road, etc.) into one search result carrying all
+// their stopIds — this builds one query aliasing stop0, stop1, ... so a
+// multi-platform board still costs a single OTP round trip.
+function buildStopBoardQuery(count: number): string {
+  const vars = Array.from({ length: count }, (_, i) => `$stopId${i}: String!`).join(', ')
+  const fields = Array.from({ length: count }, (_, i) => `stop${i}: stop(id: $stopId${i}) {${STOP_FIELDS}}`).join('\n')
+  return `query StopBoard($numberOfDepartures: Int!, ${vars}) {\n${fields}\n}`
+}
 
 interface GqlStoptime {
   scheduledDeparture: number
@@ -61,23 +67,32 @@ const cache = new Map<string, { data: StopBoardData; timestamp: number }>()
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const stopId = searchParams.get('stopId')
-  if (!stopId) {
+  const stopIdParam = searchParams.get('stopId')
+  if (!stopIdParam) {
+    return NextResponse.json({ error: 'stopId is required' }, { status: 400 })
+  }
+  // Comma-separated when /api/geocode merged several physical stops under
+  // one name (see buildStopBoardQuery above) — otherwise just the one id.
+  const stopIds = stopIdParam.split(',').map((id) => id.trim()).filter(Boolean)
+  if (stopIds.length === 0) {
     return NextResponse.json({ error: 'stopId is required' }, { status: 400 })
   }
 
-  const cached = cache.get(stopId)
+  const cached = cache.get(stopIdParam)
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return NextResponse.json(cached.data)
   }
 
   try {
+    const variables: Record<string, string | number> = { numberOfDepartures: 12 }
+    stopIds.forEach((id, i) => { variables[`stopId${i}`] = id })
+
     const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        query: STOP_BOARD_QUERY,
-        variables: { stopId, numberOfDepartures: 12 },
+        query: buildStopBoardQuery(stopIds.length),
+        variables,
       }),
       cache: 'no-store',
       signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
@@ -90,12 +105,19 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: data.errors[0].message }, { status: 502 })
     }
 
-    const stop: GqlStop | null = data.data?.stop
-    if (!stop) {
+    const stops: GqlStop[] = stopIds
+      .map((_, i) => data.data?.[`stop${i}`] as GqlStop | null)
+      .filter((s): s is GqlStop => s != null)
+    if (stops.length === 0) {
       return NextResponse.json({ error: 'Stop not found' }, { status: 404 })
     }
 
-    const departures: StopDeparture[] = stop.stoptimesWithoutPatterns
+    // A trip could in principle call at more than one of the merged
+    // platforms (a loop route) — key on trip+departure time so it only
+    // shows once.
+    const seen = new Set<string>()
+    const departures: StopDeparture[] = stops
+      .flatMap((stop) => stop.stoptimesWithoutPatterns)
       .map((st): StopDeparture => ({
         tripId: st.trip.gtfsId,
         line: st.trip.route.shortName,
@@ -105,10 +127,17 @@ export async function GET(request: Request) {
         realtime: st.realtime,
         delaySeconds: st.realtime ? st.realtimeDeparture - st.scheduledDeparture : undefined,
       }))
+      .filter((dep) => {
+        const key = `${dep.tripId}-${dep.departureEpochSec}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
       .sort((a, b) => a.departureEpochSec - b.departureEpochSec)
+      .slice(0, 12)
 
-    const board: StopBoardData = { stopName: stop.name, lat: stop.lat, lng: stop.lon, departures }
-    cache.set(stopId, { data: board, timestamp: Date.now() })
+    const board: StopBoardData = { stopName: stops[0].name, lat: stops[0].lat, lng: stops[0].lon, departures }
+    cache.set(stopIdParam, { data: board, timestamp: Date.now() })
     return NextResponse.json(board)
   } catch (error) {
     console.error('Failed to fetch stop board:', error)

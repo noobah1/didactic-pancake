@@ -33,10 +33,10 @@ interface GeoResult {
 }
 
 interface TransitStopsCache {
-  train: Map<string, OtpStop>
-  ferry: Map<string, OtpStop>
-  bus: Map<string, OtpStop>
-  tram: Map<string, OtpStop>
+  train: Map<string, OtpStop[]>
+  ferry: Map<string, OtpStop[]>
+  bus: Map<string, OtpStop[]>
+  tram: Map<string, OtpStop[]>
   timestamp: number
 }
 
@@ -65,28 +65,41 @@ async function fetchTransitStops() {
     })
     if (!response.ok) return transitStopsCache
     const data = await response.json()
-    const trainStops = new Map<string, OtpStop>()
-    const ferryStops = new Map<string, OtpStop>()
-    const busStops = new Map<string, OtpStop>()
-    const tramStops = new Map<string, OtpStop>()
+    const trainStops = new Map<string, OtpStop[]>()
+    const ferryStops = new Map<string, OtpStop[]>()
+    const busStops = new Map<string, OtpStop[]>()
+    const tramStops = new Map<string, OtpStop[]>()
+    // A name can belong to several distinct physical stops (separate poles
+    // on either side of a road, several bus bays at an interchange) — collect
+    // all of them per name instead of the previous Map<name, single stop>,
+    // which silently kept only the last one seen and dropped the rest.
+    const addStop = (map: Map<string, OtpStop[]>, stop: OtpStop) => {
+      const key = stop.name.toLowerCase()
+      const list = map.get(key)
+      if (list) {
+        if (!list.some((s) => s.gtfsId === stop.gtfsId)) list.push(stop)
+      } else {
+        map.set(key, [stop])
+      }
+    }
     for (const route of data.data?.rail || []) {
       for (const pattern of route.patterns) {
-        for (const stop of pattern.stops) trainStops.set(stop.name.toLowerCase(), stop)
+        for (const stop of pattern.stops) addStop(trainStops, stop)
       }
     }
     for (const route of data.data?.ferry || []) {
       for (const pattern of route.patterns) {
-        for (const stop of pattern.stops) ferryStops.set(stop.name.toLowerCase(), stop)
+        for (const stop of pattern.stops) addStop(ferryStops, stop)
       }
     }
     for (const route of data.data?.bus || []) {
       for (const pattern of route.patterns) {
-        for (const stop of pattern.stops) busStops.set(stop.name.toLowerCase(), stop)
+        for (const stop of pattern.stops) addStop(busStops, stop)
       }
     }
     for (const route of data.data?.tram || []) {
       for (const pattern of route.patterns) {
-        for (const stop of pattern.stops) tramStops.set(stop.name.toLowerCase(), stop)
+        for (const stop of pattern.stops) addStop(tramStops, stop)
       }
     }
     transitStopsCache = { train: trainStops, ferry: ferryStops, bus: busStops, tram: tramStops, timestamp: Date.now() }
@@ -124,34 +137,60 @@ async function loadTransitStops() {
   return transitStopsRefresh
 }
 
+const MODE_LABELS: { key: 'ferry' | 'train' | 'tram' | 'bus'; label: string }[] = [
+  { key: 'ferry', label: 'Ferry terminal' },
+  { key: 'train', label: 'Train station' },
+  { key: 'tram', label: 'Tram stop' },
+  { key: 'bus', label: 'Bus stop' },
+]
+
 async function searchTransitStops(query: string): Promise<GeoResult[]> {
   const cache = await loadTransitStops()
   if (!cache) return []
   const q = query.toLowerCase()
-  const results: GeoResult[] = []
-  const seen = new Set<string>()
 
-  const add = (stop: OtpStop, label: string) => {
-    if (!seen.has(stop.name)) {
-      seen.add(stop.name)
-      results.push({ name: `${stop.name} (${label})`, lat: stop.lat, lng: stop.lon, stopId: stop.gtfsId })
+  // A name match can be satisfied by several physical stops — different
+  // modes at the same name (a tram platform and a bus bay both called
+  // "Hobujaama"), or several poles of the same mode. All of them get
+  // merged into one search result carrying every matching stopId, so the
+  // departure board below can show the full picture instead of whichever
+  // single platform happened to win a mode-priority tiebreak.
+  const matchedNames: string[] = []
+  const seenNames = new Set<string>()
+  for (const { key } of MODE_LABELS) {
+    for (const name of cache[key].keys()) {
+      if (name.includes(q) && !seenNames.has(name)) {
+        seenNames.add(name)
+        matchedNames.push(name)
+      }
     }
   }
 
-  for (const [name, stop] of cache.ferry) {
-    if (name.includes(q)) add(stop, 'Ferry terminal')
-  }
-  for (const [name, stop] of cache.train) {
-    if (name.includes(q)) add(stop, 'Train station')
-  }
-  for (const [name, stop] of cache.tram) {
-    if (name.includes(q)) add(stop, 'Tram stop')
-  }
-  for (const [name, stop] of cache.bus) {
-    if (name.includes(q)) add(stop, 'Bus stop')
+  const results: GeoResult[] = []
+  for (const name of matchedNames) {
+    const stopIds: string[] = []
+    const labels: string[] = []
+    let displayName = ''
+    let lat = 0
+    let lng = 0
+    for (const { key, label } of MODE_LABELS) {
+      const stops = cache[key].get(name)
+      if (!stops || stops.length === 0) continue
+      labels.push(label)
+      for (const stop of stops) {
+        stopIds.push(stop.gtfsId)
+        if (!displayName) {
+          displayName = stop.name
+          lat = stop.lat
+          lng = stop.lon
+        }
+      }
+    }
+    if (stopIds.length === 0) continue
+    results.push({ name: `${displayName} (${labels.join('/')})`, lat, lng, stopId: stopIds.join(',') })
   }
 
-  return results.slice(0, 5)
+  return results.slice(0, 8)
 }
 async function searchEstonianAddresses(query: string): Promise<GeoResult[]> {
   try {
