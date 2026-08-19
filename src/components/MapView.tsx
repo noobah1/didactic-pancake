@@ -174,6 +174,11 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const arrowMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
+  // How many features were last fed into the cluster source's setData() —
+  // compared against querySourceFeatures()'s result in updateVisibility so
+  // a partial (not-yet-fully-tiled) query result can be told apart from a
+  // genuinely complete one. See that function's own comment.
+  const clusterFeedCountRef = useRef(0)
   const activeRouteRef = useRef<string | null>(null)
   const stopMarkersRef = useRef<maplibregl.Marker[]>([])
   const planLayerIdsRef = useRef<string[]>([])
@@ -616,8 +621,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       const updateVisibility = () => {
         if (!map.getSource(VEHICLE_CLUSTER_SOURCE)) return
         // querySourceFeatures only returns features from tiles that have
-        // already loaded — right after a flyTo/pan into a new area, some
-        // tiles covering the viewport can still be in flight. Treating that
+        // already loaded — right after a flyTo/pan into a new area (e.g.
+        // switching from Tallinn to a wider "all cities" view), some tiles
+        // covering the viewport can still be in flight. Treating that
         // partial result as complete would mark every marker whose tile
         // hasn't loaded yet as "not found unclustered" and hide it, even
         // though it's a real, positioned vehicle — that's what was making
@@ -627,14 +633,27 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         // re-fires this once it does.
         if (!map.isSourceLoaded(VEHICLE_CLUSTER_SOURCE)) return
         const features = map.querySourceFeatures(VEHICLE_CLUSTER_SOURCE)
-        // If source tiles aren't loaded yet, keep current visibility
-        if (features.length === 0) return
         const unclusteredIds = new Set<string>()
+        // A merely non-empty result isn't proof it's complete — a fast-
+        // loading tile (e.g. Tallinn's, already cached) can return well
+        // before a slower one (e.g. a newly-panned-to city's) finishes, so
+        // features.length > 0 alone was passing through exactly the partial
+        // result described above. Sum what the query actually accounts for
+        // (each unclustered point counts once, each cluster counts its own
+        // point_count) and only trust it once that total covers every
+        // vehicle currently fed into the source — otherwise this is a
+        // partial read, so keep the current visibility and let the next
+        // sourcedata event (once more tiles land) try again.
+        let coveredCount = 0
         for (const f of features) {
-          if (!f.properties?.cluster && f.properties?.vehicleId) {
+          if (f.properties?.cluster && typeof f.properties.point_count === 'number') {
+            coveredCount += f.properties.point_count
+          } else if (f.properties?.vehicleId) {
             unclusteredIds.add(f.properties.vehicleId as string)
+            coveredCount += 1
           }
         }
+        if (coveredCount < clusterFeedCountRef.current) return
         markersRef.current.forEach((marker, id) => {
           const show = unclusteredIds.has(id)
           marker.getElement().style.display = show ? '' : 'none'
@@ -938,6 +957,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           properties: { vehicleId: v.id },
           geometry: { type: 'Point' as const, coordinates: [v.lng, v.lat] },
         }))
+      clusterFeedCountRef.current = features.length
       ;(map.getSource(VEHICLE_CLUSTER_SOURCE) as maplibregl.GeoJSONSource).setData({
         type: 'FeatureCollection',
         features,
