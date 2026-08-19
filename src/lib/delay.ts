@@ -638,12 +638,30 @@ export function findVehicleForLeg<T extends MatchableVehicle>(
   const distanceTolerance = nowMs < startMs ? Math.min(500 + (preDepartureMs / 1000) * 10, 5000) : 500
   const headingTolerance = nowMs < startMs ? 150 : 100
 
+  // A vehicle already sitting right at the leg's origin stop, with a long
+  // stretch of time still left before this trip's scheduled departure, is
+  // "closest possible" by construction (dist≈0) and so would otherwise
+  // always win over a real inbound candidate several hundred meters out —
+  // but a bus genuinely early for a departure this far off would still be on
+  // the road, not already parked at the exact point. Far more likely: it's a
+  // different, unrelated trip currently dwelling/departing from that same
+  // stop (same line, different run). Confirmed live: a rider whose planned
+  // bus was ~15 minutes out was shown a same-line bus that was actually
+  // already leaving — an earlier trip parked at the stop the whole search
+  // window was open, unbeatable on distance alone. Only excludes the
+  // "parked right at the stop" case, not a genuinely nearby-but-moving
+  // vehicle, so a bus that has legitimately pulled up a couple minutes early
+  // is unaffected.
+  const AT_ORIGIN_RADIUS_M = 150
+  const MAX_EARLY_ARRIVAL_MS = 5 * 60 * 1000
+
   let best: T | null = null
   let bestDist = Infinity
   for (const v of candidates) {
     if (!acceptableModes.includes(v.mode) || v.line !== expectedLine) continue
     const dist = distanceMeters(v.lat, v.lng, expected.lat, expected.lng)
     if (dist > distanceTolerance || headingDiff(v.heading, expectedHeading) > headingTolerance) continue
+    if (nowMs < startMs && preDepartureMs > MAX_EARLY_ARRIVAL_MS && dist < AT_ORIGIN_RADIUS_M) continue
     if (dist < bestDist) {
       bestDist = dist
       best = v

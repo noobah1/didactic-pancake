@@ -48,7 +48,7 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
           arrival { scheduledTime estimated { time } }
         }
         duration
-        route { shortName }
+        route { gtfsId shortName }
         trip { gtfsId }
         legGeometry { points }
         intermediatePlaces {
@@ -86,7 +86,7 @@ interface GqlLeg {
   from: GqlPlace
   to: GqlPlace
   duration: number
-  route?: { shortName: string } | null
+  route?: { gtfsId: string; shortName: string } | null
   trip?: { gtfsId: string } | null
   legGeometry?: { points: string } | null
   intermediatePlaces?: GqlPlace[] | null
@@ -241,6 +241,7 @@ function mapItineraries(itineraries: GqlItinerary[]): RouteResult[] {
         endTime: resolveTime(leg.end),
         duration: leg.duration,
         route: leg.route?.shortName || undefined,
+        routeGtfsId: leg.route?.gtfsId || undefined,
         tripId: leg.trip?.gtfsId || undefined,
         intermediateStops: leg.intermediatePlaces?.map(mapPlace) || undefined,
         legGeometry: leg.legGeometry || undefined,

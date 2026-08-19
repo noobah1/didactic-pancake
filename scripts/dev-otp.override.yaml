@@ -1,0 +1,7 @@
+services:
+  otp:
+    # Compose merges "ports" across files by default (appends, doesn't
+    # replace) — without !override this tries to bind 8080 too and collides
+    # with production's already-running otp container on the same host.
+    ports: !override
+      - '8090:8080'

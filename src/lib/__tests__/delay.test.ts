@@ -212,4 +212,29 @@ describe('findVehicleForLeg', () => {
     const result = findVehicleForLeg(leg, [farAway, closeAndAligned], nowMs)
     expect(result).toBe(closeAndAligned)
   })
+
+  it('does not match a same-line vehicle already parked at the origin when the leg is still well over 5 minutes out', () => {
+    // Reproduced case: rider's planned bus was ~15 minutes out, but the map
+    // showed a same-line bus that was actually already leaving — an earlier,
+    // unrelated trip dwelling at the same origin stop. Distance-only scoring
+    // always picked it (dist≈0 beats any real inbound candidate) regardless
+    // of how far out the actual departure was.
+    const nowMs = Date.now()
+    const departsInMs = 15 * 60 * 1000
+    const leg: RoutePlanLeg = {
+      mode: 'bus',
+      route: '41',
+      from: { lat: 59.4295241, lng: 24.6924688 },
+      to: { lat: 59.4410988, lng: 24.740653 },
+      startTime: new Date(nowMs + departsInMs).toISOString(),
+      endTime: new Date(nowMs + departsInMs + 12 * 60 * 1000).toISOString(),
+    }
+    const parkedAtOrigin: MatchableVehicle = { mode: 'bus', line: '41', lat: 59.4295241, lng: 24.6924688, heading: 55 }
+    expect(findVehicleForLeg(leg, [parkedAtOrigin], nowMs)).toBeNull()
+
+    // A genuinely inbound candidate a few hundred meters out should still
+    // win over the parked decoy, not just lose to it silently.
+    const inbound: MatchableVehicle = { mode: 'bus', line: '41', lat: 59.4295241, lng: 24.6845, heading: 55 }
+    expect(findVehicleForLeg(leg, [parkedAtOrigin, inbound], nowMs)).toBe(inbound)
+  })
 })

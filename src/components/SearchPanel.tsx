@@ -111,6 +111,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             value={boardText}
             onChange={setBoardText}
             stopsOnly
+            cityIds={activeCities?.map((c) => c.id)}
             onSelect={(name, lat, lng, stopId) => {
               if (!stopId) return
               onViewStopBoard(name, lat, lng, stopId)

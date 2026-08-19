@@ -1,15 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react'
+import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft, AlertCircle } from 'lucide-react'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
-import { ServiceAlert } from '@/lib/types'
+import { ServiceAlert, RouteTrafficEstimate } from '@/lib/types'
+import { FeedStatus } from '@/lib/feed-status'
 
 interface IssuesPanelProps {
   vehicles: DelayedVehicle[]
   alerts: ServiceAlert[]
+  // Road-speed-inferred slowdowns (see RouteTrafficEstimate) — a distinct,
+  // lower-confidence signal from `vehicles`, kept in its own section below
+  // rather than merged in, same "never conflate GPS-confirmed with inferred"
+  // rule the rest of this app follows.
+  trafficEstimates: RouteTrafficEstimate[]
+  delayStatus: FeedStatus
+  alertStatus: FeedStatus
   onSelectVehicle: (vehicle: DelayedVehicle) => void
   // Flies the map to a disruption's real location — reading "Nelgi tee:
   // construction" in a list tells you the road's name, not where it is.
@@ -17,7 +25,16 @@ interface IssuesPanelProps {
   onClose: () => void
 }
 
-export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onLocateAlert, onClose }: IssuesPanelProps) {
+export function IssuesPanel({
+  vehicles,
+  alerts,
+  trafficEstimates,
+  delayStatus,
+  alertStatus,
+  onSelectVehicle,
+  onLocateAlert,
+  onClose,
+}: IssuesPanelProps) {
   // Clicking a disruption swaps the whole list for a single full-detail view
   // (prev/next to browse) instead of expanding in place — with dozens of
   // Tark Tee disruptions, an inline accordion still left every other row
@@ -30,7 +47,19 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onLocateAlert, 
   const delayedVehicles = vehicles
     .filter((v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC)
     .sort((a, b) => b.delaySeconds - a.delaySeconds)
-  const isEmpty = delayedVehicles.length === 0 && alerts.length === 0
+  const sortedEstimates = [...trafficEstimates].sort((a, b) => b.maxSeconds - a.maxSeconds)
+  // "No issues right now" is a claim that both feeds actually reported zero
+  // issues — it must never be reachable just because a dead feed handed
+  // back an empty array. unavailable rows (below) own that case instead.
+  const delayUnavailable = delayStatus === 'unavailable'
+  const alertUnavailable = alertStatus === 'unavailable'
+  const bothLoading = delayStatus === 'loading' && alertStatus === 'loading'
+  const isEmpty =
+    !delayUnavailable &&
+    !alertUnavailable &&
+    delayedVehicles.length === 0 &&
+    alerts.length === 0 &&
+    sortedEstimates.length === 0
   const viewingIndex = viewingAlertId != null ? alerts.findIndex((a) => a.id === viewingAlertId) : -1
   const viewingAlert = viewingIndex >= 0 ? alerts[viewingIndex] : null
 
@@ -46,11 +75,33 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onLocateAlert, 
         </button>
       </div>
       <div className="flex flex-col overflow-y-auto">
-        {isEmpty ? (
-          <div className="px-4 py-4 text-sm text-gray-400 text-center">No issues right now</div>
+        {bothLoading ? (
+          <div className="px-4 py-4 text-sm text-gray-400 dark:text-gray-500 text-center">Loading…</div>
         ) : (
           <>
-            {delayedVehicles.length > 0 && (
+            {delayUnavailable && (
+              <div className="flex items-start gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950 border-b border-red-100 dark:border-red-900 text-red-600 dark:text-red-400">
+                <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-medium">Live delay data unavailable</p>
+                  <p className="text-red-500/80 dark:text-red-400/70">Retrying…</p>
+                </div>
+              </div>
+            )}
+            {alertUnavailable && (
+              <div className="flex items-start gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950 border-b border-red-100 dark:border-red-900 text-red-600 dark:text-red-400">
+                <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-medium">Live alerts unavailable</p>
+                  <p className="text-red-500/80 dark:text-red-400/70">Retrying…</p>
+                </div>
+              </div>
+            )}
+            {isEmpty ? (
+              <div className="px-4 py-4 text-sm text-gray-400 dark:text-gray-500 text-center">No issues right now</div>
+            ) : (
+              <>
+                {delayedVehicles.length > 0 && (
               <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
                 {delayedVehicles.map((v) => (
                   <button
@@ -77,6 +128,36 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onLocateAlert, 
                     </span>
                   </button>
                 ))}
+              </div>
+            )}
+            {sortedEstimates.length > 0 && (
+              <div className="flex flex-col border-t border-gray-100 dark:border-gray-700">
+                <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 dark:text-gray-500">
+                  Slow roads — estimated
+                </div>
+                <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
+                  {sortedEstimates.map((e) => (
+                    <div
+                      key={e.routeGtfsId}
+                      className="flex items-center justify-between gap-2 px-4 py-2.5"
+                      title={`${e.detectorCount} traffic detector${e.detectorCount === 1 ? '' : 's'} along this route`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="px-2 py-0.5 rounded text-xs font-bold text-amber-700 dark:text-amber-300 border border-amber-400 dark:border-amber-600 shrink-0">
+                          {e.shortName}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-300 truncate">{e.longName}</span>
+                      </div>
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium shrink-0">
+                        ~{Math.round(e.minSeconds / 60)}
+                        {Math.round(e.maxSeconds / 60) > Math.round(e.minSeconds / 60)
+                          ? `-${Math.round(e.maxSeconds / 60)}`
+                          : ''}
+                        min slower
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {alerts.length > 0 && !viewingAlert && (
@@ -176,6 +257,8 @@ export function IssuesPanel({ vehicles, alerts, onSelectVehicle, onLocateAlert, 
                   )}
                 </div>
               </div>
+            )}
+              </>
             )}
           </>
         )}

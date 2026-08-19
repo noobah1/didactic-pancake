@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Check, Share2, X } from 'lucide-react'
-import { RouteResult } from '@/lib/types'
+import { RouteResult, RouteTrafficEstimate } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { RouteCard } from './RouteCard'
 
@@ -17,9 +17,10 @@ interface RouteResultsProps {
   selectedId: string | null
   onSelect: (id: string | null) => void
   delayVehicles?: DelayedVehicle[]
+  trafficEstimates?: RouteTrafficEstimate[]
 }
 
-export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, delayVehicles }: RouteResultsProps) {
+export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, delayVehicles, trafficEstimates }: RouteResultsProps) {
   const [sortBy, setSortBy] = useState<SortMode>('duration')
   const [shareState, setShareState] = useState<ShareState>('idle')
   const [shareLink, setShareLink] = useState<string | null>(null)
@@ -181,6 +182,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           selected={route.id === selectedId}
           onSelect={() => onSelect(route.id === selectedId ? null : route.id)}
           delayVehicles={delayVehicles}
+          trafficEstimates={trafficEstimates}
         />
       ))}
       </div>

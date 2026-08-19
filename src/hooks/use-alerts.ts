@@ -2,11 +2,12 @@ import { useCallback } from 'react'
 import { usePolling } from './use-polling'
 import { ServiceAlert } from '@/lib/types'
 import { POLL_INTERVALS } from '@/lib/constants'
+import { Availability, resolveFeedStatus } from '@/lib/feed-status'
 
 interface AlertsResponse {
   alerts: ServiceAlert[]
   timestamp: number
-  stale?: boolean
+  availability?: Availability
 }
 
 export function useAlerts(test?: boolean) {
@@ -17,5 +18,6 @@ export function useAlerts(test?: boolean) {
     return res.json()
   }, [test])
 
-  return usePolling(fetcher, POLL_INTERVALS.serviceAlerts)
+  const { data, error, lastUpdated } = usePolling(fetcher, POLL_INTERVALS.serviceAlerts)
+  return { data, error, lastUpdated, status: resolveFeedStatus(data, error) }
 }

@@ -32,15 +32,14 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-// Applies the saved theme before first paint — light unless the user
-// explicitly switched to dark last time. Deliberately ignores the device's
-// own color-scheme setting: a phone's own night-schedule dark mode used to
-// carry straight through to this app unannounced, which read as broken
-// rather than intentional. Runs as a blocking inline script so there's no
-// flash of the wrong theme while React hydrates — useTheme() (use-theme.ts)
-// picks up from whatever class this already applied and keeps it live
-// afterward on manual toggles.
-const themeInitScript = `(function(){try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})()`
+// Applies the device/browser's own light-or-dark preference before first
+// paint — same query useTheme() (use-theme.ts) uses to stay in sync
+// afterward, including live OS-level changes while the tab is open. Runs as
+// a blocking inline script so there's no flash of the wrong theme while
+// React hydrates; also sets the theme-color meta tag directly here rather
+// than waiting for useTheme()'s effect to run post-hydration, so mobile
+// browser chrome matches from the first frame too.
+const themeInitScript = `(function(){try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark');document.querySelector('meta[name="theme-color"]').setAttribute('content','#15202B');}}catch(e){}})()`
 
 export default function RootLayout({
   children,

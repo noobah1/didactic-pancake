@@ -40,6 +40,24 @@ export const TALLINN_TRANSPORT_AGENCY_GTFS_ID = '1:10312960'
 // feed's copy is the one that's actually kept current.
 export const ELRON_AGENCY_GTFS_ID = '1:10520953'
 
+// Tark Tee's live traffic-detector layer — the same unauthenticated ArcGIS
+// host getRoadDisruptionAlerts() already queries for road closures (see
+// tarktee.ts) also serves current per-detector speed/flow readings.
+// Confirmed live: 116 records, average_speed_forwards/backwards (km/h),
+// relative_speed_forwards/backwards (a coarse coded level), flow, refreshed
+// roughly every 5 minutes — no DATEX II key needed (src/lib/traffic/index.ts
+// used to say otherwise; this proved that wrong). See
+// src/lib/traffic/detectors.ts.
+export const TARKTEE_DETECTORS_SERVICE = 'traffic_detectors'
+// Readings refresh ~every 5 min on Tark Tee's side; polling faster than that
+// only hammers someone else's public infra for data that hasn't changed —
+// same spirit as tarktee.ts's own DISRUPTIONS_CACHE_TTL.
+export const DETECTOR_CACHE_TTL = 60_000
+// A detector reading older than this says nothing trustworthy about current
+// conditions — a stalled upstream feed must stop feeding the traffic
+// estimate rather than silently keep it "current" on stale numbers.
+export const MAX_READING_AGE_MS = 20 * 60_000
+
 export const TALLINN_CENTER = { lat: 59.437, lng: 24.7536 }
 export const DEFAULT_ZOOM = 13
 
@@ -122,7 +140,45 @@ export const POLL_INTERVALS = {
   serviceAlerts: 60_000,
   delays: 20_000,
   stopBoard: 20_000, // matches the server-side cache TTL in /api/stop-board
+  nearbyStops: 20_000, // matches the server-side cache TTL in /api/nearby-stops
 }
+
+// Default search radius for "nearby stops" — enough to catch every platform
+// at a busy city interchange without pulling in a second, unrelated stop
+// cluster a few blocks over. Verified live against OTP's stopsByRadius: a
+// small town like Rapla can have as few as 2 stops with any upcoming
+// departure within this radius, so NEARBY_WIDE_RADIUS_M is a one-step
+// fallback for exactly that case, not a general "keep expanding" search —
+// a genuinely empty rural coordinate returns nothing at 3000m either.
+export const NEARBY_DEFAULT_RADIUS_M = 600
+export const NEARBY_WIDE_RADIUS_M = 2000
+// Below this many usable stops at the default radius, retry once at the
+// wide radius rather than showing a near-empty panel.
+export const NEARBY_WIDEN_THRESHOLD = 3
+export const NEARBY_MAX_STOPS = 8
+// A single busy intersection can have several same-named stops for its
+// different platforms/directions (verified live: central Tallinn returned
+// 4x "Mere puiestee" and 3x "Viru" in the closest 8 — 7 of 8 slots for two
+// physical locations). Capping how many same-named rows can appear keeps
+// the panel showing a variety of nearby places instead of one interchange's
+// every platform; the platforms themselves stay distinguishable by headsign.
+export const NEARBY_MAX_PER_NAME = 2
+
+// Stop-name search (the Departures tab / stop-only geocode) — see
+// src/lib/stop-search.ts for the folding/ranking/clustering these gate.
+// Same-named stops only merge into one dropdown row when within this of
+// each other; verified live, "Lille" alone spans Tallinn/Tartu/Elva/
+// Kuressaare/Kohila, tens of km apart, so this stays city-block-scale.
+export const STOP_SEARCH_CLUSTER_RADIUS_M = 1_000
+// How far a cluster can be from a known city and still be labelled with it
+// in the dropdown ("Lille — Tallinn"); matches CITY_RELEVANCE_RADIUS_M's
+// reasoning in page.tsx (any two of the top cities are 30km+ apart).
+export const STOP_SEARCH_CITY_LABEL_RADIUS_M = 30_000
+// Raised from the previous hard cap of 8 now that same-named stops in
+// different towns are separate rows instead of one merged (and often
+// mis-located) result — a common name can otherwise legitimately fill most
+// of a smaller cap with entries for towns the rider has no interest in.
+export const STOP_SEARCH_MAX_RESULTS = 10
 
 // Mapping from gps.txt type codes to our transport modes
 // Verified against live feed: type 1 = trolleybus (lines terminate at Kopli/Kadriorg/

@@ -18,15 +18,20 @@ import routeCoverageData from './route-coverage.json'
 //
 // This module is intentionally scoped to STATIC data only — it says where
 // detectors are and which routes are near them, not what any detector
-// currently reads. Live readings require a Tark Tee DATEX II API key
-// (registration: https://tarktee.mnt.ee/#/et/datex) and come as DATEX II XML,
-// not the JSON shape used here. Once that key exists, the missing piece is:
-// fetch the live MeasuredDataPublication, parse each detector's
-// relativeSpeed/averageSpeed by traffic_detector_id (matching DetectorSite.id
-// below), then for each RouteCoverage whose nearest detectors show reduced
-// relative speed, surface an ESTIMATED (not confirmed) delay for that route —
-// visually distinct from Tallinn's GPS-confirmed delays, same honesty
-// principle used everywhere else delay is shown in this app.
+// currently reads.
+//
+// This used to say live readings require a Tark Tee DATEX II API key
+// (registration: https://tarktee.mnt.ee/#/et/datex). They don't: the same
+// unauthenticated ArcGIS host tarktee.ts already queries for road closures
+// also serves current per-detector average_speed_forwards/backwards and
+// relative_speed_forwards/backwards under a `traffic_detectors` layer,
+// confirmed live against the exact ids below (111 of 112 present). See
+// src/lib/traffic/detectors.ts for the live fetch, baseline.ts for the
+// learned "usual speed" each reading is compared against, and estimate.ts
+// for how a detector's current slowdown becomes a route-level ESTIMATED
+// (never confirmed) delay — visually distinct from Tallinn's GPS-confirmed
+// delays, same honesty principle used everywhere else delay is shown in
+// this app.
 
 export interface DetectorSite {
   id: string

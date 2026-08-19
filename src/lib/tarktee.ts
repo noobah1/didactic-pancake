@@ -8,12 +8,12 @@
 // ever produce a qualitative "this route has a known disruption right now"
 // flag — Tark Tee has no speed/congestion data, so never treat it as a
 // numeric delay.
-import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, GPS_FEED_TIMEOUT_MS, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from './constants'
+import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, TALLINN_TRANSPORT_AGENCY_GTFS_ID } from './constants'
 import { decodePolyline } from './decode-polyline'
 import { projectOntoSegment } from './delay'
+import { queryArcGisLayer as queryArcGisLayerShared, ArcGisFeature } from './traffic/arcgis'
 import { ServiceAlert } from './types'
 
-const TARKTEE_BASE_URL = 'https://www.tarktee.ee/tarktee/rest/services/tram'
 // Roadworks/closures don't change second to second — this is someone else's
 // public infra, not ours, so poll it gently (same spirit as
 // ELRON_GPS_CACHE_TTL's comment on the Elron feed).
@@ -50,15 +50,6 @@ interface RouteShape {
   points: [number, number][] // [lng, lat]
 }
 
-interface ArcGisFeature {
-  attributes: Record<string, string | number | null>
-  geometry?: { paths?: [number, number][][] }
-}
-
-interface ArcGisResponse {
-  features?: ArcGisFeature[]
-}
-
 function activeNowWhereClause(): string {
   // Matches the filter tarktee.ee's own frontend applies, minus its ~8-day
   // upcoming-inclusive window — we only want disruptions affecting service
@@ -69,24 +60,17 @@ function activeNowWhereClause(): string {
   return `(date_from is null or date_from <= '${now}') and (date_to is null or date_to >= '${now}')`
 }
 
+// Disruption/emergency layers live on sublayer 1 of each service (see
+// traffic/detectors.ts for a different sublayer on a different service).
 async function queryArcGisLayer(
   layer: string,
   outFields: string[],
 ): Promise<ArcGisFeature[]> {
-  const params = new URLSearchParams({
-    f: 'json',
-    outFields: outFields.join(','),
-    outSR: '4326',
-    returnGeometry: 'true',
+  return queryArcGisLayerShared(layer, 1, {
+    outFields,
     where: activeNowWhereClause(),
+    returnGeometry: true,
   })
-  const response = await fetch(`${TARKTEE_BASE_URL}/${layer}/MapServer/1/query?${params}`, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
-  })
-  if (!response.ok) return []
-  const data: ArcGisResponse = await response.json()
-  return data.features || []
 }
 
 function humanize(code: string): string {

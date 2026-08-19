@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { getRoadDisruptionAlerts } from '@/lib/tarktee'
 import { ServiceAlert } from '@/lib/types'
+import { Availability, STALE_MAX_AGE_MS } from '@/lib/feed-status'
 
 const ALERTS_QUERY = `
 {
@@ -62,6 +63,39 @@ const MOCK_ALERTS: ServiceAlert[] = [
   },
 ]
 
+async function fetchOtpAlerts(): Promise<ServiceAlert[]> {
+  const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: ALERTS_QUERY }),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
+  })
+
+  if (!response.ok) {
+    throw new Error(`OTP alerts returned ${response.status}`)
+  }
+
+  const data = await response.json()
+  const gqlAlerts: GqlAlert[] = data.data?.alerts || []
+
+  return gqlAlerts.map((alert) => ({
+    id: alert.id || String(Math.random()),
+    headerText: alert.alertHeaderText || 'Service alert',
+    descriptionText: alert.alertDescriptionText || '',
+    severity: mapSeverity(alert.alertSeverityLevel),
+    affectedRoutes: (alert.entities || [])
+      .filter((e) => e.shortName)
+      .map((e) => e.shortName!),
+    activePeriodStart: alert.effectiveStartDate
+      ? new Date(alert.effectiveStartDate * 1000).toISOString()
+      : undefined,
+    activePeriodEnd: alert.effectiveEndDate
+      ? new Date(alert.effectiveEndDate * 1000).toISOString()
+      : undefined,
+  }))
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const useTestData = searchParams.get('test') === '1'
@@ -70,58 +104,47 @@ export async function GET(request: Request) {
     return NextResponse.json({ alerts: MOCK_ALERTS, timestamp: Date.now(), test: true })
   }
 
-  try {
-    const now = Date.now()
-    if (cache && now - cache.timestamp < CACHE_TTL) {
-      return NextResponse.json({ alerts: cache.data, timestamp: cache.timestamp })
-    }
-
-    const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: ALERTS_QUERY }),
-      cache: 'no-store',
-      signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
-    })
-
-    if (!response.ok) {
-      throw new Error(`OTP alerts returned ${response.status}`)
-    }
-
-    const data = await response.json()
-    const gqlAlerts: GqlAlert[] = data.data?.alerts || []
-
-    const otpAlerts: ServiceAlert[] = gqlAlerts.map((alert) => ({
-      id: alert.id || String(Math.random()),
-      headerText: alert.alertHeaderText || 'Service alert',
-      descriptionText: alert.alertDescriptionText || '',
-      severity: mapSeverity(alert.alertSeverityLevel),
-      affectedRoutes: (alert.entities || [])
-        .filter((e) => e.shortName)
-        .map((e) => e.shortName!),
-      activePeriodStart: alert.effectiveStartDate
-        ? new Date(alert.effectiveStartDate * 1000).toISOString()
-        : undefined,
-      activePeriodEnd: alert.effectiveEndDate
-        ? new Date(alert.effectiveEndDate * 1000).toISOString()
-        : undefined,
-    }))
-
-    // Tark Tee is a separate, unofficial-to-this-app third-party source —
-    // never let it take down the existing OTP-sourced alerts.
-    const roadDisruptionAlerts = await getRoadDisruptionAlerts().catch(() => [])
-
-    const alerts: ServiceAlert[] = [...otpAlerts, ...roadDisruptionAlerts]
-
-    cache = { data: alerts, timestamp: now }
-    return NextResponse.json({ alerts, timestamp: now })
-  } catch (error) {
-    console.error('Failed to fetch alerts:', error)
-    if (cache) {
-      return NextResponse.json({ alerts: cache.data, timestamp: cache.timestamp, stale: true })
-    }
-    return NextResponse.json({ alerts: [] })
+  const now = Date.now()
+  if (cache && now - cache.timestamp < CACHE_TTL) {
+    return NextResponse.json({ alerts: cache.data, timestamp: cache.timestamp })
   }
+
+  // Fetched independently so either source's failure leaves the other's
+  // alerts intact. Tark Tee already protected OTP this way (its own
+  // .catch below predates this change); the reverse wasn't true — an OTP
+  // outage used to throw and discard already-working road disruptions
+  // along with it.
+  const [otpResult, roadDisruptionAlerts] = await Promise.all([
+    fetchOtpAlerts()
+      .then((alerts) => ({ ok: true as const, alerts }))
+      .catch((error) => {
+        console.error('Failed to fetch OTP alerts:', error)
+        return { ok: false as const, alerts: [] as ServiceAlert[] }
+      }),
+    getRoadDisruptionAlerts().catch(() => [] as ServiceAlert[]),
+  ])
+
+  if (!otpResult.ok && roadDisruptionAlerts.length === 0) {
+    // Nothing usable came back from either source this cycle — fall back to
+    // a labeled cache/unavailable response instead of caching and
+    // presenting an empty result as current (see STALE_MAX_AGE_MS: an old
+    // enough cache is no longer honestly "stale", it's unavailable).
+    if (cache && now - cache.timestamp < STALE_MAX_AGE_MS) {
+      return NextResponse.json(
+        { alerts: cache.data, timestamp: cache.timestamp, availability: 'stale' },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
+    return NextResponse.json(
+      { alerts: [], timestamp: now, availability: 'unavailable' },
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
+
+  const alerts: ServiceAlert[] = [...otpResult.alerts, ...roadDisruptionAlerts]
+  cache = { data: alerts, timestamp: now }
+  const availability: Availability = otpResult.ok ? 'live' : 'partial'
+  return NextResponse.json({ alerts, timestamp: now, availability })
 }
 
 function mapSeverity(severity?: string): ServiceAlert['severity'] {

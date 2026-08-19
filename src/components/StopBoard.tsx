@@ -2,28 +2,16 @@
 
 import { X } from 'lucide-react'
 import { useStopBoard } from '@/hooks/use-stop-board'
-import { StopDeparture } from '@/lib/types'
+import { StopDeparture, StopBoardTarget } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
+import { minutesUntil, formatClock } from '@/lib/stop-time'
 
-export interface StopBoardTarget {
-  stopId: string
-  name: string
-  lat: number
-  lng: number
-}
+export type { StopBoardTarget } from '@/lib/types'
 
 interface StopBoardProps {
   stop: StopBoardTarget
   onClose: () => void
   onSelectDeparture: (departure: StopDeparture) => void
-}
-
-function minutesUntil(epochSec: number): number {
-  return Math.round((epochSec * 1000 - Date.now()) / 60_000)
-}
-
-function formatClock(epochSec: number): string {
-  return new Date(epochSec * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
 export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) {

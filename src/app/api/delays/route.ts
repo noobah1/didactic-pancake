@@ -11,8 +11,9 @@ import { parseGpsFeed } from '@/lib/parse-gps'
 import { fetchElronVehicles } from '@/lib/elron'
 import { findBestTrip, matchVehicleToTrip, distanceMeters, calcHeading } from '@/lib/delay'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
-import { VehiclePosition } from '@/lib/types'
+import { VehiclePosition, RouteTrafficEstimate } from '@/lib/types'
 import { Availability, STALE_MAX_AGE_MS } from '@/lib/feed-status'
+import { computeTrafficEstimates } from '@/lib/traffic/estimate'
 
 const GPS_CACHE_TTL = 5_000
 const SCHEDULE_CACHE_TTL = 10 * 60_000 // static schedule doesn't change intraday
@@ -138,6 +139,14 @@ export interface DelayedVehicle {
 
 interface DelaysResponse {
   vehicles: DelayedVehicle[]
+  // Road-speed-inferred slowdowns for the ~251 intercity/regional routes
+  // that have no live GPS or real-time feed at all (see
+  // src/lib/traffic/estimate.ts) — a separate, lower-confidence signal from
+  // `vehicles` above, never merged into it. Independent of `availability`,
+  // which describes the GPS/schedule pipeline only: a traffic-estimate
+  // failure (see computeDelays below) degrades to an empty array here
+  // without affecting GPS-confirmed delays at all.
+  estimates: RouteTrafficEstimate[]
   timestamp: number
   availability?: Availability
 }
@@ -251,19 +260,22 @@ async function fetchTallinnGpsVehicles(): Promise<VehiclePosition[]> {
 export async function computeDelays(): Promise<DelaysResponse> {
   const now = Date.now()
 
-  // These three are independent of each other (two unrelated live-position
-  // feeds and a static schedule query) — fetching them one after another
-  // stacked their timeouts (up to 5s + 5s + 8s = 18s worst case) into a
-  // single request's latency for no reason. allSettled (rather than all) so
-  // a failure names which upstream actually died instead of an opaque
-  // rejection — Elron already degrades internally on its own failure (see
-  // fetchElronVehicles), but the schedule query and Tallinn's GPS feed are
-  // both load-bearing: a delay is GPS measured against schedule, so losing
-  // either still means no vehicles here, just with a clearer reason logged.
-  const [gpsResult, elronResult, scheduleResult] = await Promise.allSettled([
+  // These four are independent of each other (two unrelated live-position
+  // feeds, a static schedule query, and the road-speed traffic estimate —
+  // see computeTrafficEstimates) — fetching them one after another stacked
+  // their timeouts (up to 5s + 5s + 8s = 18s worst case) into a single
+  // request's latency for no reason. allSettled (rather than all) so a
+  // failure names which upstream actually died instead of an opaque
+  // rejection — Elron and the traffic estimate already degrade internally
+  // on their own failure (see fetchElronVehicles and computeTrafficEstimates
+  // respectively), but the schedule query and Tallinn's GPS feed are both
+  // load-bearing: a delay is GPS measured against schedule, so losing either
+  // still means no vehicles here, just with a clearer reason logged.
+  const [gpsResult, elronResult, scheduleResult, trafficResult] = await Promise.allSettled([
     fetchTallinnGpsVehicles(),
     fetchElronVehicles(),
     fetchScheduleData(),
+    computeTrafficEstimates(),
   ])
   if (gpsResult.status === 'rejected') {
     throw new Error(`Tallinn GPS feed unavailable: ${gpsResult.reason}`)
@@ -274,6 +286,10 @@ export async function computeDelays(): Promise<DelaysResponse> {
   const tallinnGps = gpsResult.value
   const elronVehicles = elronResult.status === 'fulfilled' ? elronResult.value : []
   const routes = scheduleResult.value
+  // Never load-bearing — a traffic-estimate failure must not take down
+  // GPS-confirmed delays, which is the entire reason this sits in the same
+  // allSettled rather than being awaited on its own.
+  const estimates = trafficResult.status === 'fulfilled' ? trafficResult.value : []
   const gpsVehicles: (VehiclePosition & { mode: GpsMode })[] = [
     ...tallinnGps.filter(
       (v): v is VehiclePosition & { mode: GpsMode } =>
@@ -470,7 +486,7 @@ export async function computeDelays(): Promise<DelaysResponse> {
     )
   }
 
-  return { vehicles: reliableVehicles, timestamp: now, availability: 'live' }
+  return { vehicles: reliableVehicles, estimates, timestamp: now, availability: 'live' }
 }
 
 export async function GET() {
@@ -498,7 +514,7 @@ export async function GET() {
       )
     }
     return NextResponse.json(
-      { vehicles: [], timestamp: Date.now(), availability: 'unavailable' },
+      { vehicles: [], estimates: [], timestamp: Date.now(), availability: 'unavailable' },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   }

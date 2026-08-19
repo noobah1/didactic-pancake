@@ -140,19 +140,6 @@ async function loadTallinnRoutes(): Promise<TallinnRouteIndex | null> {
   return tallinnRoutesRefresh
 }
 
-// Targeted fetch for exactly the matched route id(s) by alias — a
-// shortName+mode can map to more than one Route entity in the feed (e.g. a
-// peak-hour variant with its own gtfsId), so this can't just be route(id:).
-function buildRoutesByIdQuery(ids: string[]): string {
-  const fields = ids
-    .map(
-      (id, i) =>
-        `r${i}: route(id: ${JSON.stringify(id)}) { patterns { patternGeometry { points } tripsForDate(serviceDate: $date) { gtfsId stoptimes { scheduledArrival scheduledDeparture stop { name lat lon gtfsId } } } } }`,
-    )
-    .join('\n')
-  return `query($date: String!) { ${fields} }`
-}
-
 // Nationwide substring fallback — same query/filtering the endpoint always
 // used, kept only for the rare case a matched vehicle's route isn't in
 // Tallinn's own agency listing (so correctness never regresses, only the

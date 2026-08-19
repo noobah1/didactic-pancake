@@ -11,11 +11,12 @@ import { RouteResults } from '@/components/RouteResults'
 import { MapView } from '@/components/MapView'
 import { IssuesButton } from '@/components/IssuesButton'
 import { IssuesPanel } from '@/components/IssuesPanel'
+import { NearbyButton } from '@/components/NearbyButton'
+import { NearbyPanel } from '@/components/NearbyPanel'
 import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { NotificationToggle } from '@/components/NotificationToggle'
 import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
@@ -32,7 +33,10 @@ import { usePushNotifications } from '@/hooks/use-push-notifications'
 function HomeContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { preference: themePreference, setPreference: setThemePreference } = useTheme()
+  // No return value needed — mounting this is what keeps the app's theme
+  // synced to the OS/browser preference (including a live change while the
+  // tab stays open); see use-theme.ts.
+  useTheme()
   const { enabled: notificationsEnabled, busy: notificationsBusy, enable: enableNotifications, disable: disableNotifications, supported: pushSupported } = usePushNotifications()
 
   const modesFromUrl = searchParams.get('modes')
@@ -58,6 +62,7 @@ function HomeContent() {
   // which has no such trip to hand over.
   const [selectedVehicleInitialTripId, setSelectedVehicleInitialTripId] = useState<string | null>(null)
   const [showIssues, setShowIssues] = useState(false)
+  const [showNearby, setShowNearby] = useState(false)
   const [focusedAlert, setFocusedAlert] = useState<ServiceAlert | null>(null)
   const [stopBoard, setStopBoard] = useState<StopBoardTarget | null>(null)
 
@@ -261,12 +266,26 @@ function HomeContent() {
     )
   }, [delayData.data?.vehicles, activeCities, showAllCities])
 
+  // Same city-relevance filtering as activeAlerts/activeDelayedVehicles
+  // above, kept as a separate list rather than merged into either — these
+  // are road-speed inferences for routes with no live GPS at all, not a
+  // GPS-confirmed vehicle delay or an OTP/Tark Tee service alert (see
+  // RouteTrafficEstimate in lib/types.ts).
+  const activeTrafficEstimates = useMemo(() => {
+    const estimates = delayData.data?.estimates || []
+    if (showAllCities) return estimates
+    return estimates.filter((e) =>
+      activeCities.some((c) => distanceMeters(e.lat, e.lng, c.lat, c.lng) <= CITY_RELEVANCE_RADIUS_M),
+    )
+  }, [delayData.data?.estimates, activeCities, showAllCities])
+
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
 
   // For the journey you've picked, find the actual live vehicle running each
-  // transit leg (by tripId) — GPS-tracked modes come from the delay feed,
-  // rail/ferry (no live GPS) fall back to the schedule-interpolated position
-  // already in the main vehicles feed — so you can see where your bus/tram/
+  // transit leg (by tripId) — GPS-tracked modes (including trains, via Elron's
+  // feed) come from the delay feed, and anything not currently being reported
+  // live falls back to the schedule-interpolated position already in the main
+  // vehicles feed — so you can see where your bus/tram/
   // train currently is, not just the planned line on the map. When the exact
   // tripId doesn't turn up a match, findVehicleForLeg (shared with RouteCard's
   // delay badge) falls back to a position+heading match instead.
@@ -393,6 +412,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
               selectedId={selectedRouteId}
               onSelect={selectRoute}
               delayVehicles={delayData.data?.vehicles}
+              trafficEstimates={delayData.data?.estimates}
             />
             <DelayBanner
   warnings={warnings}
@@ -444,34 +464,66 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         <IssuesPanel
           vehicles={activeDelayedVehicles}
           alerts={activeAlerts}
+          trafficEstimates={activeTrafficEstimates}
+          delayStatus={delayData.status}
+          alertStatus={alertData.status}
           onSelectVehicle={handleSelectDelayedVehicle}
           onLocateAlert={setFocusedAlert}
           onClose={() => setShowIssues(false)}
         />
       )}
 
-      {/* Notification toggle - bottom right, left of the theme toggle */}
-      {pushSupported && (
-        <div className="absolute bottom-6 right-36 z-30 pointer-events-auto">
+      {/* Nearby-stops panel - above the nearby button; mutually exclusive
+          with the issues panel so the two never stack in the same corner */}
+      {showNearby && (
+        <ErrorBoundary
+          fallback={
+            <div className="absolute bottom-24 right-4 z-40 w-80 p-4 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+              Nearby stops unavailable
+            </div>
+          }
+        >
+          <NearbyPanel
+            onSelectStop={(name, lat, lng, stopId) => {
+              handleViewStopBoard(name, lat, lng, stopId)
+              setShowNearby(false)
+            }}
+            onClose={() => setShowNearby(false)}
+          />
+        </ErrorBoundary>
+      )}
+
+      {/* Bottom-right FAB row. A single flex container rather than per-button
+          right-N offsets: NotificationToggle is conditional on pushSupported,
+          so a hardcoded offset for a 4th button would leave a visible gap
+          whenever push isn't supported. This makes <main> the nearest
+          positioned ancestor for any absolute badge inside these buttons —
+          see the `relative` added to IssuesButton's own <button>. */}
+      <div className="absolute bottom-6 right-4 z-30 flex items-center gap-2 pointer-events-auto">
+        <NearbyButton
+          active={showNearby}
+          onClick={() => {
+            setShowNearby((prev) => !prev)
+            setShowIssues(false)
+          }}
+        />
+
+        {pushSupported && (
           <NotificationToggle
             enabled={notificationsEnabled}
             busy={notificationsBusy}
             onToggle={() => (notificationsEnabled ? disableNotifications() : enableNotifications())}
           />
-        </div>
-      )}
+        )}
 
-      {/* Theme toggle - bottom right, left of the issues button */}
-      <div className="absolute bottom-6 right-20 z-30 pointer-events-auto">
-        <ThemeToggle preference={themePreference} onChange={setThemePreference} />
-      </div>
-
-      {/* Issues button - bottom right (delays + service alerts, merged) */}
-      <div className="absolute bottom-6 right-4 z-30 pointer-events-auto">
         <IssuesButton
           active={showIssues}
           count={delayedVehicleCount + activeAlerts.length}
-          onClick={() => setShowIssues((prev) => !prev)}
+          degraded={delayData.status === 'unavailable' || alertData.status === 'unavailable'}
+          onClick={() => {
+            setShowIssues((prev) => !prev)
+            setShowNearby(false)
+          }}
         />
       </div>
 

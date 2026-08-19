@@ -5,5 +5,7 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startPushChecker } = await import('@/lib/push-checker')
     startPushChecker()
+    const { startDetectorSampler } = await import('@/lib/traffic/sampler')
+    startDetectorSampler()
   }
 }

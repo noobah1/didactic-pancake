@@ -62,3 +62,7 @@ otp/graph.obj
 
 # shared-journey link store — same reasoning as push-data/ above.
 /share-data/
+
+# learned traffic-detector baseline database — same reasoning as push-data/
+# above (compose.yaml mounts this as a volume in production).
+/traffic-data/

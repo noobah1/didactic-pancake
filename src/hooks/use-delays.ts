@@ -2,10 +2,14 @@ import { useCallback } from 'react'
 import { usePolling } from './use-polling'
 import { POLL_INTERVALS } from '@/lib/constants'
 import { DelayedVehicle } from '@/app/api/delays/route'
+import { Availability, resolveFeedStatus } from '@/lib/feed-status'
+import { RouteTrafficEstimate } from '@/lib/types'
 
 interface DelaysResponse {
   vehicles: DelayedVehicle[]
+  estimates: RouteTrafficEstimate[]
   timestamp: number
+  availability?: Availability
 }
 
 export function useDelays() {
@@ -15,5 +19,6 @@ export function useDelays() {
     return res.json()
   }, [])
 
-  return usePolling(fetcher, POLL_INTERVALS.delays)
+  const { data, error, lastUpdated } = usePolling(fetcher, POLL_INTERVALS.delays)
+  return { data, error, lastUpdated, status: resolveFeedStatus(data, error) }
 }

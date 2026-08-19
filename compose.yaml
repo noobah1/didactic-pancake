@@ -4,13 +4,15 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    depends_on:
+      otp:
+        condition: service_started
     environment:
       NODE_ENV: production
       OTP_BASE_URL: http://otp:8080
       PUSH_DATA_DIR: /data
       SHARE_DATA_DIR: /share-data
-      # Sourced from a .env file next to this compose.yaml on the server —
-      # Compose auto-loads it, same as the rest of this project's secrets.
+      TRAFFIC_DATA_DIR: /traffic-data
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       VAPID_SUBJECT: ${VAPID_SUBJECT}
@@ -18,6 +20,7 @@ services:
     volumes:
       - ./push-data:/data
       - ./share-data:/share-data
+      - ./traffic-data:/traffic-data
     ports:
       - 3001:3000
     restart: unless-stopped
@@ -27,17 +30,14 @@ services:
     ports:
       - '8080:8080'
     environment:
-      # Serving a pre-built graph needs far less heap than building one.
       - JAVA_TOOL_OPTIONS=-Xmx2g
     volumes:
       - ./otp:/var/opentripplanner
-    # graph.obj is built by the "Build OTP graph" GitHub Actions workflow and
-    # published as a release asset — this container only ever loads it, never builds.
-    # Run scripts/refresh-graph.sh (e.g. via cron) to fetch a newer graph and reload.
     command: ['--load', '--serve']
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8080/otp/actuators/health']
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
     restart: unless-stopped
