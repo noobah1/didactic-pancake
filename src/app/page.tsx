@@ -365,7 +365,10 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           journeyVehicles={journeyVehicles}
           selectedVehicle={selectedVehicle}
           highlightDelay={selectedVehicleDelayed}
-          incidents={showIssues ? activeAlerts : undefined}
+          // Only the disruption the user actually picked from the issues
+          // panel gets drawn — passing every active alert here drew every
+          // piece of roadwork on the map the instant the panel opened.
+          incidents={showIssues && focusedAlert ? [focusedAlert] : undefined}
           cities={activeCities}
           focusAlert={focusedAlert}
           focusStop={stopBoard}
