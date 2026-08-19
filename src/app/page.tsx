@@ -3,6 +3,7 @@ import { useJourneyMonitor } from '@/hooks/use-journey-monitor'
 import { DelayBanner } from '@/components/DelayBanner'
 import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { AnimatePresence } from 'motion/react'
 import Image from 'next/image'
 const logo3 = '/logo3.png'
 import { SearchPanel } from '@/components/SearchPanel'
@@ -373,15 +374,18 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       </ErrorBoundary>
 
       {/* Timetable panel - bottom left */}
-      {selectedVehicle && (
-        <TimetablePanel
-          vehicle={selectedVehicle}
-          vehicles={vehicleData.data?.vehicles}
-          initialTripId={selectedVehicleInitialTripId}
-          onClose={() => { setSelectedVehicle(null); setSelectedVehicleInitialTripId(null) }}
-          onLateChange={setSelectedVehicleDelayed}
-        />
-      )}
+      <AnimatePresence>
+        {selectedVehicle && (
+          <TimetablePanel
+            key="timetable"
+            vehicle={selectedVehicle}
+            vehicles={vehicleData.data?.vehicles}
+            initialTripId={selectedVehicleInitialTripId}
+            onClose={() => { setSelectedVehicle(null); setSelectedVehicleInitialTripId(null) }}
+            onLateChange={setSelectedVehicleDelayed}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Floating UI column - top center. On mobile it spans full width, leaving just
           a gutter on the right to clear the map's zoom/locate controls, instead of
@@ -394,13 +398,16 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} pushSupported={pushSupported} pushEnabled={notificationsEnabled} onEnablePush={enableNotifications} />
         </div>
         <div className="pointer-events-auto mt-8 sm:mt-0">
-          {stopBoard && (
-            <ErrorBoundary
-              fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">Departure board unavailable</div>}
-            >
-              <StopBoard stop={stopBoard} onClose={() => setStopBoard(null)} onSelectDeparture={handleSelectDeparture} />
-            </ErrorBoundary>
-          )}
+          <AnimatePresence>
+            {stopBoard && (
+              <ErrorBoundary
+                key="stop-board"
+                fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">Departure board unavailable</div>}
+              >
+                <StopBoard stop={stopBoard} onClose={() => setStopBoard(null)} onSelectDeparture={handleSelectDeparture} />
+              </ErrorBoundary>
+            )}
+          </AnimatePresence>
           <ErrorBoundary
             fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">Route search unavailable</div>}
           >
@@ -448,50 +455,59 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       </div>
 
       {/* Delay toast - briefly announces newly-detected delays */}
-      {toast && !showIssues && (
-        <DelayToast
-          text={toast.text}
-          onDismiss={dismissToast}
-          onClick={() => {
-            setShowIssues(true)
-            dismissToast()
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {toast && !showIssues && (
+          <DelayToast
+            key="delay-toast"
+            text={toast.text}
+            onDismiss={dismissToast}
+            onClick={() => {
+              setShowIssues(true)
+              dismissToast()
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Issues panel - above the issues button */}
-      {showIssues && (
-        <IssuesPanel
-          vehicles={activeDelayedVehicles}
-          alerts={activeAlerts}
-          trafficEstimates={activeTrafficEstimates}
-          delayStatus={delayData.status}
-          alertStatus={alertData.status}
-          onSelectVehicle={handleSelectDelayedVehicle}
-          onLocateAlert={setFocusedAlert}
-          onClose={() => setShowIssues(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showIssues && (
+          <IssuesPanel
+            key="issues"
+            vehicles={activeDelayedVehicles}
+            alerts={activeAlerts}
+            trafficEstimates={activeTrafficEstimates}
+            delayStatus={delayData.status}
+            alertStatus={alertData.status}
+            onSelectVehicle={handleSelectDelayedVehicle}
+            onLocateAlert={setFocusedAlert}
+            onClose={() => setShowIssues(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Nearby-stops panel - above the nearby button; mutually exclusive
           with the issues panel so the two never stack in the same corner */}
-      {showNearby && (
-        <ErrorBoundary
-          fallback={
-            <div className="absolute bottom-24 right-4 z-40 w-80 p-4 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-              Nearby stops unavailable
-            </div>
-          }
-        >
-          <NearbyPanel
-            onSelectStop={(name, lat, lng, stopId) => {
-              handleViewStopBoard(name, lat, lng, stopId)
-              setShowNearby(false)
-            }}
-            onClose={() => setShowNearby(false)}
-          />
-        </ErrorBoundary>
-      )}
+      <AnimatePresence>
+        {showNearby && (
+          <ErrorBoundary
+            key="nearby"
+            fallback={
+              <div className="absolute bottom-24 right-4 z-40 w-80 p-4 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                Nearby stops unavailable
+              </div>
+            }
+          >
+            <NearbyPanel
+              onSelectStop={(name, lat, lng, stopId) => {
+                handleViewStopBoard(name, lat, lng, stopId)
+                setShowNearby(false)
+              }}
+              onClose={() => setShowNearby(false)}
+            />
+          </ErrorBoundary>
+        )}
+      </AnimatePresence>
 
       {/* Bottom-right FAB row. A single flex container rather than per-button
           right-N offsets: NotificationToggle is conditional on pushSupported,

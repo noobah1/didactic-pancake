@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft, AlertCircle } from 'lucide-react'
+import { AnimatedOverlay, TAP_SPRING } from '@/components/AnimatedOverlay'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -64,15 +66,20 @@ export function IssuesPanel({
   const viewingAlert = viewingIndex >= 0 ? alerts[viewingIndex] : null
 
   return (
-    <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col overflow-hidden">
+    <AnimatedOverlay
+      anchor="bottom-right"
+      className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden"
+    >
       <div className="flex items-center justify-between px-4 py-3 bg-amber-500 text-white shrink-0">
         <span className="text-sm font-semibold">Current issues</span>
-        <button
+        <motion.button
           onClick={onClose}
+          whileTap={{ scale: 0.85 }}
+          transition={TAP_SPRING}
           className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
         >
           <X size={18} />
-        </button>
+        </motion.button>
       </div>
       <div className="flex flex-col overflow-y-auto">
         {bothLoading ? (
@@ -263,6 +270,6 @@ export function IssuesPanel({
           </>
         )}
       </div>
-    </div>
+    </AnimatedOverlay>
   )
 }

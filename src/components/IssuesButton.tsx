@@ -1,6 +1,8 @@
 'use client'
 
+import { motion } from 'motion/react'
 import { AlertTriangle } from 'lucide-react'
+import { TAP_SPRING } from '@/components/AnimatedOverlay'
 
 interface IssuesButtonProps {
   active: boolean
@@ -16,16 +18,18 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
   const hasIssues = count > 0
 
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all border-2 ${
+      whileTap={{ scale: 0.9 }}
+      transition={TAP_SPRING}
+      className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-colors border-2 backdrop-blur-xl ${
         active
-          ? 'bg-amber-100 dark:bg-amber-900 border-amber-500'
+          ? 'bg-amber-100/90 dark:bg-amber-900/80 border-amber-500'
           : degraded
-            ? 'bg-white dark:bg-gray-800 border-red-400 hover:bg-red-50 dark:hover:bg-red-950'
+            ? 'bg-white/85 dark:bg-gray-900/80 border-red-400 hover:bg-red-50 dark:hover:bg-red-950'
             : hasIssues
-              ? 'bg-white dark:bg-gray-800 border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950'
-              : 'bg-white dark:bg-gray-800 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
+              ? 'bg-white/85 dark:bg-gray-900/80 border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950'
+              : 'bg-white/85 dark:bg-gray-900/80 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
       title={degraded ? 'Live issue data unavailable' : active ? 'Hide issues' : `Show issues (${count})`}
     >
@@ -44,6 +48,6 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
           </span>
         )
       )}
-    </button>
+    </motion.button>
   )
 }

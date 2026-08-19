@@ -1,6 +1,8 @@
 'use client'
 
+import { motion } from 'motion/react'
 import { X } from 'lucide-react'
+import { AnimatedOverlay, TAP_SPRING } from '@/components/AnimatedOverlay'
 import { useStopBoard } from '@/hooks/use-stop-board'
 import { StopDeparture, StopBoardTarget } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
@@ -18,7 +20,10 @@ export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) 
   const { data, error, lastUpdated } = useStopBoard(stop.stopId)
 
   return (
-    <div className="flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2 max-h-[40vh] sm:max-h-[24rem]">
+    <AnimatedOverlay
+      anchor="top"
+      className="flex flex-col bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg mt-2 max-h-[40vh] sm:max-h-[24rem]"
+    >
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate pr-2">
           {/* The stop-search result carries a "(Bus stop)"-style suffix that's
@@ -26,14 +31,16 @@ export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) 
               this is the only stop on screen. */}
           {stop.name.replace(/\s*\([^)]+\)\s*$/, '')}
         </h2>
-        <button
+        <motion.button
           type="button"
           onClick={onClose}
           aria-label="Close departure board"
+          whileTap={{ scale: 0.85 }}
+          transition={TAP_SPRING}
           className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         >
           <X size={16} />
-        </button>
+        </motion.button>
       </div>
 
       {!data && !error && (
@@ -85,6 +92,6 @@ export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) 
           Updated {new Date(lastUpdated).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
         </div>
       )}
-    </div>
+    </AnimatedOverlay>
   )
 }
