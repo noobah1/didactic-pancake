@@ -64,3 +64,26 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   event.waitUntil(self.clients.openWindow(event.notification.data?.url || '/'))
 })
+
+// The push service can rotate a subscription's endpoint at any time
+// (browser-side key rotation, not something the page triggers), firing
+// this instead of a normal push event. event.oldSubscription.options
+// carries the same applicationServerKey the page originally subscribed
+// with, so this can re-subscribe without needing the VAPID key baked into
+// the service worker at build time.
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    self.registration.pushManager
+      .subscribe(event.oldSubscription ? event.oldSubscription.options : { userVisibleOnly: true })
+      .then((subscription) =>
+        fetch('/api/push/resubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            oldEndpoint: event.oldSubscription ? event.oldSubscription.endpoint : undefined,
+            subscription,
+          }),
+        }),
+      ),
+  )
+})

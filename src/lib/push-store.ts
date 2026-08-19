@@ -54,6 +54,24 @@ export function upsertSubscription(subscription: WebPushSubscription, favorites:
   writeAll(all)
 }
 
+// Chrome (or any push service) can rotate an endpoint at any time, firing
+// the SW's pushsubscriptionchange rather than a fresh subscribe() call from
+// the page. Re-keys the existing record onto the new endpoint so favorites
+// and per-favorite state (lastNotifiedTripIds, lastReminderDates) survive
+// the rotation instead of silently starting over — or over subscribing
+// fresh if the old record is already gone (e.g. it was 410-removed first).
+export function migrateSubscription(oldEndpoint: string | undefined, subscription: WebPushSubscription) {
+  const all = readAll()
+  const existing = oldEndpoint ? all[oldEndpoint] : undefined
+  if (!existing) {
+    upsertSubscription(subscription, [])
+    return
+  }
+  if (oldEndpoint) delete all[oldEndpoint]
+  all[subscription.endpoint] = { ...existing, subscription }
+  writeAll(all)
+}
+
 export function removeSubscription(endpoint: string) {
   const all = readAll()
   if (!(endpoint in all)) return

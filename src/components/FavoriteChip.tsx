@@ -1,20 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, X, Clock } from 'lucide-react'
+import { Star, X, Clock, TriangleAlert } from 'lucide-react'
 import { FavoriteRoute } from '@/lib/types'
+import { DEFAULT_LEAD_MINUTES } from '@/lib/reminder'
 
 interface FavoriteChipProps {
   favorite: FavoriteRoute
   onSelect: () => void
   onRemove: () => void
   onSetReminder: (reminder: { enabled: boolean; time: string; leadMinutes: number }) => void
+  pushSupported: boolean
+  pushEnabled: boolean
+  onEnablePush: () => Promise<boolean>
 }
 
-const DEFAULT_LEAD_MINUTES = 10
 const DEFAULT_TIME = '08:00'
 
-export function FavoriteChip({ favorite, onSelect, onRemove, onSetReminder }: FavoriteChipProps) {
+export function FavoriteChip({ favorite, onSelect, onRemove, onSetReminder, pushSupported, pushEnabled, onEnablePush }: FavoriteChipProps) {
   const [editing, setEditing] = useState(false)
   const hasReminder = !!favorite.reminderEnabled && !!favorite.reminderTime
 
@@ -79,7 +82,14 @@ export function FavoriteChip({ favorite, onSelect, onRemove, onSetReminder }: Fa
             <input
               type="checkbox"
               checked={hasReminder}
-              onChange={(e) => onSetReminder({ enabled: e.target.checked, time, leadMinutes })}
+              onChange={(e) => {
+                // Persist the reminder either way — even if the permission
+                // prompt below gets denied, the setting itself shouldn't be
+                // lost, and the warning underneath tells the rider it can't
+                // fire yet.
+                onSetReminder({ enabled: e.target.checked, time, leadMinutes })
+                if (e.target.checked && pushSupported && !pushEnabled) onEnablePush()
+              }}
             />
             Remind me
           </label>
@@ -112,6 +122,14 @@ export function FavoriteChip({ favorite, onSelect, onRemove, onSetReminder }: Fa
             className="w-11 px-1.5 py-0.5 text-[11px] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded"
           />
           <span className="text-[11px] text-gray-500 dark:text-gray-400">min heads-up, weekdays</span>
+          {hasReminder && !pushEnabled && (
+            <span className="flex items-center gap-1 w-full text-[11px] text-amber-600 dark:text-amber-400">
+              <TriangleAlert size={12} />
+              {pushSupported
+                ? 'Turn on notifications (bell, bottom right) or this reminder won’t fire.'
+                : "This browser can't show notifications, so this reminder won't fire."}
+            </span>
+          )}
         </div>
       )}
     </div>

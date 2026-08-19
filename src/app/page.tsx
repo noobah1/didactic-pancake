@@ -372,7 +372,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
       >
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} pushSupported={pushSupported} pushEnabled={notificationsEnabled} onEnablePush={enableNotifications} />
         </div>
         <div className="pointer-events-auto mt-8 sm:mt-0">
           {stopBoard && (

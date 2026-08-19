@@ -89,16 +89,27 @@ export function usePushNotifications() {
   // Keep the server's copy of favorites current while notifications are on,
   // so a favorite added/removed after subscribing still gets checked (or
   // stops being checked) without the rider having to re-toggle the switch.
+  // Also re-runs once on mount (not just on favorites-changed): that's what
+  // heals a server-side record lost to a 410 removal or a wiped
+  // PUSH_DATA_DIR volume, since postSubscription is an upsert. If the
+  // browser itself no longer has a subscription while localStorage still
+  // says "enabled", the bell is lying — correct it instead of resyncing
+  // nothing.
   useEffect(() => {
     if (!enabled) return
 
     const resync = async () => {
       const subscription = await getSubscription()
-      if (!subscription) return
+      if (!subscription) {
+        localStorage.setItem(STORAGE_KEY, 'false')
+        setEnabled(false)
+        return
+      }
       const favorites: FavoriteRoute[] = JSON.parse(localStorage.getItem('favoriteRoutes') || '[]')
       await postSubscription(subscription, favorites)
     }
 
+    resync()
     window.addEventListener('favorites-changed', resync)
     return () => window.removeEventListener('favorites-changed', resync)
   }, [enabled])

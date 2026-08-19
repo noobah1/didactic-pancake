@@ -18,9 +18,16 @@ interface SearchPanelProps {
   onCountyToggle?: (countyCities: CityDef[]) => void
   onSetAllCities?: (cities: CityDef[]) => void
   onViewStopBoard?: (name: string, lat: number, lng: number, stopId: string) => void
+  // Passed down rather than calling usePushNotifications() again in here —
+  // that hook's enabled/busy state is a separate useState per call site
+  // with no cross-instance sync, so a second instance would drift from the
+  // NotificationToggle's after any toggle.
+  pushSupported: boolean
+  pushEnabled: boolean
+  onEnablePush: () => Promise<boolean>
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard, pushSupported, pushEnabled, onEnablePush }: SearchPanelProps) {
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
   const [toText, setToText] = useState('')
@@ -208,6 +215,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               onSelect={() => handleFavoriteClick(favorite)}
               onRemove={() => removeFavorite(favorite.id)}
               onSetReminder={(reminder) => setReminder(favorite.id, reminder)}
+              pushSupported={pushSupported}
+              pushEnabled={pushEnabled}
+              onEnablePush={onEnablePush}
             />
           ))}
         </div>

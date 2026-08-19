@@ -3,6 +3,7 @@ import { getAllSubscriptions, markNotified, markReminderSent, removeSubscription
 import { planTrip } from '@/lib/plan-query'
 import { findVehicleForLeg, LIVE_BANNER_THRESHOLD_SEC } from '@/lib/delay'
 import { computeDelays } from '@/app/api/delays/route'
+import { DEFAULT_LEAD_MINUTES, shouldSendReminder, tallinnNow } from '@/lib/reminder'
 import { FavoriteRoute } from '@/lib/types'
 
 // Slower than the client's own 20s POLL_INTERVALS.delays — push doesn't
@@ -12,13 +13,13 @@ const CHECK_INTERVAL_MS = 60_000
 // Once notified about a given trip's delay, don't notify again for the
 // same still-ongoing delay every single cycle.
 const RENOTIFY_COOLDOWN_MS = 30 * 60_000
-// A "leave now" reminder must fire inside [leaveTime - leadMinutes, that +
-// this window) — wide enough to survive the 60s check cadence without being
-// missed, narrow enough that a checker outage earlier in the day doesn't
-// cause a wildly late "leave now" hours after the fact.
-const REMINDER_NOTIFY_WINDOW_MIN = 3
 
 let started = false
+// Guards against a slow cycle (many subscriptions x favorites, each up to
+// an 8s OTP timeout) still running when the next setInterval tick fires —
+// without this, two overlapping cycles could both pass a reminder's notify
+// window before either had written markReminderSent, sending it twice.
+let checking = false
 
 // Called once from instrumentation.ts on server boot. Guarded so importing
 // this module twice (e.g. from a route handler during dev hot-reload)
@@ -36,8 +37,17 @@ export function startPushChecker() {
   console.log('[push-checker] started, checking every', CHECK_INTERVAL_MS, 'ms')
 
   setInterval(() => {
+    if (checking) {
+      console.warn('[push-checker] previous cycle still running, skipping tick')
+      return
+    }
     console.log('[push-checker] running check cycle')
-    runCheck().catch((err) => console.error('[push-checker] check cycle failed:', err))
+    checking = true
+    runCheck()
+      .catch((err) => console.error('[push-checker] check cycle failed:', err))
+      .finally(() => {
+        checking = false
+      })
   }, CHECK_INTERVAL_MS)
 }
 
@@ -45,10 +55,31 @@ async function runCheck() {
   const subs = getAllSubscriptions()
   if (subs.length === 0) return
 
-  const delays = await computeDelays()
-  const nowMs = Date.now()
-  const tallinn = tallinnNow()
+  const now = tallinnNow()
 
+  // Reminders first, and independent of the delay pass below: it's plain
+  // clock arithmetic with no network involved, so a live-feed outage (OTP
+  // down, GPS feed erroring) must never be able to take it down too — that
+  // used to be exactly what happened when computeDelays() gated this loop.
+  for (const sub of subs) {
+    for (const favorite of sub.favorites) {
+      try {
+        await checkReminder(sub, favorite, now)
+      } catch (err) {
+        console.error('[push-checker] failed checking reminder', favorite.id, err)
+      }
+    }
+  }
+
+  let delays: Awaited<ReturnType<typeof computeDelays>>
+  try {
+    delays = await computeDelays()
+  } catch (err) {
+    console.error('[push-checker] computeDelays failed, skipping delay pass this cycle:', err)
+    return
+  }
+
+  const nowMs = Date.now()
   for (const sub of subs) {
     for (const favorite of sub.favorites) {
       try {
@@ -56,56 +87,21 @@ async function runCheck() {
       } catch (err) {
         console.error('[push-checker] failed checking favorite', favorite.id, err)
       }
-      try {
-        await checkReminder(sub, favorite, tallinn)
-      } catch (err) {
-        console.error('[push-checker] failed checking reminder', favorite.id, err)
-      }
     }
   }
 }
 
-interface TallinnNow {
-  hour: number
-  minute: number
-  dateStr: string // "YYYY-MM-DD"
-  isWeekday: boolean
-}
+async function checkReminder(sub: StoredSubscription, favorite: FavoriteRoute, now: ReturnType<typeof tallinnNow>) {
+  if (!shouldSendReminder(favorite, now, sub.lastReminderDates?.[favorite.id])) return
 
-function tallinnNow(): TallinnNow {
-  const now = new Date()
-  const [h, m] = now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Tallinn', hour12: false }).split(':')
-  const weekday = now.toLocaleDateString('en-US', { timeZone: 'Europe/Tallinn', weekday: 'short' })
-  return {
-    hour: parseInt(h, 10),
-    minute: parseInt(m, 10),
-    dateStr: now.toLocaleDateString('en-CA', { timeZone: 'Europe/Tallinn' }),
-    isWeekday: weekday !== 'Sat' && weekday !== 'Sun',
-  }
-}
-
-// Independent of checkFavorite's delay push — a plain time-of-day reminder,
-// not tied to replanning the trip through OTP. Weekdays only for now.
-async function checkReminder(sub: StoredSubscription, favorite: FavoriteRoute, tallinn: TallinnNow) {
-  if (!favorite.reminderEnabled || !favorite.reminderTime || !tallinn.isWeekday) return
-
-  const [leaveHour, leaveMinute] = favorite.reminderTime.split(':').map(Number)
-  if (Number.isNaN(leaveHour) || Number.isNaN(leaveMinute)) return
-
-  const leadMinutes = favorite.reminderLeadMinutes ?? 10
-  const notifyMinuteOfDay = leaveHour * 60 + leaveMinute - leadMinutes
-  const nowMinuteOfDay = tallinn.hour * 60 + tallinn.minute
-  if (nowMinuteOfDay < notifyMinuteOfDay || nowMinuteOfDay >= notifyMinuteOfDay + REMINDER_NOTIFY_WINDOW_MIN) return
-
-  if (sub.lastReminderDates?.[favorite.id] === tallinn.dateStr) return
-
+  const leadMinutes = favorite.reminderLeadMinutes ?? DEFAULT_LEAD_MINUTES
   const payload = JSON.stringify({
     title: `Leave in ${leadMinutes} min`,
     body: `Time to head out for your ${favorite.fromName} → ${favorite.toName} trip`,
     url: '/',
   })
   const sent = await sendPush(sub, payload)
-  if (sent) markReminderSent(sub.subscription.endpoint, favorite.id, tallinn.dateStr)
+  if (sent) markReminderSent(sub.subscription.endpoint, favorite.id, now.dateStr)
 }
 
 async function checkFavorite(
