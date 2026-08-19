@@ -7,7 +7,7 @@ interface LocationInputProps {
   label: string
   placeholder: string
   value: string
-  onSelect: (name: string, lat: number, lng: number, stopId?: string) => void
+  onSelect: (name: string, lat: number, lng: number, stopId?: string, line?: string, mode?: string) => void
   onChange: (value: string) => void
   allowMyLocation?: boolean
   // Restricts search (and results) to transit stops only — used by the
@@ -57,8 +57,8 @@ export function LocationInput({
     setShowDropdown(true)
   }
 
-  const handleSelect = (result: { name: string; lat: number; lng: number; stopId?: string }) => {
-    onSelect(result.name, result.lat, result.lng, result.stopId)
+  const handleSelect = (result: { name: string; lat: number; lng: number; stopId?: string; line?: string; mode?: string }) => {
+    onSelect(result.name, result.lat, result.lng, result.stopId, result.line, result.mode)
     setShowDropdown(false)
     clear()
   }

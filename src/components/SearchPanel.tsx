@@ -20,6 +20,12 @@ interface SearchPanelProps {
   onCountyToggle?: (countyCities: CityDef[]) => void
   onSetAllCities?: (cities: CityDef[]) => void
   onViewStopBoard?: (name: string, lat: number, lng: number, stopId: string) => void
+  // Called when the rider picks a line result from the same search box
+  // (see LocationInput's stopsOnly mode, which now also returns lines —
+  // /api/geocode). Returns whether a currently-active trip on that line was
+  // found and selected, so this panel can show an inline "not running right
+  // now" message on a miss without page.tsx needing to own that UI state.
+  onSelectLine?: (mode: string, line: string) => boolean
   // Passed down rather than calling usePushNotifications() again in here —
   // that hook's enabled/busy state is a separate useState per call site
   // with no cross-instance sync, so a second instance would drift from the
@@ -29,7 +35,7 @@ interface SearchPanelProps {
   onEnablePush: () => Promise<boolean>
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard, pushSupported, pushEnabled, onEnablePush }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard, onSelectLine, pushSupported, pushEnabled, onEnablePush }: SearchPanelProps) {
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
   const [toText, setToText] = useState('')
@@ -39,6 +45,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const [dateTime, setDateTime] = useState('')
   const [pickerVisible, setPickerVisible] = useState(false)
   const [boardText, setBoardText] = useState('')
+  // Set only when a picked line has no currently-active trip to show (see
+  // onSelectLine) — cleared on the next successful pick or a fresh search.
+  const [lineNotRunning, setLineNotRunning] = useState<string | null>(null)
   const { favorites, addFavorite, removeFavorite, findFavorite, setReminder } = useFavorites()
 
   const handleSearch = (from = fromCoords, to = toCoords) => {
@@ -106,20 +115,42 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
         </div>
       )}
       {panelMode === 'board' && onViewStopBoard ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
-          <LocationInput
-            label="Stop"
-            placeholder="Search for a stop..."
-            value={boardText}
-            onChange={setBoardText}
-            stopsOnly
-            cityIds={activeCities?.map((c) => c.id)}
-            onSelect={(name, lat, lng, stopId) => {
-              if (!stopId) return
-              onViewStopBoard(name, lat, lng, stopId)
-              setBoardText('')
-            }}
-          />
+        <div className="flex flex-col gap-1">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
+            <LocationInput
+              label="Stop or line"
+              placeholder="Search for a stop or line..."
+              value={boardText}
+              onChange={(text) => {
+                setBoardText(text)
+                setLineNotRunning(null)
+              }}
+              stopsOnly
+              cityIds={activeCities?.map((c) => c.id)}
+              onSelect={(name, lat, lng, stopId, line, mode) => {
+                if (stopId) {
+                  onViewStopBoard(name, lat, lng, stopId)
+                  setBoardText('')
+                  setLineNotRunning(null)
+                  return
+                }
+                if (line && mode) {
+                  const found = onSelectLine?.(mode, line) ?? false
+                  if (found) {
+                    setBoardText('')
+                    setLineNotRunning(null)
+                  } else {
+                    setLineNotRunning(line)
+                  }
+                }
+              }}
+            />
+          </div>
+          {lineNotRunning && (
+            <p className="px-3 text-xs text-gray-500 dark:text-gray-400">
+              No vehicles currently running on line {lineNotRunning}.
+            </p>
+          )}
         </div>
       ) : (
       <>

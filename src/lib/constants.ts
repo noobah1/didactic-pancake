@@ -185,6 +185,17 @@ export const STOP_SEARCH_CITY_LABEL_RADIUS_M = 30_000
 // of a smaller cap with entries for towns the rider has no interest in.
 export const STOP_SEARCH_MAX_RESULTS = 10
 
+// Line-number search (mixed into the same Departures-tab search as stops
+// above) — kept much smaller than STOP_SEARCH_MAX_RESULTS since a line query
+// is almost always a short, specific code ("5", "T2", "R16") with very few
+// real matches, unlike a place name that can legitimately have a dozen
+// same-named stops across the country.
+export const LINE_SEARCH_MAX_RESULTS = 5
+// Same reasoning as STOP_SEARCH_CITY_LABEL_RADIUS_M — a line whose stops sit
+// this far from every known city shows with no city label rather than a
+// misleading one.
+export const LINE_SEARCH_CITY_LABEL_RADIUS_M = 30_000
+
 // Mapping from gps.txt type codes to our transport modes
 // Verified against live feed: type 1 = trolleybus (lines terminate at Kopli/Kadriorg/
 // Kaubamaja/Balti jaam, Tallinn's trolleybus depots), type 2 = bus (majority),

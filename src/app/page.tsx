@@ -219,6 +219,34 @@ function HomeContent() {
     setShowIssues(false)
   }
 
+  // Line search (see SearchPanel's Departures-tab search, mixed in with
+  // stops via /api/geocode) has no vehicle or trip to select up front — just
+  // a mode + line code — so it has to find one itself rather than being
+  // handed one like the handlers above. Checks the GPS-confirmed delay board
+  // first (nationwide, not scoped to activeModes/activeCities, so a line
+  // outside the map's current filters can still be found), then falls back
+  // to the schedule-interpolated /api/vehicles feed (covers modes/lines
+  // currently active but not GPS-tracked right now). Returns whether
+  // anything was found, so SearchPanel knows whether to show its own "not
+  // running" message — deliberately never fabricates a placeholder position
+  // for a miss, which would risk showing a fake "confirmed" delay computed
+  // against a point no real vehicle is at (see computeStatusFromGPS).
+  const handleSelectLine = (mode: string, line: string): boolean => {
+    const delayed = delayData.data?.vehicles.find((v) => v.mode === mode && v.line === line)
+    if (delayed) {
+      handleSelectDelayedVehicle(delayed)
+      return true
+    }
+    const scheduled = vehicleData.data?.vehicles.find((v) => v.mode === mode && v.line === line)
+    if (scheduled) {
+      setSelectedVehicle(scheduled)
+      setSelectedVehicleInitialTripId(null)
+      setSelectedVehicleDelayed(false)
+      return true
+    }
+    return false
+  }
+
   const handleVehicleClick = (vehicle: VehiclePosition | null) => {
     setSelectedVehicle(vehicle)
     setSelectedVehicleInitialTripId(null)
@@ -398,7 +426,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
       >
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} pushSupported={pushSupported} pushEnabled={notificationsEnabled} onEnablePush={enableNotifications} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} pushSupported={pushSupported} pushEnabled={notificationsEnabled} onEnablePush={enableNotifications} />
         </div>
         <div className="pointer-events-auto mt-8 sm:mt-0">
           <AnimatePresence>

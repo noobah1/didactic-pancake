@@ -5,6 +5,11 @@ interface GeoResult {
   lat: number
   lng: number
   stopId?: string
+  // Only present for a line match (stopsOnly search only — see /api/geocode)
+  // — mutually exclusive with stopId. Selecting one means "show this line",
+  // not "open a departure board".
+  line?: string
+  mode?: 'train' | 'ferry' | 'bus' | 'tram'
 }
 
 // cityIds: the rider's currently-selected cities (CityDef.id), passed
@@ -27,7 +32,12 @@ export function useGeocode(stopsOnly = false, cityIds: string[] = []) {
   const search = useCallback((query: string) => {
     clearTimeout(debounceRef.current)
 
-    if (query.length < 2) {
+    // Mirrors /api/geocode's own minimum: 2 characters for a general place
+    // search, but a single character is allowed for stopsOnly (the
+    // departure-board search) since a one-digit line code ("1", "2", "5"...)
+    // is a complete, deliberate query on its own — requiring 2 would make
+    // the single most common class of line search unreachable.
+    if (query.length < (stopsOnly ? 1 : 2)) {
       setResults([])
       return
     }

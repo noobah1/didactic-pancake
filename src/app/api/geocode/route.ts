@@ -1,17 +1,30 @@
-import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, STOP_SEARCH_CLUSTER_RADIUS_M, STOP_SEARCH_CITY_LABEL_RADIUS_M, STOP_SEARCH_MAX_RESULTS, CITIES } from '@/lib/constants'
+import {
+  OTP_BASE_URL,
+  OTP_FETCH_TIMEOUT_MS,
+  STOP_SEARCH_CLUSTER_RADIUS_M,
+  STOP_SEARCH_CITY_LABEL_RADIUS_M,
+  STOP_SEARCH_MAX_RESULTS,
+  LINE_SEARCH_MAX_RESULTS,
+  LINE_SEARCH_CITY_LABEL_RADIUS_M,
+  CITIES,
+} from '@/lib/constants'
 import { foldName, tokenize, scoreName, clusterByLocation, nearestCityName, distanceToNearestActiveCity } from '@/lib/stop-search'
 const TRANSIT_STOPS_QUERY = `
 query {
   rail: routes(transportModes: [RAIL]) {
+    shortName
     patterns { stops { name lat lon gtfsId } }
   }
   ferry: routes(transportModes: [FERRY]) {
+    shortName
     patterns { stops { name lat lon gtfsId } }
   }
   bus: routes(transportModes: [BUS]) {
+    shortName
     patterns { stops { name lat lon gtfsId } }
   }
   tram: routes(transportModes: [TRAM]) {
+    shortName
     patterns { stops { name lat lon gtfsId } }
   }
 }
@@ -24,6 +37,11 @@ interface OtpStop {
   gtfsId: string
 }
 
+interface OtpRoute {
+  shortName: string | null
+  patterns: { stops: OtpStop[] }[]
+}
+
 interface GeoResult {
   name: string
   lat: number
@@ -31,6 +49,10 @@ interface GeoResult {
   // Only present for an actual transit-stop match (not a plain address) —
   // the departure board needs OTP's stop id, an address has no such thing.
   stopId?: string
+  // Only present for a line match — mutually exclusive with stopId. Selecting
+  // one means "show this line", not "open a departure board".
+  line?: string
+  mode?: 'train' | 'ferry' | 'bus' | 'tram'
 }
 
 interface ActiveCity {
@@ -38,11 +60,30 @@ interface ActiveCity {
   lng: number
 }
 
+// A stop served by a line, plus that line's own shortName in its original
+// casing — the lineStops maps below are keyed by *folded* shortName (so
+// "t2" and "T2" land in the same bucket), which would otherwise lose the
+// real display casing entirely.
+interface LineStopEntry {
+  shortName: string
+  stop: OtpStop
+}
+
 interface TransitStopsCache {
   train: Map<string, OtpStop[]>
   ferry: Map<string, OtpStop[]>
   bus: Map<string, OtpStop[]>
   tram: Map<string, OtpStop[]>
+  // Every stop served by a given line, keyed the same way the maps above key
+  // stop names — used only to derive an anchor point per line for search-
+  // result clustering/city-labeling (see searchTransitLines), not shown to
+  // the rider directly.
+  lineStops: {
+    train: Map<string, LineStopEntry[]>
+    ferry: Map<string, LineStopEntry[]>
+    bus: Map<string, LineStopEntry[]>
+    tram: Map<string, LineStopEntry[]>
+  }
   timestamp: number
 }
 
@@ -75,6 +116,10 @@ async function fetchTransitStops() {
     const ferryStops = new Map<string, OtpStop[]>()
     const busStops = new Map<string, OtpStop[]>()
     const tramStops = new Map<string, OtpStop[]>()
+    const trainLineStops = new Map<string, LineStopEntry[]>()
+    const ferryLineStops = new Map<string, LineStopEntry[]>()
+    const busLineStops = new Map<string, LineStopEntry[]>()
+    const tramLineStops = new Map<string, LineStopEntry[]>()
     // A name can belong to several distinct physical stops (separate poles
     // on either side of a road, several bus bays at an interchange) — collect
     // all of them per name instead of the previous Map<name, single stop>,
@@ -92,32 +137,58 @@ async function fetchTransitStops() {
         map.set(key, [stop])
       }
     }
-    for (const route of data.data?.rail || []) {
+    // Every stop a line serves, tagged under that line's own shortName — an
+    // anchor set used only to cluster/city-label line search results (see
+    // searchTransitLines), the same way the stop maps above cluster same-
+    // named stops. A route with no shortName (rare, but present in the
+    // graph for a couple of special/replacement services) contributes no
+    // line-search entry at all rather than a blank, unsearchable one.
+    const addLine = (map: Map<string, LineStopEntry[]>, route: OtpRoute) => {
+      if (!route.shortName) return
+      const key = foldName(route.shortName)
+      for (const pattern of route.patterns) {
+        for (const stop of pattern.stops) {
+          const entry = { shortName: route.shortName, stop }
+          const list = map.get(key)
+          if (list) {
+            if (!list.some((e) => e.stop.gtfsId === stop.gtfsId)) list.push(entry)
+          } else {
+            map.set(key, [entry])
+          }
+        }
+      }
+    }
+    for (const route of (data.data?.rail || []) as OtpRoute[]) {
       for (const pattern of route.patterns) {
         for (const stop of pattern.stops) addStop(trainStops, stop)
       }
+      addLine(trainLineStops, route)
     }
-    for (const route of data.data?.ferry || []) {
+    for (const route of (data.data?.ferry || []) as OtpRoute[]) {
       for (const pattern of route.patterns) {
         for (const stop of pattern.stops) addStop(ferryStops, stop)
       }
+      addLine(ferryLineStops, route)
     }
-    for (const route of data.data?.bus || []) {
+    for (const route of (data.data?.bus || []) as OtpRoute[]) {
       for (const pattern of route.patterns) {
         for (const stop of pattern.stops) addStop(busStops, stop)
       }
+      addLine(busLineStops, route)
     }
-    for (const route of data.data?.tram || []) {
+    for (const route of (data.data?.tram || []) as OtpRoute[]) {
       for (const pattern of route.patterns) {
         for (const stop of pattern.stops) addStop(tramStops, stop)
       }
+      addLine(tramLineStops, route)
     }
     // Elron's schedule is loaded into the graph twice under different agency
     // ids — "1:" from the current, weekly-refreshed unified feed, "2:" from
     // the committed-once, never-refreshed elron.zip (see ELRON_AGENCY_GTFS_ID
     // in constants.ts). Its stop rows are exact duplicates of the "1:" ones,
     // same numeric id, just the stale feed's prefix — drop them here so they
-    // never pad a merged stopId list with dead weight.
+    // never pad a merged stopId list (or a line's anchor set) with dead
+    // weight.
     const dropStaleFeedDuplicates = (map: Map<string, OtpStop[]>) => {
       for (const [key, stops] of map) {
         const primaryIds = new Set(stops.filter((s) => s.gtfsId.startsWith('1:')).map((s) => s.gtfsId.slice(2)))
@@ -126,8 +197,31 @@ async function fetchTransitStops() {
       }
     }
     for (const map of [trainStops, ferryStops, busStops, tramStops]) dropStaleFeedDuplicates(map)
+    // Same duplicate-prefix problem, applied to the line-stops maps — same
+    // underlying stop rows, just wrapped in a { shortName, stop } entry here.
+    const dropStaleFeedDuplicatesFromLines = (map: Map<string, LineStopEntry[]>) => {
+      for (const [key, entries] of map) {
+        const primaryIds = new Set(
+          entries.filter((e) => e.stop.gtfsId.startsWith('1:')).map((e) => e.stop.gtfsId.slice(2)),
+        )
+        const deduped = entries.filter(
+          (e) => !(e.stop.gtfsId.startsWith('2:') && primaryIds.has(e.stop.gtfsId.slice(2))),
+        )
+        map.set(key, deduped)
+      }
+    }
+    for (const map of [trainLineStops, ferryLineStops, busLineStops, tramLineStops]) {
+      dropStaleFeedDuplicatesFromLines(map)
+    }
 
-    transitStopsCache = { train: trainStops, ferry: ferryStops, bus: busStops, tram: tramStops, timestamp: Date.now() }
+    transitStopsCache = {
+      train: trainStops,
+      ferry: ferryStops,
+      bus: busStops,
+      tram: tramStops,
+      lineStops: { train: trainLineStops, ferry: ferryLineStops, bus: busLineStops, tram: tramLineStops },
+      timestamp: Date.now(),
+    }
     return transitStopsCache
   } catch {
     return transitStopsCache
@@ -168,6 +262,88 @@ const MODE_LABELS: { key: 'ferry' | 'train' | 'tram' | 'bus'; label: string }[] 
   { key: 'tram', label: 'Tram stop' },
   { key: 'bus', label: 'Bus stop' },
 ]
+
+const LINE_MODE_LABELS: { key: 'ferry' | 'train' | 'tram' | 'bus'; label: string }[] = [
+  { key: 'ferry', label: 'Ferry' },
+  { key: 'train', label: 'Train' },
+  { key: 'tram', label: 'Tram' },
+  { key: 'bus', label: 'Bus' },
+]
+
+async function searchTransitLines(query: string, activeCities: ActiveCity[] = []): Promise<GeoResult[]> {
+  const cache = await loadTransitStops()
+  if (!cache) return []
+  const foldedQuery = foldName(query)
+  if (!foldedQuery) return []
+  const tokens = tokenize(query)
+
+  // Score once per distinct (folded shortName, mode) pair — relevance is a
+  // property of the line code itself, same principle searchTransitStops
+  // uses for stop names.
+  const candidates: { key: string; mode: (typeof LINE_MODE_LABELS)[number]['key']; score: number }[] = []
+  for (const { key: mode } of LINE_MODE_LABELS) {
+    for (const foldedShortName of cache.lineStops[mode].keys()) {
+      const score = scoreName(foldedShortName, foldedQuery, tokens)
+      if (score > 0) candidates.push({ key: foldedShortName, mode, score })
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score)
+  // Kept well above LINE_SEARCH_MAX_RESULTS since one line code can still
+  // split into several city-specific rows below.
+  const trimmed = candidates.slice(0, LINE_SEARCH_MAX_RESULTS * 4)
+
+  interface ScoredResult extends GeoResult {
+    score: number
+    distanceToActive: number | null
+  }
+  const results: ScoredResult[] = []
+
+  for (const { key, mode, score } of trimmed) {
+    const entries = cache.lineStops[mode].get(key) || []
+    if (entries.length === 0) continue
+    const shortName = entries[0].shortName
+    const modeLabel = LINE_MODE_LABELS.find((m) => m.key === mode)!.label
+
+    // Group this line's own stops by nearest known city rather than
+    // clustering nearby stops the way searchTransitStops does — a stop
+    // name's clusters need to separate physically distinct poles a block
+    // apart (STOP_SEARCH_CLUSTER_RADIUS_M), but a single line's own stops
+    // legitimately span many kilometers within one town, so the right
+    // grouping scale here is "same city", not "same block". Two different
+    // towns' same-numbered line (Tallinn bus 5, Tartu bus 5) still end up as
+    // separate rows since they resolve to different city labels.
+    const byCity = new Map<string, OtpStop[]>()
+    for (const { stop } of entries) {
+      const cityLabel = nearestCityName(stop.lat, stop.lon, LINE_SEARCH_CITY_LABEL_RADIUS_M) ?? ''
+      const list = byCity.get(cityLabel)
+      if (list) list.push(stop)
+      else byCity.set(cityLabel, [stop])
+    }
+    for (const [cityLabel, stops] of byCity) {
+      const seed = stops[0]
+      const displayName = cityLabel ? `Line ${shortName} (${modeLabel}) — ${cityLabel}` : `Line ${shortName} (${modeLabel})`
+      results.push({
+        name: displayName,
+        lat: seed.lat,
+        lng: seed.lon,
+        line: shortName,
+        mode,
+        score,
+        distanceToActive: distanceToNearestActiveCity(seed.lat, seed.lon, activeCities),
+      })
+    }
+  }
+
+  results.sort((a, b) => {
+    if (a.score !== b.score) return b.score - a.score
+    const da = a.distanceToActive ?? Infinity
+    const db = b.distanceToActive ?? Infinity
+    if (da !== db) return da - db
+    return a.name.length - b.name.length
+  })
+
+  return results.slice(0, LINE_SEARCH_MAX_RESULTS).map((r) => ({ name: r.name, lat: r.lat, lng: r.lng, line: r.line, mode: r.mode }))
+}
 
 async function searchTransitStops(query: string, activeCities: ActiveCity[] = []): Promise<GeoResult[]> {
   const cache = await loadTransitStops()
@@ -276,13 +452,29 @@ function resolveActiveCities(searchParams: URLSearchParams): ActiveCity[] {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')
-  if (!query || query.length < 2) return Response.json({ results: [] })
+  const isStopSearch = searchParams.get('type') === 'stop'
+  // The general (address-included) search needs at least 2 characters —
+  // below that, a place-name search is too broad to be useful and would
+  // otherwise dispatch a query to the external gazetteer for every single
+  // keystroke. The departure-board search allows a single character since a
+  // one-digit line code ("1", "2", "5"...) is an extremely common, complete,
+  // deliberate query on its own — requiring 2 would make the single most
+  // common class of line search unreachable.
+  if (!query || query.length < (isStopSearch ? 1 : 2)) return Response.json({ results: [] })
   const activeCities = resolveActiveCities(searchParams)
-  // The departure-board search only ever wants transit stops — an address
-  // has no stopId to look departures up by. Skipping the gazetteer call
-  // there also means it can't stall the response, unlike the general search.
-  if (searchParams.get('type') === 'stop') {
-    return Response.json({ results: await searchTransitStops(query, activeCities) })
+  // The departure-board search wants transit stops *and* lines — an address
+  // has no stopId to look departures up by, and this is also the only
+  // search surface a bare line code ("5", "T2", "R16") makes sense in (see
+  // searchTransitLines; results merged in ahead of stops since a query that
+  // exactly matches a line code is a strong, deliberate signal — no stop is
+  // ever just named "5"). Skipping the gazetteer call here also means it
+  // can't stall the response, unlike the general search below.
+  if (isStopSearch) {
+    const [lineResults, stopResults] = await Promise.all([
+      searchTransitLines(query, activeCities),
+      searchTransitStops(query, activeCities),
+    ])
+    return Response.json({ results: [...lineResults, ...stopResults] })
   }
   const [stopsResults, addressResults] = await Promise.all([
     searchTransitStops(query, activeCities),
