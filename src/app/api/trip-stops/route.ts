@@ -3,6 +3,7 @@ import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS, TALLINN_TRANSPORT_AGENCY_GTFS_ID } 
 import { TripStopInfo } from '@/lib/types'
 import { LATE_BUFFER_SEC, computeStatusFromGPS, findBestTrip } from '@/lib/delay'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
+import { buildRoutesByIdQuery } from '@/lib/route-query'
 
 // Direct lookup by trip ID — includes pattern geometry for route line
 const TRIP_STOPS_QUERY = `
@@ -292,6 +293,11 @@ export async function GET(request: Request) {
   const vehicleLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null
   const vehicleHeading = searchParams.get('heading') ? parseFloat(searchParams.get('heading')!) : null
   const preferredTripId = searchParams.get('preferredTripId')
+  // Set when the caller's lat/lng is a real live GPS fix rather than a
+  // schedule-interpolated guess. Only Elron trains reach the tripId branch
+  // below with a real position — their live feed names the trip outright, so
+  // they need no matching, but they're no less live for it.
+  const hasLiveGps = searchParams.get('live') === '1'
 
   const nowSec = getServiceSeconds()
 
@@ -320,9 +326,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Trip not found' }, { status: 404 })
       }
 
-      // Method 1 positions are interpolated/scheduled, never real GPS —
-      // never claim a confirmed delay for them.
-      return NextResponse.json(buildResponse(trip, nowSec, undefined, undefined, vehicleLat, vehicleLng, false))
+      // Method 1 positions are interpolated/scheduled unless the caller
+      // says otherwise — never claim a confirmed delay off a guessed position.
+      return NextResponse.json(
+        buildResponse(trip, nowSec, undefined, undefined, vehicleLat, vehicleLng, hasLiveGps),
+      )
     } catch (error) {
       console.error('Failed to fetch trip stops:', error)
       return NextResponse.json({ error: 'Failed to fetch trip stops' }, { status: 502 })

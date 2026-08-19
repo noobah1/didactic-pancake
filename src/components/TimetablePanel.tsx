@@ -66,7 +66,12 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const isScheduled = vehicle.id.includes(':')
+  // An id carrying a feed prefix is an OTP trip gtfsId, so the trip is known
+  // outright and needs no matching. That covers both schedule-interpolated
+  // vehicles and Elron trains, whose live feed names the trip it's running —
+  // so "which trip" and "is the position real" are two separate questions.
+  const isKnownTrip = vehicle.id.includes(':')
+  const hasLiveGps = !vehicle.estimated
   const color = MODE_COLORS[vehicle.mode]
 
   // Ref so the interval always reads the latest vehicles array
@@ -87,12 +92,14 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
 
     const doFetch = (lat: number, lng: number) => {
       let url: string
-      if (isScheduled) {
-        // Scheduled (interpolated) vehicles: the id itself is already the
-        // exact trip, so once locked, keep using that same id directly —
-        // no matching ambiguity here at all.
+      if (isKnownTrip) {
+        // The id itself is already the exact trip, so once locked, keep using
+        // that same id directly — no matching ambiguity here at all. Flag a
+        // real GPS position so a live train gets a confirmed delay off it
+        // rather than the time-based fallback used for interpolated ones.
         const tripIdToUse = lockedTripId || vehicle.id
         url = `/api/trip-stops?tripId=${encodeURIComponent(tripIdToUse)}&lat=${lat}&lng=${lng}`
+        if (hasLiveGps) url += '&live=1'
       } else {
         // Live GPS vehicles: always re-match by line/mode/GPS (this is the
         // only method that can compute a real GPS-based delay — a locked
@@ -154,7 +161,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
     return () => { cancelled = true; clearInterval(timer) }
   // Only re-run when the vehicle itself changes, NOT on every GPS position update
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isScheduled, initialTripId])
+  }, [vehicle.id, vehicle.line, vehicle.mode, vehicle.destination, isKnownTrip, hasLiveGps, initialTripId])
 
   // Tick every 15s to keep displayed times current
   const [, setTick] = useState(0)

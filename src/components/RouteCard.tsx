@@ -7,7 +7,10 @@ import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
 
-const GPS_MODES = new Set<TransportMode>(['bus', 'tram', 'trolleybus', 'nightbus'])
+// Modes with a live position feed behind them: Tallinn's own for the road
+// modes, Elron's for trains (see src/lib/elron.ts). Ferry has none, so a
+// ferry leg can only ever show its scheduled time.
+const GPS_MODES = new Set<TransportMode>(['bus', 'tram', 'trolleybus', 'nightbus', 'train'])
 
 interface RouteCardProps {
   route: RouteResult
@@ -90,7 +93,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCar
 
   // Only attempt a live match for GPS-covered modes whose scheduled departure
   // is near enough to "now" that a live vehicle could plausibly be running —
-  // a leg hours away, or on train/ferry/other-city bus, has no live vehicle to
+  // a leg hours away, or on ferry/other-city bus, has no live vehicle to
   // match against and must show a neutral "Scheduled" state, never a guessed
   // "on time".
   const nowMs = new Date().getTime()
