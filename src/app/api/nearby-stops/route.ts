@@ -36,7 +36,12 @@ query NearbyStops($lat: Float!, $lon: Float!, $radius: Int!, $first: Int!, $numb
 // exactly half of stopsByRadius's edges are the feed-2 phantom duplicates (see
 // buildNearbyStops), so this needs to be several times NEARBY_MAX_STOPS to
 // reliably leave enough real, departure-bearing stops after filtering.
-const STOPS_FETCHED = 40
+// Also shared by the NEARBY_WIDE_RADIUS_M retry — OTP doesn't return edges
+// sorted by distance, so a wider radius with the same `first` risks the
+// truncation missing genuinely nearby stops. Verified live at 8km radius in
+// real countryside: 40 already finds the same nearest stop 60 does, so this
+// stays generous rather than exact.
+const STOPS_FETCHED = 60
 const DEPARTURES_PER_STOP = 3
 
 // 4dp ~= 11m, same precision/rationale as use-favorites.ts's COORD_PRECISION
