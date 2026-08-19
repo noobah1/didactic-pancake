@@ -13,8 +13,36 @@ body {
 }
 
 .dark body {
-  background-color: #0f172a;
-  color: #e5e7eb;
+  background-color: #15202B;
+  color: #E7E9EA;
+}
+
+/* "Dim" theme, not stark black-on-white-inverted: every component in this
+   app reaches dark-mode colors through Tailwind's gray-* scale (dark:bg-
+   gray-800, dark:text-gray-400, etc. — never a bare, unprefixed gray
+   class), and those utilities all read their color from a
+   --color-gray-N CSS variable at the point they're used (confirmed in the
+   compiled output — e.g. `.dark\:bg-gray-800 { background-color:
+   var(--color-gray-800) }`). Redefining those same variables inside .dark
+   is enough to retint every dark:gray-* usage across the whole app at
+   once, without touching each component file individually. Anchored at
+   the five colors actually specified for this theme (900 background, 800
+   cards, 700 borders, 400 muted text, 100 primary text); the rest of the
+   ramp is interpolated between those so every existing shade in between
+   (hover states, secondary text, dividers) still reads as a step in one
+   consistent scale rather than a flat handful of colors reused everywhere. */
+.dark {
+  --color-gray-50: #F5F8F9;
+  --color-gray-100: #E7E9EA;
+  --color-gray-200: #C7CFD6;
+  --color-gray-300: #A3B1BC;
+  --color-gray-400: #8B98A5;
+  --color-gray-500: #6E7F8D;
+  --color-gray-600: #4F6272;
+  --color-gray-700: #38444D;
+  --color-gray-800: #1E2732;
+  --color-gray-900: #15202B;
+  --color-gray-950: #0E161D;
 }
 
 /* Dark map: dim the rendered canvas rather than swapping to a real dark
@@ -34,26 +62,31 @@ body {
    white fills to black and rotated their brand colors to clash with the
    untouched DOM markers right next to them. Contrast/saturate boosted to
    compensate so roads and water stay distinguishable at this brightness
-   instead of crushing into a flat void. */
+   instead of crushing into a flat void. Brightness raised from this
+   theme's original near-black 0.28 to sit with the rest of the UI's dim
+   (not stark-black) chrome — contrast/saturate nudged down slightly with
+   it so the lighter base doesn't wash out at the same boosted levels. */
 .dark .maplibregl-canvas {
-  filter: brightness(0.28) contrast(1.35) saturate(1.25);
+  filter: brightness(0.4) contrast(1.25) saturate(1.2);
 }
 
 /* Zoom +/- and the locate-me button are maplibre's own native controls,
    styled by maplibre-gl.css, not this app's Tailwind classes — need their
-   own dark overrides. */
+   own dark overrides. Hex values match this theme's card/border colors
+   (see the --color-gray-* block above) directly rather than via var(), same
+   as before this theme's colors changed. */
 .dark .maplibregl-ctrl-group {
-  background-color: #1f2937;
+  background-color: #1E2732;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 .dark .maplibregl-ctrl-group button {
   background-color: transparent;
 }
 .dark .maplibregl-ctrl-group button:not(:disabled):hover {
-  background-color: #374151;
+  background-color: #38444D;
 }
 .dark .maplibregl-ctrl-group button + button {
-  border-top: 1px solid #374151;
+  border-top: 1px solid #38444D;
 }
 .dark .maplibregl-ctrl-icon {
   filter: invert(1) brightness(1.8);
@@ -66,27 +99,27 @@ body {
    across those popup builders in MapView.tsx; !important is required
    since inline styles otherwise always win over an external stylesheet. */
 .dark .maplibregl-popup-content {
-  background-color: #1f2937;
-  color: #e5e7eb;
+  background-color: #1E2732;
+  color: #E7E9EA;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 .dark .maplibregl-popup-tip {
-  border-top-color: #1f2937;
-  border-bottom-color: #1f2937;
-  border-left-color: #1f2937;
-  border-right-color: #1f2937;
+  border-top-color: #1E2732;
+  border-bottom-color: #1E2732;
+  border-left-color: #1E2732;
+  border-right-color: #1E2732;
 }
 .dark .maplibregl-popup-close-button {
-  color: #e5e7eb;
+  color: #E7E9EA;
 }
 .dark .maplibregl-popup-content [style*="color:#374151"] {
-  color: #d1d5db !important;
+  color: #C7CFD6 !important;
 }
 .dark .maplibregl-popup-content [style*="color:#6B7280"] {
-  color: #9ca3af !important;
+  color: #8B98A5 !important;
 }
 .dark .maplibregl-popup-content [style*="color:#9CA3AF"] {
-  color: #9ca3af !important;
+  color: #8B98A5 !important;
 }
 
 /* Your live vehicle on the selected journey — needs to visibly pulse since it

@@ -796,7 +796,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     // enough (created/recreated as vehicles enter/leave the feed) that a
     // toggle catches up within a poll or two without needing its own effect.
     const isDark = document.documentElement.classList.contains('dark')
-    const markerOutlineColor = isDark ? '#1f2937' : 'white'
+    const markerOutlineColor = isDark ? '#1E2732' : 'white'
 
     const currentIds = new Set<string>()
 
@@ -954,7 +954,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     // outlines are DOM elements, untouched by the dark-mode canvas filter,
     // so a hardcoded white ring would stand out oddly against a dark map.
     const isDark = document.documentElement.classList.contains('dark')
-    const markerOutlineColor = isDark ? '#1f2937' : 'white'
+    const markerOutlineColor = isDark ? '#1E2732' : 'white'
 
     const cleanup = () => {
       // Remove stop layers/source
