@@ -274,6 +274,21 @@ function mapOtpMode(mode: string): TransportMode {
   }
 }
 
+async function fetchTallinnGpsVehicles(): Promise<VehiclePosition[]> {
+  const now = Date.now()
+  if (gpsCache && now - gpsCache.timestamp < GPS_CACHE_TTL) {
+    return gpsCache.data
+  }
+  const response = await fetch(GPS_FEED_URL, {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
+  })
+  if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
+  const text = await response.text()
+  gpsCache = { data: parseGpsFeed(text), timestamp: now }
+  return gpsCache.data
+}
+
 async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
   const now = Date.now()
   if (scheduledCache && now - scheduledCache.timestamp < SCHEDULED_CACHE_TTL) {
@@ -369,29 +384,15 @@ export async function GET(request: Request) {
 
   try {
     const now = Date.now()
-    let gpsVehicles: VehiclePosition[] = []
 
-    // Fetch Tallinn live GPS vehicles (only when Tallinn is selected)
-    if (includesTallinn) {
-      if (!gpsCache || now - gpsCache.timestamp > GPS_CACHE_TTL) {
-        const response = await fetch(GPS_FEED_URL, {
-          cache: 'no-store',
-          signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
-        })
-        if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
-        const text = await response.text()
-        gpsCache = { data: parseGpsFeed(text), timestamp: now }
-      }
-      gpsVehicles = gpsCache.data
-    }
-
-    // Fetch scheduled vehicles (all modes, nationwide)
-    let scheduled: VehiclePosition[] = []
-    try {
-      scheduled = await fetchScheduledVehicles()
-    } catch {
-      // Non-critical: continue with GPS-only vehicles
-    }
+    // Tallinn's live GPS feed and the nationwide OTP schedule query are
+    // independent of each other — fetching them one after another stacked
+    // both timeouts (up to 5s + 8s = 13s worst case) into a single request.
+    const [gpsVehicles, scheduled] = await Promise.all([
+      includesTallinn ? fetchTallinnGpsVehicles() : Promise.resolve<VehiclePosition[]>([]),
+      // Non-critical: continue with GPS-only vehicles if this fails.
+      fetchScheduledVehicles().catch(() => [] as VehiclePosition[]),
+    ])
 
     // Merge: use live GPS for Tallinn bus/tram, scheduled for everything else
     // Only exclude scheduled bus/tram that overlap with Tallinn's live GPS area

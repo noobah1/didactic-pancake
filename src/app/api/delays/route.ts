@@ -277,6 +277,21 @@ async function fetchElronVehicles(): Promise<ElronVehicle[]> {
   }
 }
 
+async function fetchTallinnGpsVehicles(): Promise<VehiclePosition[]> {
+  const now = Date.now()
+  if (gpsCache && now - gpsCache.timestamp < GPS_CACHE_TTL) {
+    return gpsCache.data
+  }
+  const response = await fetch(GPS_FEED_URL, {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
+  })
+  if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
+  const text = await response.text()
+  gpsCache = { data: parseGpsFeed(text), timestamp: now }
+  return gpsCache.data
+}
+
 // Exported for the push-notification checker (src/lib/push-checker.ts),
 // which calls this directly rather than round-tripping through its own
 // GET handler — same computation, just invoked server-internally instead
@@ -284,18 +299,17 @@ async function fetchElronVehicles(): Promise<ElronVehicle[]> {
 export async function computeDelays(): Promise<DelaysResponse> {
   const now = Date.now()
 
-  if (!gpsCache || now - gpsCache.timestamp > GPS_CACHE_TTL) {
-    const response = await fetch(GPS_FEED_URL, {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(GPS_FEED_TIMEOUT_MS),
-    })
-    if (!response.ok) throw new Error(`GPS feed returned ${response.status}`)
-    const text = await response.text()
-    gpsCache = { data: parseGpsFeed(text), timestamp: now }
-  }
-  const elronVehicles = await fetchElronVehicles()
+  // These three are independent of each other (two unrelated live-position
+  // feeds and a static schedule query) — fetching them one after another
+  // stacked their timeouts (up to 5s + 5s + 8s = 18s worst case) into a
+  // single request's latency for no reason.
+  const [tallinnGps, elronVehicles, routes] = await Promise.all([
+    fetchTallinnGpsVehicles(),
+    fetchElronVehicles(),
+    fetchScheduleData(),
+  ])
   const gpsVehicles: (VehiclePosition & { mode: GpsMode })[] = [
-    ...gpsCache.data.filter(
+    ...tallinnGps.filter(
       (v): v is VehiclePosition & { mode: GpsMode } =>
         v.mode === 'bus' || v.mode === 'tram' || v.mode === 'trolleybus' || v.mode === 'nightbus',
     ),
@@ -313,7 +327,6 @@ export async function computeDelays(): Promise<DelaysResponse> {
     })),
   ]
 
-  const routes = await fetchScheduleData()
   const tripsByLine = buildTripsByLine(routes)
   // Elron's live feed can't tell us which line a train is on (see
   // fetchElronVehicles), so rather than look trips up per-line like every
