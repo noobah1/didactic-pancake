@@ -224,14 +224,25 @@ function HomeContent() {
   // a mode + line code — so it has to find one itself rather than being
   // handed one like the handlers above. Checks the GPS-confirmed delay board
   // first (nationwide, not scoped to activeModes/activeCities, so a line
-  // outside the map's current filters can still be found), then falls back
-  // to the schedule-interpolated /api/vehicles feed (covers modes/lines
-  // currently active but not GPS-tracked right now). Returns whether
-  // anything was found, so SearchPanel knows whether to show its own "not
-  // running" message — deliberately never fabricates a placeholder position
-  // for a miss, which would risk showing a fake "confirmed" delay computed
-  // against a point no real vehicle is at (see computeStatusFromGPS).
-  const handleSelectLine = (mode: string, line: string): boolean => {
+  // outside the map's current filters can still be found), then the already-
+  // polled schedule-interpolated vehicleData. Both of those, though, only
+  // ever cover what the map is currently showing: delayData's GPS is
+  // Tallinn-only by feed, and vehicleData is fetched scoped to activeCities/
+  // activeModes (verified live: useVehicles returns an empty list outright
+  // when no city is active, and /api/vehicles otherwise filters everything
+  // non-intercity down to just the active cities). The search box itself is
+  // nationwide, so e.g. picking Tartu's "Line 2 (Bus)" while the map is
+  // filtered to Tallinn would always report "not running" here even with a
+  // real bus 2 out on the road — a mismatch between what the search can find
+  // and what selecting a result can look up. Final fallback: a one-off fetch
+  // to /api/vehicles scoped only to the picked mode, no cities filter, so it
+  // always searches the whole country regardless of the map's own toggles.
+  // Returns whether anything was found, so SearchPanel knows whether to show
+  // its own "not running" message — deliberately never fabricates a
+  // placeholder position for a miss, which would risk showing a fake
+  // "confirmed" delay computed against a point no real vehicle is at (see
+  // computeStatusFromGPS).
+  const handleSelectLine = async (mode: string, line: string): Promise<boolean> => {
     const delayed = delayData.data?.vehicles.find((v) => v.mode === mode && v.line === line)
     if (delayed) {
       handleSelectDelayedVehicle(delayed)
@@ -243,6 +254,21 @@ function HomeContent() {
       setSelectedVehicleInitialTripId(null)
       setSelectedVehicleDelayed(false)
       return true
+    }
+    try {
+      const res = await fetch(`/api/vehicles?modes=${encodeURIComponent(mode)}`)
+      if (res.ok) {
+        const data: { vehicles: VehiclePosition[] } = await res.json()
+        const nationwide = data.vehicles.find((v) => v.mode === mode && v.line === line)
+        if (nationwide) {
+          setSelectedVehicle(nationwide)
+          setSelectedVehicleInitialTripId(null)
+          setSelectedVehicleDelayed(false)
+          return true
+        }
+      }
+    } catch {
+      // Non-critical: fall through to "not found" below.
     }
     return false
   }

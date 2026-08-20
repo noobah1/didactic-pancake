@@ -22,10 +22,11 @@ interface SearchPanelProps {
   onViewStopBoard?: (name: string, lat: number, lng: number, stopId: string) => void
   // Called when the rider picks a line result from the same search box
   // (see LocationInput's stopsOnly mode, which now also returns lines —
-  // /api/geocode). Returns whether a currently-active trip on that line was
-  // found and selected, so this panel can show an inline "not running right
-  // now" message on a miss without page.tsx needing to own that UI state.
-  onSelectLine?: (mode: string, line: string) => boolean
+  // /api/geocode). Resolves to whether a currently-active trip on that line
+  // was found and selected (its last resort is a nationwide network fetch,
+  // hence async), so this panel can show an inline "not running right now"
+  // message on a miss without page.tsx needing to own that UI state.
+  onSelectLine?: (mode: string, line: string) => boolean | Promise<boolean>
   // Passed down rather than calling usePushNotifications() again in here —
   // that hook's enabled/busy state is a separate useState per call site
   // with no cross-instance sync, so a second instance would drift from the
@@ -127,7 +128,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               }}
               stopsOnly
               cityIds={activeCities?.map((c) => c.id)}
-              onSelect={(name, lat, lng, stopId, line, mode) => {
+              onSelect={async (name, lat, lng, stopId, line, mode) => {
                 if (stopId) {
                   onViewStopBoard(name, lat, lng, stopId)
                   setBoardText('')
@@ -135,7 +136,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                   return
                 }
                 if (line && mode) {
-                  const found = onSelectLine?.(mode, line) ?? false
+                  const found = (await onSelectLine?.(mode, line)) ?? false
                   if (found) {
                     setBoardText('')
                     setLineNotRunning(null)
