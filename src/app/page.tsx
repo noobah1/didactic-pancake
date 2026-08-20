@@ -575,8 +575,11 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           so a hardcoded offset for a 4th button would leave a visible gap
           whenever push isn't supported. This makes <main> the nearest
           positioned ancestor for any absolute badge inside these buttons —
-          see the `relative` added to IssuesButton's own <button>. */}
-      <div className="absolute bottom-6 right-4 z-30 flex items-center gap-2 pointer-events-auto">
+          see the `relative` added to IssuesButton's own <button>. z-45 (above
+          the z-40 route-results sheet) so these stay reachable on mobile
+          even when the bottom sheet's full-width card is tall enough to
+          reach this corner, instead of getting buried under it. */}
+      <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
         <NearbyButton
           active={showNearby}
           onClick={() => {
