@@ -14,6 +14,15 @@ export interface VehiclePosition {
   estimated?: boolean
 }
 
+// A journey sharer's own live position, attached to a share (see
+// share-store.ts) once they opt in to broadcasting it — separate from
+// VehiclePosition, which is a transit vehicle, not a person.
+export interface SharePosition {
+  lat: number
+  lng: number
+  updatedAt: number // epoch ms
+}
+
 export interface RouteResult {
   id: string
   legs: RouteLeg[]

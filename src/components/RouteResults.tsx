@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, Share2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Check, MapPin, Share2, X } from 'lucide-react'
 import { RouteResult, RouteTrafficEstimate } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { RouteCard } from './RouteCard'
+import { useLiveShare } from '@/hooks/use-live-share'
 
 type SortMode = 'duration' | 'departure'
 type ShareState = 'idle' | 'sharing' | 'error'
@@ -36,6 +37,22 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   const [shareState, setShareState] = useState<ShareState>('idle')
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [shareId, setShareId] = useState<string | null>(null)
+  const [shareToken, setShareToken] = useState<string | null>(null)
+  // The route this share/token pair belongs to — used only to auto-stop live
+  // sharing if the user navigates away from this journey (back to the route
+  // list, or a different route entirely) without explicitly turning it off.
+  const [sharedRouteId, setSharedRouteId] = useState<string | null>(null)
+  const liveShare = useLiveShare(shareId, shareToken)
+
+  useEffect(() => {
+    if (sharedRouteId && selectedId !== sharedRouteId && liveShare.sharing) {
+      liveShare.stop()
+    }
+    // liveShare's identity changes every render (new callbacks) — only
+    // re-run this when the route selection itself actually changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, sharedRouteId])
 
   const copyLink = (link: string) => {
     // Fire-and-forget: clipboard permission can hang or be denied outright
@@ -52,6 +69,13 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   }
 
   const handleShare = async (route: RouteResult) => {
+    // A fresh link needs its own opt-in — carrying live sharing over from a
+    // previous link would broadcast to whoever holds the new one under the
+    // old one's token, silently.
+    if (liveShare.sharing) liveShare.stop()
+    setShareId(null)
+    setShareToken(null)
+    setSharedRouteId(null)
     setShareState('sharing')
     setShareLink(null)
     setLinkCopied(false)
@@ -62,7 +86,10 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
         body: JSON.stringify({ route }),
       })
       if (!res.ok) throw new Error('share failed')
-      const { id } = await res.json()
+      const { id, token } = await res.json()
+      setShareId(id)
+      setShareToken(token)
+      setSharedRouteId(route.id)
       const link = `${window.location.origin}${window.location.pathname}?share=${id}`
 
       // On phones/PWAs, handing off straight to the OS share sheet (Messages,
@@ -189,6 +216,30 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           >
             <X size={12} />
           </button>
+        </div>
+      )}
+      {shareId && shareToken && (
+        <div className="mx-3 mb-2 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-gray-50 dark:bg-gray-900 text-xs">
+          <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+            <MapPin size={12} className={liveShare.sharing ? 'text-blue-600 dark:text-blue-400' : ''} />
+            {liveShare.sharing ? 'Sharing your live location' : 'Share your live location on this link'}
+          </span>
+          <button
+            type="button"
+            onClick={() => (liveShare.sharing ? liveShare.stop() : liveShare.start())}
+            className={`shrink-0 px-2 py-0.5 rounded-full font-medium ${
+              liveShare.sharing
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            {liveShare.sharing ? 'On' : 'Off'}
+          </button>
+        </div>
+      )}
+      {liveShare.error && (
+        <div className="mx-3 mb-2 px-2.5 py-1.5 rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-300 text-xs">
+          {liveShare.error}
         </div>
       )}
       {notice && (

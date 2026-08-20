@@ -18,7 +18,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
 import { NotificationToggle } from '@/components/NotificationToggle'
-import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture } from '@/lib/types'
+import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -78,13 +78,27 @@ function HomeContent() {
   // in once on load, then drop the param so it doesn't linger in the URL or
   // re-fetch on a later refresh (localStorage already has it from here on).
   const shareId = searchParams.get('share')
+  // The sharer's own live position, if they've opted in (see RouteResults'
+  // "Share your live location" toggle and use-live-share.ts) — polled below
+  // for as long as this is still the journey on screen.
+  const [sharedPosition, setSharedPosition] = useState<SharePosition | null>(null)
+  // Kept separate from the reactive `shareId` above: that one is read
+  // straight from the URL and gets stripped by the router.replace below a
+  // moment after load, but polling needs to keep targeting the same share
+  // for as long as its journey stays selected.
+  const [liveShareId, setLiveShareId] = useState<string | null>(null)
+  const [liveShareRouteId, setLiveShareRouteId] = useState<string | null>(null)
   useEffect(() => {
     if (!shareId) return
     let cancelled = false
     fetch(`/api/share?id=${encodeURIComponent(shareId)}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
-        if (!cancelled) loadSharedRoute(data.route)
+        if (cancelled) return
+        loadSharedRoute(data.route)
+        setSharedPosition(data.position ?? null)
+        setLiveShareId(shareId)
+        setLiveShareRouteId(data.route.id)
       })
       .catch(() => {
         if (!cancelled) setShareError('This shared journey has expired or could not be found.')
@@ -101,6 +115,41 @@ function HomeContent() {
     // Only ever run for the share id present on first load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareId])
+
+  // Poll for the sharer's position while their journey is the one on screen.
+  // Stops (and clears the marker) the moment the sharer turns live sharing
+  // off — /api/share then simply stops returning a position.
+  useEffect(() => {
+    if (!liveShareId) return
+    let cancelled = false
+    const tick = async () => {
+      try {
+        const res = await fetch(`/api/share?id=${encodeURIComponent(liveShareId)}`)
+        if (res.ok && !cancelled) {
+          const data = await res.json()
+          setSharedPosition(data.position ?? null)
+        }
+      } catch {
+        // Transient — the next tick will just try again.
+      }
+    }
+    const interval = setInterval(tick, 20_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [liveShareId])
+
+  // Once the viewer navigates away from the shared journey (a new search, a
+  // different route), the position no longer belongs on screen and there's
+  // no reason to keep polling for it.
+  useEffect(() => {
+    if (liveShareRouteId && selectedRouteId !== liveShareRouteId) {
+      setLiveShareId(null)
+      setLiveShareRouteId(null)
+      setSharedPosition(null)
+    }
+  }, [selectedRouteId, liveShareRouteId])
 
   const handleCityToggle = (city: CityDef) => {
     const isActive = activeCities.some((c) => c.id === city.id)
@@ -416,6 +465,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           activeModes={activeModes}
           selectedRoute={selectedRoute}
           journeyVehicles={journeyVehicles}
+          sharedPosition={selectedRoute?.id === liveShareRouteId ? sharedPosition : null}
           selectedVehicle={selectedVehicle}
           highlightDelay={selectedVehicleDelayed}
           // Only the disruption the user actually picked from the issues

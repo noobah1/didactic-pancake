@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/constants'
-import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo } from '@/lib/types'
+import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, SharePosition } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
 
 function formatSecondsToTime(seconds: number): string {
@@ -15,6 +15,16 @@ function formatSecondsToTime(seconds: number): string {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+// A rider reading a live marker needs to know how stale it might be — the
+// web has no reliable background location, so "3 min ago" vs "just now" is
+// often the difference between trusting the dot and not.
+function formatAgo(ms: number): string {
+  if (ms < 60_000) return 'just now'
+  const minutes = Math.round(ms / 60_000)
+  if (minutes < 60) return `${minutes} min ago`
+  return `${Math.round(minutes / 60)}h ago`
 }
 
 const ROUTE_LINE_SOURCE = 'route-line-source'
@@ -152,6 +162,11 @@ interface MapViewProps {
   activeModes?: TransportMode[]
   selectedRoute?: RouteResult | null
   journeyVehicles?: VehiclePosition[]
+  // The journey's own sharer, broadcasting their live position onto the
+  // link they sent (see RouteResults' "Share your live location" toggle) —
+  // a person, not a transit vehicle, so it gets its own marker style rather
+  // than joining journeyVehicles.
+  sharedPosition?: SharePosition | null
   selectedVehicle?: VehiclePosition | null
   highlightDelay?: boolean
   incidents?: ServiceAlert[]
@@ -169,7 +184,7 @@ interface MapViewProps {
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, sharedPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -213,6 +228,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   })
   const vehicleDotTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
+  const sharedPositionMarkerRef = useRef<maplibregl.Marker | null>(null)
 
   const clearRouteShape = useCallback(() => {
     const map = mapRef.current
@@ -1260,6 +1276,54 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       journeyMarkersRef.current.get(jv.id)?.setLngLat([jv.lng, jv.lat])
     }
   }, [journeyVehicles])
+
+  // Draws (or removes) the journey sharer's own live-location marker — a
+  // person, styled distinctly from both transit vehicles and the A/B route
+  // endpoints so it's never mistaken for either. Position updates arrive via
+  // polling (see page.tsx), roughly every 20s, so this only needs to react
+  // to sharedPosition changing, not run on any tighter interval itself.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    const render = () => {
+      if (!sharedPosition) {
+        sharedPositionMarkerRef.current?.remove()
+        sharedPositionMarkerRef.current = null
+        return
+      }
+
+      const popupHtml = `<strong>Shared location</strong><br/>Updated ${formatAgo(Date.now() - sharedPosition.updatedAt)}`
+
+      if (sharedPositionMarkerRef.current) {
+        sharedPositionMarkerRef.current.setLngLat([sharedPosition.lng, sharedPosition.lat])
+        sharedPositionMarkerRef.current.getPopup()?.setHTML(popupHtml)
+        return
+      }
+
+      const el = document.createElement('div')
+      el.style.width = '18px'
+      el.style.height = '18px'
+      el.style.borderRadius = '50%'
+      el.style.backgroundColor = '#2563EB'
+      el.style.border = '3px solid white'
+      el.style.boxShadow = '0 0 0 4px rgba(37, 99, 235, 0.35), 0 2px 6px rgba(0,0,0,0.35)'
+
+      const popup = new maplibregl.Popup({ offset: 14, closeButton: false, closeOnClick: false }).setHTML(popupHtml)
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([sharedPosition.lng, sharedPosition.lat])
+        .setPopup(popup)
+        .addTo(map)
+      marker.togglePopup()
+      sharedPositionMarkerRef.current = marker
+    }
+
+    if (mapReadyRef.current) {
+      render()
+    } else {
+      map.once('load', render)
+    }
+  }, [sharedPosition])
 
   // Incident overlay effect
   useEffect(() => {
