@@ -480,16 +480,9 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           <ErrorBoundary
             fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg">Route search unavailable</div>}
           >
-            <RouteResults
-              routes={routes}
-              loading={loading}
-              error={error}
-              notice={notice}
-              selectedId={selectedRouteId}
-              onSelect={selectRoute}
-              delayVehicles={delayData.data?.vehicles}
-              trafficEstimates={delayData.data?.estimates}
-            />
+            {/* Rendered above the results card (not below) so it reads as a
+                warning floating over the sheet rather than getting pushed
+                off-screen under the bottom-anchored card. */}
             <DelayBanner
               warnings={warnings}
               onGetAlternatives={() => {
@@ -513,6 +506,16 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
                 }
               }}
               onDismiss={dismissWarning}
+            />
+            <RouteResults
+              routes={routes}
+              loading={loading}
+              error={error}
+              notice={notice}
+              selectedId={selectedRouteId}
+              onSelect={selectRoute}
+              delayVehicles={delayData.data?.vehicles}
+              trafficEstimates={delayData.data?.estimates}
             />
           </ErrorBoundary>
         </div>
