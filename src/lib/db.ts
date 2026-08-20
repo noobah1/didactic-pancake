@@ -19,7 +19,13 @@ function resolveDbPath(): string {
 }
 
 function migrate(database: DatabaseSync): void {
-  database.exec('PRAGMA journal_mode = WAL')
+  // Disable WAL for Windows/OneDrive compatibility — WAL causes I/O errors
+  // on network filesystems and cloud storage that doesn't handle multiple
+  // file handles well. Use simple DELETE journal mode with normal sync.
+  database.exec('PRAGMA journal_mode = DELETE')
+  database.exec('PRAGMA synchronous = NORMAL')
+  // 5-second timeout for locked database instead of instant failure
+  database.exec('PRAGMA busy_timeout = 5000')
   database.exec(`
     CREATE TABLE IF NOT EXISTS detector_sample (
       detector_id TEXT NOT NULL,
