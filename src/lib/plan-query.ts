@@ -3,6 +3,10 @@ import { TransportMode, RouteResult, RouteLeg, LegPlace } from '@/lib/types'
 
 // Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
 // TROLLEYBUS route_type in the data), so trip planning requests BUS for it too.
+// See its use in planTrip: how far past OTP's own auto-sized search window
+// to look before accepting that transit genuinely has nothing today.
+const WIDE_SEARCH_WINDOW_SECONDS = 24 * 60 * 60
+
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
   tram: 'TRAM',
@@ -13,7 +17,7 @@ const MODE_TO_OTP: Record<TransportMode, string> = {
 }
 
 const PLAN_QUERY = `
-query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean, $banned: InputBanned) {
+query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean, $banned: InputBanned, $searchWindow: Long) {
   plan(
     from: $from,
     to: $to,
@@ -22,7 +26,8 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
     date: $date,
     time: $time,
     arriveBy: $arriveBy,
-    banned: $banned
+    banned: $banned,
+    searchWindow: $searchWindow
   ) {
     itineraries {
       duration
@@ -170,6 +175,23 @@ export async function planTrip(
 
     if (primary.itineraries.length > 0) {
       return { routes: mapItineraries(primary.itineraries) }
+    }
+
+    // OTP sizes its own default search window from the typical service
+    // frequency between the two nearest stops — for a sparse rural pairing
+    // that estimate can come out too narrow and miss a real departure just
+    // a couple hours later, returning NO_TRANSIT_CONNECTION_IN_SEARCH_WINDOW
+    // even though a trip exists (confirmed live: a Tallinn–Kadrina-area
+    // request at a specific time found nothing with OTP's own window, but
+    // an explicit 6-hour window found one about 20 minutes later). Retry
+    // once with a full day's window before concluding transit genuinely
+    // has nothing today.
+    const widened = await fetchItineraries({ ...variables, searchWindow: WIDE_SEARCH_WINDOW_SECONDS })
+    if (widened.itineraries.length > 0) {
+      return {
+        routes: mapItineraries(widened.itineraries),
+        notice: 'Service is infrequent on this route — showing the next available departure.',
+      }
     }
 
     // No itinerary at all — before giving up, check whether a plain walk is
