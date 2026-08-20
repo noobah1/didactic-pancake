@@ -23,6 +23,29 @@ export interface SharePosition {
   updatedAt: number // epoch ms
 }
 
+// How confident traveller-position.ts's resolved position is, from a real
+// fix down to a pure timetable guess — see that file's own comment for the
+// full tier ladder. Never conflate with VehiclePosition.estimated: this is
+// about a PERSON's position, derived very differently (from a live phone fix,
+// or from the vehicle/timetable they're presumed to be on).
+export type TravellerSource = 'gps' | 'vehicle' | 'schedule' | 'stale'
+
+// What a shared journey's viewer actually draws — always the output of
+// resolveTravellerPosition, never a raw SharePosition rendered directly, so
+// the UI can never accidentally show an inferred guess with the same visual
+// weight as a real GPS fix.
+export interface TravellerPosition {
+  lat: number
+  lng: number
+  source: TravellerSource
+  label: string
+  ageMs: number
+  // Only set for source: 'vehicle' — the transit mode of the vehicle this
+  // position was borrowed from, so the marker can be tinted the same as
+  // that vehicle's own map color instead of a generic placeholder.
+  mode?: TransportMode
+}
+
 export interface RouteResult {
   id: string
   legs: RouteLeg[]

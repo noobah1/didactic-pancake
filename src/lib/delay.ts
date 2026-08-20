@@ -566,6 +566,50 @@ export interface MatchableVehicle {
   heading: number
 }
 
+// Where a leg's own schedule (plus its geometry, when available) says its
+// vehicle should physically be RIGHT NOW — pure time-fraction interpolation
+// along the leg's polyline, no live GPS involved. Shared by findVehicleForLeg
+// below (as its own "expected position" search anchor) and by
+// traveller-position.ts's schedule-only fallback tier, which needs this same
+// computation independent of any vehicle-matching attempt.
+export function positionAlongLeg(
+  leg: RoutePlanLeg,
+  nowMs: number,
+): { lat: number; lng: number; heading: number } {
+  const startMs = new Date(leg.startTime).getTime()
+  const endMs = new Date(leg.endTime).getTime()
+  const legCoords = leg.legGeometry?.points ? decodePolyline(leg.legGeometry.points) : null
+  const frac = endMs > startMs ? Math.max(0, Math.min(1, (nowMs - startMs) / (endMs - startMs))) : 0
+
+  if (!legCoords || legCoords.length < 2) {
+    return {
+      lat: leg.from.lat,
+      lng: leg.from.lng,
+      heading: calcHeading(leg.from.lat, leg.from.lng, leg.to.lat, leg.to.lng),
+    }
+  }
+
+  const segDists: number[] = [0]
+  let total = 0
+  for (let i = 1; i < legCoords.length; i++) {
+    total += distanceMeters(legCoords[i - 1][1], legCoords[i - 1][0], legCoords[i][1], legCoords[i][0])
+    segDists.push(total)
+  }
+  const target = frac * total
+  let idx = 0
+  while (idx < segDists.length - 2 && segDists[idx + 1] < target) idx++
+  const segStart = segDists[idx]
+  const segEnd = segDists[idx + 1]
+  const segFrac = segEnd > segStart ? (target - segStart) / (segEnd - segStart) : 0
+  const [aLng, aLat] = legCoords[idx]
+  const [bLng, bLat] = legCoords[idx + 1]
+  return {
+    lat: aLat + segFrac * (bLat - aLat),
+    lng: aLng + segFrac * (bLng - aLng),
+    heading: calcHeading(aLat, aLng, bLat, bLng),
+  }
+}
+
 // Finds the real vehicle physically running a planned transit leg, when its
 // exact tripId doesn't turn up a match (see findBestTrip's own comments on
 // why GPS-vs-trip identity is inherently ambiguous for busy lines — this is
@@ -588,29 +632,8 @@ export function findVehicleForLeg<T extends MatchableVehicle>(
   const endMs = new Date(leg.endTime).getTime()
   if (nowMs < startMs - ROUTE_PLAN_MATCH_WINDOW_SEC * 1000 || nowMs > endMs + MAX_TRIP_OVERRUN_SEC * 1000) return null
 
-  const legCoords = leg.legGeometry?.points ? decodePolyline(leg.legGeometry.points) : null
-  const frac = endMs > startMs ? Math.max(0, Math.min(1, (nowMs - startMs) / (endMs - startMs))) : 0
-
-  let expected = { lat: leg.from.lat, lng: leg.from.lng }
-  let expectedHeading = calcHeading(leg.from.lat, leg.from.lng, leg.to.lat, leg.to.lng)
-  if (legCoords && legCoords.length >= 2) {
-    const segDists: number[] = [0]
-    let total = 0
-    for (let i = 1; i < legCoords.length; i++) {
-      total += distanceMeters(legCoords[i - 1][1], legCoords[i - 1][0], legCoords[i][1], legCoords[i][0])
-      segDists.push(total)
-    }
-    const target = frac * total
-    let idx = 0
-    while (idx < segDists.length - 2 && segDists[idx + 1] < target) idx++
-    const segStart = segDists[idx]
-    const segEnd = segDists[idx + 1]
-    const segFrac = segEnd > segStart ? (target - segStart) / (segEnd - segStart) : 0
-    const [aLng, aLat] = legCoords[idx]
-    const [bLng, bLat] = legCoords[idx + 1]
-    expected = { lat: aLat + segFrac * (bLat - aLat), lng: aLng + segFrac * (bLng - aLng) }
-    expectedHeading = calcHeading(aLat, aLng, bLat, bLng)
-  }
+  const { lat: expectedLat, lng: expectedLng, heading: expectedHeading } = positionAlongLeg(leg, nowMs)
+  const expected = { lat: expectedLat, lng: expectedLng }
 
   // OTP's own route shortName carries a T-prefix for trams (e.g. "T4"), but
   // the live GPS feed's line field never does (just "4").

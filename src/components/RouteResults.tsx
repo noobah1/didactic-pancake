@@ -237,6 +237,11 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           </button>
         </div>
       )}
+      {liveShare.sharing && (
+        <div className="mx-3 mb-2 px-2.5 py-1 text-[11px] text-gray-400 dark:text-gray-500">
+          Your screen will stay on while sharing so your location keeps updating.
+        </div>
+      )}
       {liveShare.error && (
         <div className="mx-3 mb-2 px-2.5 py-1.5 rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-300 text-xs">
           {liveShare.error}

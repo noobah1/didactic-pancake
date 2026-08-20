@@ -29,6 +29,14 @@ interface StoredShare {
   // every position ever broadcast on it.
   ownerTokenHash: string
   position?: SharePosition
+  // Whether the owner currently has live sharing switched on — distinct from
+  // `position` existing: a viewer's inferred-from-vehicle tiers (see
+  // traveller-position.ts) are only ever allowed to run for a share whose
+  // owner actually opted in, not for anyone who merely still has a `position`
+  // left over from before they turned it off (clearSharePosition wipes both
+  // together, but this flag is what a consumer must gate inference on, since
+  // a present-but-stale `position` alone doesn't prove consent is current).
+  sharing: boolean
 }
 
 function filePath(id: string): string {
@@ -57,12 +65,14 @@ export function createShare(route: RouteResult): { id: string; token: string } {
   const id = crypto.randomBytes(6).toString('base64url')
   const token = crypto.randomBytes(24).toString('base64url')
   fs.mkdirSync(DATA_DIR, { recursive: true })
-  const stored: StoredShare = { route, createdAt: Date.now(), ownerTokenHash: hashToken(token) }
+  const stored: StoredShare = { route, createdAt: Date.now(), ownerTokenHash: hashToken(token), sharing: false }
   writeStored(id, stored)
   return { id, token }
 }
 
-export function getShare(id: string): { route: RouteResult; position: SharePosition | null } | null {
+export function getShare(
+  id: string,
+): { route: RouteResult; position: SharePosition | null; sharing: boolean } | null {
   const stored = readStored(id)
   if (!stored) return null
   if (Date.now() - stored.createdAt > MAX_AGE_MS) {
@@ -73,9 +83,12 @@ export function getShare(id: string): { route: RouteResult; position: SharePosit
     }
     return null
   }
-  const position =
-    stored.position && Date.now() - stored.position.updatedAt <= LIVE_POSITION_MAX_AGE_MS ? stored.position : null
-  return { route: stored.route, position }
+  const fresh = !!stored.position && Date.now() - stored.position.updatedAt <= LIVE_POSITION_MAX_AGE_MS
+  // A dead phone (battery, crash, force-quit before the sender could toggle
+  // off) must not leave `sharing: true` readable forever — bounding it to
+  // the same freshness window as the position itself means a consumer never
+  // needs a separate cleanup job to notice the owner is effectively gone.
+  return { route: stored.route, position: fresh ? stored.position! : null, sharing: stored.sharing && fresh }
 }
 
 // Returns false (and writes nothing) on a bad id or a token that doesn't
@@ -86,6 +99,7 @@ export function updateSharePosition(id: string, token: string, lat: number, lng:
   if (!stored || stored.ownerTokenHash !== hashToken(token)) return false
   if (Date.now() - stored.createdAt > MAX_AGE_MS) return false
   stored.position = { lat, lng, updatedAt: Date.now() }
+  stored.sharing = true
   writeStored(id, stored)
   return true
 }
@@ -94,6 +108,7 @@ export function clearSharePosition(id: string, token: string): boolean {
   const stored = readStored(id)
   if (!stored || stored.ownerTokenHash !== hashToken(token)) return false
   delete stored.position
+  stored.sharing = false
   writeStored(id, stored)
   return true
 }

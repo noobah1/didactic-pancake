@@ -4,8 +4,9 @@ import { useRef, useEffect, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/constants'
-import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, SharePosition } from '@/lib/types'
+import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, TravellerPosition, TravellerSource } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
+import { formatAgo } from '@/lib/format-ago'
 
 function formatSecondsToTime(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -17,14 +18,17 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-// A rider reading a live marker needs to know how stale it might be — the
-// web has no reliable background location, so "3 min ago" vs "just now" is
-// often the difference between trusting the dot and not.
-function formatAgo(ms: number): string {
-  if (ms < 60_000) return 'just now'
-  const minutes = Math.round(ms / 60_000)
-  if (minutes < 60) return `${minutes} min ago`
-  return `${Math.round(minutes / 60)}h ago`
+// One row per resolveTravellerPosition tier — a real GPS fix gets a solid
+// ring at full opacity; anything inferred (vehicle/schedule) gets a dashed
+// ring and reduced opacity so it reads as a guess, never as a measurement;
+// a fix too old to trust at all fades to grey. `color` for 'vehicle' is
+// overridden per-render with the actual vehicle's MODE_COLORS entry when
+// travellerPosition.mode is set — see the render() below.
+const TRAVELLER_MARKER_STYLE: Record<TravellerSource, { color: string; border: string; opacity: number; boxShadow: string }> = {
+  gps: { color: '#2563EB', border: '3px solid white', opacity: 1, boxShadow: '0 0 0 4px rgba(37, 99, 235, 0.35), 0 2px 6px rgba(0,0,0,0.35)' },
+  vehicle: { color: '#2563EB', border: '3px dashed white', opacity: 0.85, boxShadow: '0 2px 6px rgba(0,0,0,0.35)' },
+  schedule: { color: '#2563EB', border: '3px dashed white', opacity: 0.6, boxShadow: '0 2px 6px rgba(0,0,0,0.3)' },
+  stale: { color: '#9CA3AF', border: '3px solid white', opacity: 0.6, boxShadow: '0 2px 6px rgba(0,0,0,0.3)' },
 }
 
 const ROUTE_LINE_SOURCE = 'route-line-source'
@@ -162,11 +166,13 @@ interface MapViewProps {
   activeModes?: TransportMode[]
   selectedRoute?: RouteResult | null
   journeyVehicles?: VehiclePosition[]
-  // The journey's own sharer, broadcasting their live position onto the
-  // link they sent (see RouteResults' "Share your live location" toggle) —
-  // a person, not a transit vehicle, so it gets its own marker style rather
-  // than joining journeyVehicles.
-  sharedPosition?: SharePosition | null
+  // The journey's own sharer, resolved by resolveTravellerPosition
+  // (traveller-position.ts) from either a real GPS fix or, once that goes
+  // stale, an inference from their vehicle/timetable — see that function's
+  // tier ladder. A person, not a transit vehicle, so it gets its own marker
+  // style rather than joining journeyVehicles, and that style itself varies
+  // by tier (source) so a guess is never drawn identically to a real fix.
+  travellerPosition?: TravellerPosition | null
   selectedVehicle?: VehiclePosition | null
   highlightDelay?: boolean
   incidents?: ServiceAlert[]
@@ -184,7 +190,7 @@ interface MapViewProps {
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, sharedPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -1281,41 +1287,52 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   // person, styled distinctly from both transit vehicles and the A/B route
   // endpoints so it's never mistaken for either. Position updates arrive via
   // polling (see page.tsx), roughly every 20s, so this only needs to react
-  // to sharedPosition changing, not run on any tighter interval itself.
+  // to travellerPosition changing, not run on any tighter interval itself.
+  // Style (solid vs dashed ring, opacity, color) varies by source/tier — see
+  // TRAVELLER_MARKER_STYLE — so an inferred guess never looks like a real
+  // fix, matching resolveTravellerPosition's own "never let inference
+  // masquerade as measurement" rule.
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
 
     const render = () => {
-      if (!sharedPosition) {
+      if (!travellerPosition) {
         sharedPositionMarkerRef.current?.remove()
         sharedPositionMarkerRef.current = null
         return
       }
 
-      const popupHtml = `<strong>Shared location</strong><br/>Updated ${formatAgo(Date.now() - sharedPosition.updatedAt)}`
+      const { lat, lng, source, label, ageMs, mode } = travellerPosition
+      const style = TRAVELLER_MARKER_STYLE[source]
+      const color = source === 'vehicle' && mode ? MODE_COLORS[mode] : style.color
+      // "Updated Xm ago" only adds information on a real fix — for the
+      // inferred tiers ageMs reflects the last real fix, not the (always
+      // freshly-computed) inferred position itself, so showing it there
+      // would read as staler than the estimate actually is.
+      const popupExtra = source === 'gps' ? `<br/>Updated ${formatAgo(ageMs)}` : ''
+      const popupHtml = `<strong>${escapeHtml(label)}</strong>${popupExtra}`
 
-      if (sharedPositionMarkerRef.current) {
-        sharedPositionMarkerRef.current.setLngLat([sharedPosition.lng, sharedPosition.lat])
-        sharedPositionMarkerRef.current.getPopup()?.setHTML(popupHtml)
-        return
+      let marker = sharedPositionMarkerRef.current
+      if (!marker) {
+        const el = document.createElement('div')
+        el.style.width = '18px'
+        el.style.height = '18px'
+        el.style.borderRadius = '50%'
+        const popup = new maplibregl.Popup({ offset: 14, closeButton: false, closeOnClick: false })
+        marker = new maplibregl.Marker({ element: el }).setPopup(popup).addTo(map)
+        marker.togglePopup()
+        sharedPositionMarkerRef.current = marker
       }
 
-      const el = document.createElement('div')
-      el.style.width = '18px'
-      el.style.height = '18px'
-      el.style.borderRadius = '50%'
-      el.style.backgroundColor = '#2563EB'
-      el.style.border = '3px solid white'
-      el.style.boxShadow = '0 0 0 4px rgba(37, 99, 235, 0.35), 0 2px 6px rgba(0,0,0,0.35)'
+      marker.setLngLat([lng, lat])
+      marker.getPopup()?.setHTML(popupHtml)
 
-      const popup = new maplibregl.Popup({ offset: 14, closeButton: false, closeOnClick: false }).setHTML(popupHtml)
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([sharedPosition.lng, sharedPosition.lat])
-        .setPopup(popup)
-        .addTo(map)
-      marker.togglePopup()
-      sharedPositionMarkerRef.current = marker
+      const el = marker.getElement()
+      el.style.backgroundColor = color
+      el.style.border = style.border
+      el.style.opacity = String(style.opacity)
+      el.style.boxShadow = style.boxShadow
     }
 
     if (mapReadyRef.current) {
@@ -1323,7 +1340,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     } else {
       map.once('load', render)
     }
-  }, [sharedPosition])
+  }, [travellerPosition])
 
   // Incident overlay effect
   useEffect(() => {

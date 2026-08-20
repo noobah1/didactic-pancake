@@ -21,6 +21,7 @@ import { NotificationToggle } from '@/components/NotificationToggle'
 import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
+import { resolveTravellerPosition } from '@/lib/traveller-position'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useVehicles } from '@/hooks/use-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
@@ -80,8 +81,14 @@ function HomeContent() {
   const shareId = searchParams.get('share')
   // The sharer's own live position, if they've opted in (see RouteResults'
   // "Share your live location" toggle and use-live-share.ts) — polled below
-  // for as long as this is still the journey on screen.
+  // for as long as this is still the journey on screen. `sharing` is a
+  // separate flag from `position` being present: it's what gates whether
+  // resolveTravellerPosition is allowed to infer a position from the
+  // vehicle/timetable once the position itself goes stale (see that
+  // function's own comment on why a present-but-stale position alone isn't
+  // proof consent is still current).
   const [sharedPosition, setSharedPosition] = useState<SharePosition | null>(null)
+  const [sharing, setSharing] = useState(false)
   // Kept separate from the reactive `shareId` above: that one is read
   // straight from the URL and gets stripped by the router.replace below a
   // moment after load, but polling needs to keep targeting the same share
@@ -97,6 +104,7 @@ function HomeContent() {
         if (cancelled) return
         loadSharedRoute(data.route)
         setSharedPosition(data.position ?? null)
+        setSharing(!!data.sharing)
         setLiveShareId(shareId)
         setLiveShareRouteId(data.route.id)
       })
@@ -118,7 +126,7 @@ function HomeContent() {
 
   // Poll for the sharer's position while their journey is the one on screen.
   // Stops (and clears the marker) the moment the sharer turns live sharing
-  // off — /api/share then simply stops returning a position.
+  // off — /api/share then simply stops returning a position/sharing flag.
   useEffect(() => {
     if (!liveShareId) return
     let cancelled = false
@@ -128,6 +136,7 @@ function HomeContent() {
         if (res.ok && !cancelled) {
           const data = await res.json()
           setSharedPosition(data.position ?? null)
+          setSharing(!!data.sharing)
         }
       } catch {
         // Transient — the next tick will just try again.
@@ -148,6 +157,7 @@ function HomeContent() {
       setLiveShareId(null)
       setLiveShareRouteId(null)
       setSharedPosition(null)
+      setSharing(false)
     }
   }, [selectedRouteId, liveShareRouteId])
 
@@ -441,6 +451,24 @@ function HomeContent() {
     return found
   }, [selectedRoute, delayData.data?.vehicles, vehicleData.data?.vehicles, nowMs])
 
+  // Resolves the shared journey's traveller marker (see MapView's own
+  // TRAVELLER_MARKER_STYLE) from whatever's freshest: a real GPS fix, the
+  // live vehicle running the current leg, or the timetable — see
+  // traveller-position.ts's tier ladder. Only computed for the route that
+  // actually is the shared one (liveShareRouteId), same guard the raw
+  // sharedPosition prop used before this.
+  const travellerPosition = useMemo(() => {
+    if (!selectedRoute || selectedRoute.id !== liveShareRouteId) return null
+    return resolveTravellerPosition({
+      route: selectedRoute,
+      position: sharedPosition,
+      sharing,
+      delayVehicles: delayData.data?.vehicles,
+      vehicles: vehicleData.data?.vehicles,
+      nowMs,
+    })
+  }, [selectedRoute, liveShareRouteId, sharedPosition, sharing, delayData.data?.vehicles, vehicleData.data?.vehicles, nowMs])
+
   const delayedVehicleCount = activeDelayedVehicles.filter(
     (v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC,
   ).length
@@ -480,7 +508,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           activeModes={activeModes}
           selectedRoute={selectedRoute}
           journeyVehicles={journeyVehicles}
-          sharedPosition={selectedRoute?.id === liveShareRouteId ? sharedPosition : null}
+          travellerPosition={travellerPosition}
           selectedVehicle={selectedVehicle}
           highlightDelay={selectedVehicleDelayed}
           // Only the disruption the user actually picked from the issues

@@ -7,8 +7,13 @@ export async function POST(request: Request) {
   if (!body.route?.legs?.length) {
     return NextResponse.json({ error: 'route is required' }, { status: 400 })
   }
-  const { id, token } = createShare(body.route)
-  return NextResponse.json({ id, token })
+  try {
+    const { id, token } = createShare(body.route)
+    return NextResponse.json({ id, token })
+  } catch (err) {
+    console.error('Failed to write share:', err)
+    return NextResponse.json({ error: 'Could not create share' }, { status: 500 })
+  }
 }
 
 export async function GET(request: Request) {
@@ -33,11 +38,16 @@ export async function PATCH(request: Request) {
   if (!body.id || !body.token || typeof body.lat !== 'number' || typeof body.lng !== 'number') {
     return NextResponse.json({ error: 'id, token, lat and lng are required' }, { status: 400 })
   }
-  const ok = updateSharePosition(body.id, body.token, body.lat, body.lng)
-  if (!ok) {
-    return NextResponse.json({ error: 'Not found or not authorized' }, { status: 404 })
+  try {
+    const ok = updateSharePosition(body.id, body.token, body.lat, body.lng)
+    if (!ok) {
+      return NextResponse.json({ error: 'Not found or not authorized' }, { status: 404 })
+    }
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Failed to write share position:', err)
+    return NextResponse.json({ error: 'Could not update position' }, { status: 500 })
   }
-  return NextResponse.json({ ok: true })
 }
 
 // Stops sharing live location without invalidating the journey link itself
@@ -47,9 +57,14 @@ export async function DELETE(request: Request) {
   if (!body.id || !body.token) {
     return NextResponse.json({ error: 'id and token are required' }, { status: 400 })
   }
-  const ok = clearSharePosition(body.id, body.token)
-  if (!ok) {
-    return NextResponse.json({ error: 'Not found or not authorized' }, { status: 404 })
+  try {
+    const ok = clearSharePosition(body.id, body.token)
+    if (!ok) {
+      return NextResponse.json({ error: 'Not found or not authorized' }, { status: 404 })
+    }
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Failed to clear share position:', err)
+    return NextResponse.json({ error: 'Could not clear position' }, { status: 500 })
   }
-  return NextResponse.json({ ok: true })
 }
