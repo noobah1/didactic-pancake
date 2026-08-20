@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { motion } from 'motion/react'
 import { X, RefreshCw } from 'lucide-react'
-import { AnimatedOverlay, TAP_SPRING } from '@/components/AnimatedOverlay'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useNearbyStops } from '@/hooks/use-nearby-stops'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
@@ -33,35 +31,28 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
   }, [])
 
   return (
-    <AnimatedOverlay
-      anchor="bottom-right"
-      className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden"
-    >
+    <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-blue-600 text-white shrink-0">
         <span className="text-sm font-semibold">Near you</span>
         <div className="flex items-center gap-1">
-          <motion.button
+          <button
             type="button"
             onClick={request}
             disabled={geoLoading}
             aria-label="Refresh location"
             title="Refresh location"
-            whileTap={{ scale: 0.85 }}
-            transition={TAP_SPRING}
             className="p-1 rounded-full hover:bg-white/20 disabled:opacity-50 transition-colors shrink-0"
           >
             <RefreshCw size={16} className={geoLoading ? 'animate-spin' : ''} />
-          </motion.button>
-          <motion.button
+          </button>
+          <button
             type="button"
             onClick={onClose}
             aria-label="Close nearby stops"
-            whileTap={{ scale: 0.85 }}
-            transition={TAP_SPRING}
             className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
           >
             <X size={18} />
-          </motion.button>
+          </button>
         </div>
       </div>
 
@@ -161,6 +152,6 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
           Updated {new Date(lastUpdated).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
         </div>
       )}
-    </AnimatedOverlay>
+    </div>
   )
 }

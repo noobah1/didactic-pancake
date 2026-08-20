@@ -1,9 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'motion/react'
 import { Star } from 'lucide-react'
-import { TAP_SPRING } from '@/components/AnimatedOverlay'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
@@ -158,19 +156,17 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
       <div className="flex gap-4">
         {/* Stacked search boxes */}
         <div className="relative flex-1 flex flex-col gap-2">
-          <motion.button
+          <button
             type="button"
             onClick={handleSwap}
             title="Swap from and to"
             aria-label="Swap from and to"
-            whileTap={{ scale: 0.85, rotate: 180 }}
-            transition={TAP_SPRING}
             className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" />
             </svg>
-          </motion.button>
+          </button>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
               label="From"
@@ -231,18 +227,17 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               </svg>
             </button>
           )}
-          <motion.button
+          <button
+            type="button"
             onClick={() => handleSearch()}
             disabled={!fromCoords || !toCoords}
-            whileTap={{ scale: 0.9 }}
-            transition={TAP_SPRING}
             className="w-12 h-12 bg-white dark:bg-gray-800 border-2 border-blue-800 dark:border-blue-500 text-blue-800 dark:text-blue-400 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-lg"
             aria-label="Search routes"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
-          </motion.button>
+          </button>
         </div>
       </div>
       {!hasInput && favorites.length > 0 && (

@@ -1,8 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
 import { AlertTriangle } from 'lucide-react'
-import { TAP_SPRING } from '@/components/AnimatedOverlay'
 
 interface IssuesButtonProps {
   active: boolean
@@ -18,10 +16,9 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
   const hasIssues = count > 0
 
   return (
-    <motion.button
+    <button
+      type="button"
       onClick={onClick}
-      whileTap={{ scale: 0.9 }}
-      transition={TAP_SPRING}
       className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-colors border-2 backdrop-blur-xl ${
         active
           ? 'bg-amber-100/90 dark:bg-amber-900/80 border-amber-500'
@@ -48,6 +45,6 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
           </span>
         )
       )}
-    </motion.button>
+    </button>
   )
 }
