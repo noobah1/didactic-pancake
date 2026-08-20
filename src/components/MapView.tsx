@@ -185,7 +185,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   const planMarkerRef = useRef<maplibregl.Marker[]>([])
   const journeyMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const journeyVehiclesRef = useRef(journeyVehicles)
-  journeyVehiclesRef.current = journeyVehicles
+  useEffect(() => {
+    journeyVehiclesRef.current = journeyVehicles
+  })
   const mapReadyRef = useRef(false)
   const incidentLayerIdsRef = useRef<string[]>([])
   // Which alert each drawn incident-line layer belongs to, so the focused
@@ -196,13 +198,19 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
   // when it's flying to a hub with several overlapping lines).
   const incidentLayerAlertIdRef = useRef<Map<string, string>>(new Map())
   const focusAlertRef = useRef(focusAlert)
-  focusAlertRef.current = focusAlert
+  useEffect(() => {
+    focusAlertRef.current = focusAlert
+  })
   const showRouteShapeRef = useRef<(v: VehiclePosition, opts?: { delayHighlight?: boolean }) => void>(() => {})
   const highlightDelayRef = useRef(highlightDelay)
-  highlightDelayRef.current = highlightDelay
+  useEffect(() => {
+    highlightDelayRef.current = highlightDelay
+  })
   const onVehicleClickRef = useRef(onVehicleClick)
   const vehiclesRef = useRef(vehicles)
-  vehiclesRef.current = vehicles
+  useEffect(() => {
+    vehiclesRef.current = vehicles
+  })
   const vehicleDotTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
 
