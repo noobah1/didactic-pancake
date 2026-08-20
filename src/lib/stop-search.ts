@@ -98,6 +98,22 @@ export function nearestCityName(lat: number, lng: number, maxDistanceM: number):
   return best && best.dist <= maxDistanceM ? best.name : null
 }
 
+// Population of the nearest known city to a coordinate, or 0 beyond
+// maxDistanceM — used to break line-search ties between same-numbered routes
+// in different towns (e.g. bus "5" exists in ~8 towns nationwide) by town
+// size rather than raw distance from the rider's active city. Raw distance
+// alone systematically buried Tartu, Estonia's second-largest city, behind
+// every smaller town that merely sits closer to Tallinn (the app's default
+// active city) — see the Tartu line-search bug this was added to fix.
+export function nearestCityPopulation(lat: number, lng: number, maxDistanceM: number): number {
+  let best: { population: number; dist: number } | null = null
+  for (const city of CITIES) {
+    const dist = distanceMeters(lat, lng, city.lat, city.lng)
+    if (!best || dist < best.dist) best = { population: city.population, dist }
+  }
+  return best && best.dist <= maxDistanceM ? best.population : 0
+}
+
 // Smallest distance from a stop cluster to any of the cities the rider
 // currently has selected, or null when no cities are active. Used to bias
 // ranking toward where the rider actually is: a Tallinn rider searching a

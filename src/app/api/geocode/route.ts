@@ -9,7 +9,7 @@ import {
   LINE_SEARCH_CITY_LABEL_RADIUS_M,
   CITIES,
 } from '@/lib/constants'
-import { foldName, tokenize, scoreName, clusterByLocation, nearestCityName, distanceToNearestActiveCity } from '@/lib/stop-search'
+import { foldName, tokenize, scoreName, clusterByLocation, nearestCityName, nearestCityPopulation, distanceToNearestActiveCity } from '@/lib/stop-search'
 
 // Cache warming flag — set to true once the initial load completes, so
 // simultaneous cache-miss requests don't all re-fetch from OTP
@@ -313,6 +313,10 @@ async function searchTransitLines(query: string, activeCities: ActiveCity[] = []
   interface ScoredResult extends GeoResult {
     score: number
     distanceToActive: number | null
+    // Nearest recognized city's population (0 if none within
+    // LINE_SEARCH_CITY_LABEL_RADIUS_M) — see the tie-break comment below for
+    // why this exists.
+    population: number
   }
   const results: ScoredResult[] = []
 
@@ -340,14 +344,27 @@ async function searchTransitLines(query: string, activeCities: ActiveCity[] = []
         mode,
         score,
         distanceToActive: distanceToNearestActiveCity(stop.lat, stop.lon, activeCities),
+        population: nearestCityPopulation(stop.lat, stop.lon, LINE_SEARCH_CITY_LABEL_RADIUS_M),
       })
     }
   }
 
   results.sort((a, b) => {
     if (a.score !== b.score) return b.score - a.score
+    // A same-numbered line exists in a dozen-plus towns nationwide (bus "5"
+    // alone runs in ~8) — with only LINE_SEARCH_MAX_RESULTS slots, breaking
+    // ties by raw distance-from-active-city buried major cities like Tartu
+    // (Estonia's second largest) behind every small town that merely sits
+    // closer to Tallinn, the app's default active city. A match actually in
+    // one of the rider's selected cities still wins outright; beyond that,
+    // rank by the matching town's size rather than its distance from
+    // wherever the rider happens to be centered.
     const da = a.distanceToActive ?? Infinity
     const db = b.distanceToActive ?? Infinity
+    const aInActive = da <= LINE_SEARCH_CITY_LABEL_RADIUS_M
+    const bInActive = db <= LINE_SEARCH_CITY_LABEL_RADIUS_M
+    if (aInActive !== bInActive) return aInActive ? -1 : 1
+    if (a.population !== b.population) return b.population - a.population
     if (da !== db) return da - db
     return a.name.length - b.name.length
   })
