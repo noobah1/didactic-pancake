@@ -9,6 +9,17 @@ import { RouteCard } from './RouteCard'
 type SortMode = 'duration' | 'departure'
 type ShareState = 'idle' | 'sharing' | 'error'
 
+// Purely decorative affordance marking this as a sheet anchored to the
+// bottom edge on mobile — hidden from sm: up, where the panel floats as a
+// regular card instead and a drag handle would be a lie (nothing to drag).
+function SheetHandle() {
+  return (
+    <div className="flex justify-center pt-2 pb-1 sm:hidden">
+      <div className="w-9 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+    </div>
+  )
+}
+
 interface RouteResultsProps {
   routes: RouteResult[]
   loading: boolean
