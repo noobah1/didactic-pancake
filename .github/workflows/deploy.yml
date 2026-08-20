@@ -20,3 +20,4 @@ jobs:
           # sent here.
           script: /opt/app/scripts/deploy.sh
           script_stop: true
+          command_timeout: 20m
