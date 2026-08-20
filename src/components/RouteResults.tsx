@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import { Check, Share2, X } from 'lucide-react'
 import { RouteResult, RouteTrafficEstimate } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -8,6 +9,20 @@ import { RouteCard } from './RouteCard'
 
 type SortMode = 'duration' | 'departure'
 type ShareState = 'idle' | 'sharing' | 'error'
+
+// Riders trigger this panel by tapping the search button, which sits at
+// the bottom of the From/To input stack right above where this panel
+// appears — so it should read as rising up out of that button (Google
+// Maps' directions-panel effect) rather than dropping down from above.
+// Critically damped, no bounce — this is a tap response, not a flung
+// gesture, so an overshoot would read as wrong per the apple-design skill.
+const ENTRANCE_SPRING = { type: 'spring', damping: 1, duration: 0.35 } as const
+const entranceProps = {
+  initial: { opacity: 0, scale: 0.94, y: 16 },
+  animate: { opacity: 1, scale: 1, y: 0 },
+  transition: ENTRANCE_SPRING,
+  style: { transformOrigin: 'bottom right' },
+} as const
 
 interface RouteResultsProps {
   routes: RouteResult[]
@@ -81,11 +96,11 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   }
 
   if (loading) {
-    return <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">Searching routes...</div>
+    return <motion.div {...entranceProps} className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">Searching routes...</motion.div>
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-500 dark:text-red-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">{error}</div>
+    return <motion.div {...entranceProps} className="p-4 text-center text-red-500 dark:text-red-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">{error}</motion.div>
   }
 
   if (routes.length === 0) return null
@@ -100,7 +115,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   const visible = selectedId ? sorted.filter((route) => route.id === selectedId) : sorted
 
   return (
-    <div className={`flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2 ${selectedId ? 'max-h-[40vh] sm:max-h-[24rem]' : 'max-h-44 sm:max-h-80'}`}>
+    <motion.div {...entranceProps} className={`flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2 ${selectedId ? 'max-h-[40vh] sm:max-h-[24rem]' : 'max-h-44 sm:max-h-80'}`}>
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? 'Your journey' : 'Routes'}</h2>
         {selectedId && (
@@ -186,6 +201,6 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
         />
       ))}
       </div>
-    </div>
+    </motion.div>
   )
 }
