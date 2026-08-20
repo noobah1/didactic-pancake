@@ -185,6 +185,16 @@ export const STOP_SEARCH_CITY_LABEL_RADIUS_M = 30_000
 // of a smaller cap with entries for towns the rider has no interest in.
 export const STOP_SEARCH_MAX_RESULTS = 10
 
+// The From/To journey-planner search (unlike the Departures-tab stop-only
+// search above) blends transit stops with plain street addresses. Stop
+// results are computed first and always listed ahead of addresses, so
+// without a reserved minimum a query matching 10+ stops (STOP_SEARCH_MAX_
+// RESULTS's own internal cap) fills the combined list before any address is
+// even considered — a rider typing a real street address would only ever
+// see stop names. Reserving slots guarantees addresses stay reachable
+// whenever the gazetteer actually returns any.
+export const ADDRESS_SEARCH_RESERVED_RESULTS = 4
+
 // Line-number search (mixed into the same Departures-tab search as stops
 // above) — kept much smaller than STOP_SEARCH_MAX_RESULTS since a line query
 // is almost always a short, specific code ("5", "T2", "R16") with very few
