@@ -176,7 +176,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               allowMyLocation
               onSelect={(name, lat, lng) => {
                 setFromText(name)
-                setFromCoords({ lat, lng })
+                const coords = { lat, lng }
+                setFromCoords(coords)
+                if (toCoords) handleSearch(coords, toCoords)
               }}
             />
           </div>
@@ -188,7 +190,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               onChange={setToText}
               onSelect={(name, lat, lng) => {
                 setToText(name)
-                setToCoords({ lat, lng })
+                const coords = { lat, lng }
+                setToCoords(coords)
+                if (fromCoords) handleSearch(fromCoords, coords)
               }}
               trailing={
                 fromCoords && toCoords ? (
@@ -214,9 +218,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             />
           </div>
         </div>
-        {/* Buttons - stacked vertically to the right */}
-        <div className={`flex flex-col items-center ${hasInput ? 'justify-start' : 'justify-center'} gap-1.5`}>
-          {hasInput && (
+        {/* Clear button */}
+        {hasInput && (
+          <div className="flex flex-col items-center justify-start">
             <button
               onClick={handleClear}
               className="w-12 h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors shadow-md"
@@ -226,19 +230,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => handleSearch()}
-            disabled={!fromCoords || !toCoords}
-            className="w-12 h-12 bg-white dark:bg-gray-800 border-2 border-blue-800 dark:border-blue-500 text-blue-800 dark:text-blue-400 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-lg"
-            aria-label="Search routes"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-          </button>
-        </div>
+          </div>
+        )}
       </div>
       {!hasInput && favorites.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
