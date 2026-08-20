@@ -24,7 +24,7 @@ interface SearchPanelProps {
   // was found and selected (its last resort is a nationwide network fetch,
   // hence async), so this panel can show an inline "not running right now"
   // message on a miss without page.tsx needing to own that UI state.
-  onSelectLine?: (mode: string, line: string) => boolean | Promise<boolean>
+  onSelectLine?: (mode: string, line: string, lat: number, lng: number) => boolean | Promise<boolean>
   // Passed down rather than calling usePushNotifications() again in here —
   // that hook's enabled/busy state is a separate useState per call site
   // with no cross-instance sync, so a second instance would drift from the
@@ -134,7 +134,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                   return
                 }
                 if (line && mode) {
-                  const found = (await onSelectLine?.(mode, line)) ?? false
+                  const found = (await onSelectLine?.(mode, line, lat, lng)) ?? false
                   if (found) {
                     setBoardText('')
                     setLineNotRunning(null)

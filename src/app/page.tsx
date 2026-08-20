@@ -269,8 +269,9 @@ function HomeContent() {
 
   // Line search (see SearchPanel's Departures-tab search, mixed in with
   // stops via /api/geocode) has no vehicle or trip to select up front — just
-  // a mode + line code — so it has to find one itself rather than being
-  // handed one like the handlers above. Checks the GPS-confirmed delay board
+  // a mode + line code plus the picked result's own anchor coordinates — so
+  // it has to find one itself rather than being handed one like the handlers
+  // above. Checks the GPS-confirmed delay board
   // first (nationwide, not scoped to activeModes/activeCities, so a line
   // outside the map's current filters can still be found), then the already-
   // polled schedule-interpolated vehicleData. Both of those, though, only
@@ -290,13 +291,27 @@ function HomeContent() {
   // placeholder position for a miss, which would risk showing a fake
   // "confirmed" delay computed against a point no real vehicle is at (see
   // computeStatusFromGPS).
-  const handleSelectLine = async (mode: string, line: string): Promise<boolean> => {
-    const delayed = delayData.data?.vehicles.find((v) => v.mode === mode && v.line === line)
+  // anchorLat/anchorLng are the picked line result's own anchor stop (e.g.
+  // Tartu's bus 5, not Tallinn's) — the same line number legitimately runs in
+  // a dozen-plus towns, so matching on mode+line alone and taking whichever
+  // vehicle happens to come first grabbed the wrong town's bus whenever a
+  // closer/earlier-indexed one shared the number. Picking the candidate
+  // nearest the anchor keeps the result matching the town the rider actually
+  // searched.
+  const handleSelectLine = async (mode: string, line: string, anchorLat: number, anchorLng: number): Promise<boolean> => {
+    const nearest = <T extends { lat: number; lng: number }>(candidates: T[]): T | undefined =>
+      candidates.length === 0
+        ? undefined
+        : candidates.reduce((best, v) =>
+            distanceMeters(v.lat, v.lng, anchorLat, anchorLng) < distanceMeters(best.lat, best.lng, anchorLat, anchorLng) ? v : best,
+          )
+
+    const delayed = nearest((delayData.data?.vehicles || []).filter((v) => v.mode === mode && v.line === line))
     if (delayed) {
       handleSelectDelayedVehicle(delayed)
       return true
     }
-    const scheduled = vehicleData.data?.vehicles.find((v) => v.mode === mode && v.line === line)
+    const scheduled = nearest((vehicleData.data?.vehicles || []).filter((v) => v.mode === mode && v.line === line))
     if (scheduled) {
       setSelectedVehicle(scheduled)
       setSelectedVehicleInitialTripId(null)
@@ -307,7 +322,7 @@ function HomeContent() {
       const res = await fetch(`/api/vehicles?modes=${encodeURIComponent(mode)}`)
       if (res.ok) {
         const data: { vehicles: VehiclePosition[] } = await res.json()
-        const nationwide = data.vehicles.find((v) => v.mode === mode && v.line === line)
+        const nationwide = nearest(data.vehicles.filter((v) => v.mode === mode && v.line === line))
         if (nationwide) {
           setSelectedVehicle(nationwide)
           setSelectedVehicleInitialTripId(null)
