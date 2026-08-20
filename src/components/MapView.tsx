@@ -1180,8 +1180,6 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       // hunting for it among every other vehicle on the map.
       for (const jv of journeyVehiclesRef.current || []) {
         const el = document.createElement('div')
-        el.className = 'journey-vehicle-marker'
-        el.style.setProperty('--pulse-color', `${MODE_COLORS[jv.mode]}99`)
         el.style.minWidth = '28px'
         el.style.height = '28px'
         el.style.padding = '0 6px'

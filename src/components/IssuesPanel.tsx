@@ -70,7 +70,7 @@ export function IssuesPanel({
         <button
           type="button"
           onClick={onClose}
-          className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
+          className="p-1 rounded-full hover:bg-white/20 shrink-0"
         >
           <X size={18} />
         </button>
@@ -109,7 +109,7 @@ export function IssuesPanel({
                     key={v.vehicleId}
                     type="button"
                     onClick={() => onSelectVehicle(v)}
-                    className="flex items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
+                    className="flex items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-amber-950"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span
@@ -168,7 +168,7 @@ export function IssuesPanel({
                     key={alert.id}
                     type="button"
                     onClick={() => { setViewingAlertId(alert.id); onLocateAlert?.(alert) }}
-                    className="w-full flex items-center gap-2 text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
+                    className="w-full flex items-center gap-2 text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950"
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -196,7 +196,7 @@ export function IssuesPanel({
                   <button
                     type="button"
                     onClick={() => setViewingAlertId(null)}
-                    className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                   >
                     <ArrowLeft size={13} /> All issues
                   </button>
@@ -211,7 +211,7 @@ export function IssuesPanel({
                           setViewingAlertId(prev.id)
                           onLocateAlert?.(prev)
                         }}
-                        className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         <ChevronLeft size={16} />
                       </button>
@@ -223,7 +223,7 @@ export function IssuesPanel({
                           setViewingAlertId(next.id)
                           onLocateAlert?.(next)
                         }}
-                        className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        className="p-0.5 hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         <ChevronRight size={16} />
                       </button>

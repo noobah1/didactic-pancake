@@ -100,14 +100,14 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           <button
             type="button"
             onClick={() => setPanelMode('plan')}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${panelMode === 'plan' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
           >
             Plan trip
           </button>
           <button
             type="button"
             onClick={() => setPanelMode('board')}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${panelMode === 'board' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
           >
             Departures
           </button>
@@ -161,7 +161,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             onClick={handleSwap}
             title="Swap from and to"
             aria-label="Swap from and to"
-            className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+            className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" />
@@ -204,7 +204,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                     }}
                     title={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
                     aria-label={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
-                    className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
+                    className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-amber-500 dark:hover:text-amber-400"
                   >
                     <Star
                       size={18}
@@ -223,7 +223,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           <div className="flex flex-col items-center justify-start">
             <button
               onClick={handleClear}
-              className="w-12 h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors shadow-md"
+              className="w-12 h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 shadow-md"
               aria-label="Clear search"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -284,7 +284,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 setDateTime('')
               }
             }}
-            className={`px-4 py-3 rounded-full text-sm shadow-md border transition-colors ${timeMode !== 'now' && dateTime ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
           >
             {timeMode === 'now' && 'Depart now'}
             {timeMode === 'depart' && (dateTime

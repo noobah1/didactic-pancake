@@ -28,12 +28,12 @@ export function FilterChips({ activeModes, onToggle }: FilterChipsProps) {
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
         aria-label="Filters"
-        className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
       >
         <SlidersHorizontal size={22} />
       </button>
       <div
-        className={`flex items-center gap-1 overflow-hidden transition-all duration-200 ${
+        className={`flex items-center gap-1 overflow-hidden ${
           expanded ? 'max-w-full opacity-100' : 'max-w-0 opacity-0'
         }`}
       >
@@ -44,7 +44,7 @@ export function FilterChips({ activeModes, onToggle }: FilterChipsProps) {
             <button
               key={mode}
               onClick={() => onToggle(mode)}
-              className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-colors border shadow-sm flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap border shadow-sm flex items-center gap-1.5 ${
                 active ? 'text-white border-transparent' : 'text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
               }`}
               style={active ? { backgroundColor: MODE_COLORS[mode] } : undefined}

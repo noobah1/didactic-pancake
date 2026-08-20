@@ -21,7 +21,7 @@ export function DelayToast({ text, onDismiss, onClick }: DelayToastProps) {
           e.stopPropagation()
           onDismiss()
         }}
-        className="shrink-0 p-0.5 rounded-full hover:bg-white/20 transition-colors"
+        className="shrink-0 p-0.5 rounded-full hover:bg-white/20"
         aria-label="Dismiss"
       >
         <X size={14} />

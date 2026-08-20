@@ -26,14 +26,14 @@ export function DelayBanner({ warnings, onGetAlternatives, onDismiss }: DelayBan
             <button
               type="button"
               onClick={onGetAlternatives}
-              className="px-2 py-1 bg-amber-500 text-white rounded text-xs font-medium hover:bg-amber-600 transition-colors"
+              className="px-2 py-1 bg-amber-500 text-white rounded text-xs font-medium hover:bg-amber-600"
             >
               Alternatives
             </button>
             <button
               type="button"
               onClick={() => onDismiss(warning.legIndex)}
-              className="px-2 py-1 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
+              className="px-2 py-1 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
             >
               ✕
             </button>

@@ -237,10 +237,10 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
             aria-label="Expand/Collapse"
-            className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
+            className="p-1 rounded-full hover:bg-white/20 shrink-0"
           >
             <svg
-              className={`w-3.5 h-3.5 text-white transition-transform ${expanded ? '' : 'rotate-180'}`}
+              className={`w-3.5 h-3.5 text-white ${expanded ? '' : 'rotate-180'}`}
               fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
@@ -249,7 +249,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
+            className="p-1 rounded-full hover:bg-white/20 shrink-0"
           >
             <X size={18} />
           </button>
@@ -258,7 +258,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
 
       {/* expanding-contracting */}
       <div
-        className={`flex flex-col overflow-hidden transition-all duration-200 ${
+        className={`flex flex-col overflow-hidden ${
           expanded ? 'max-h-[70vh]' : 'max-h-0'
         }`}
       >

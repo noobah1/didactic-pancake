@@ -41,7 +41,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
             disabled={geoLoading}
             aria-label="Refresh location"
             title="Refresh location"
-            className="p-1 rounded-full hover:bg-white/20 disabled:opacity-50 transition-colors shrink-0"
+            className="p-1 rounded-full hover:bg-white/20 disabled:opacity-50 shrink-0"
           >
             <RefreshCw size={16} className={geoLoading ? 'animate-spin' : ''} />
           </button>
@@ -49,7 +49,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
             type="button"
             onClick={onClose}
             aria-label="Close nearby stops"
-            className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
+            className="p-1 rounded-full hover:bg-white/20 shrink-0"
           >
             <X size={18} />
           </button>
@@ -107,7 +107,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
                 <button
                   type="button"
                   onClick={() => onSelectStop(stop.name, stop.lat, stop.lng, stop.stopId)}
-                  className="w-full flex items-center justify-between gap-2 px-1.5 py-1.5 rounded-lg text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="w-full flex items-center justify-between gap-2 px-1.5 py-1.5 rounded-lg text-left hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                     {stop.name}

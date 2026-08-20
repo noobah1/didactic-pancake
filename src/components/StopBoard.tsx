@@ -30,7 +30,7 @@ export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) 
           type="button"
           onClick={onClose}
           aria-label="Close departure board"
-          className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           <X size={16} />
         </button>
@@ -57,7 +57,7 @@ export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) 
                 key={`${dep.tripId}-${i}`}
                 type="button"
                 onClick={() => onSelectDeparture(dep)}
-                className="flex items-center gap-2.5 px-1.5 py-2 rounded-lg text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-2.5 px-1.5 py-2 rounded-lg text-left hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <span
                   className="shrink-0 min-w-[1.75rem] px-1.5 py-0.5 rounded text-white text-xs font-bold text-center"

@@ -44,21 +44,30 @@ interface BaselineRow {
 // measured_at) primary key makes this idempotent — re-recording the same
 // 5-minute reading (e.g. after a process restart) is a harmless no-op rather
 // than a duplicate row skewing the baseline.
+// Failures (especially disk I/O on cloud storage) are non-critical — the
+// app's core routes/delays features don't depend on traffic estimates, so
+// we silently swallow errors rather than letting a locked database
+// block the traffic sampler's whole tick.
 export function recordSamples(readings: Map<string, DetectorReading>): void {
-  const db = getDb()
-  const insert = db.prepare(
-    'INSERT OR IGNORE INTO detector_sample (detector_id, direction, measured_at, avg_speed, flow, relative_speed) VALUES (?, ?, ?, ?, ?, ?)',
-  )
-  for (const r of readings.values()) {
-    if (r.forwards) {
-      insert.run(r.detectorId, 'forwards', r.measuredAt, r.forwards.avgSpeedKmh, r.forwards.flow, r.forwards.relativeSpeed)
+  try {
+    const db = getDb()
+    const insert = db.prepare(
+      'INSERT OR IGNORE INTO detector_sample (detector_id, direction, measured_at, avg_speed, flow, relative_speed) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    for (const r of readings.values()) {
+      if (r.forwards) {
+        insert.run(r.detectorId, 'forwards', r.measuredAt, r.forwards.avgSpeedKmh, r.forwards.flow, r.forwards.relativeSpeed)
+      }
+      if (r.backwards) {
+        insert.run(r.detectorId, 'backwards', r.measuredAt, r.backwards.avgSpeedKmh, r.backwards.flow, r.backwards.relativeSpeed)
+      }
     }
-    if (r.backwards) {
-      insert.run(r.detectorId, 'backwards', r.measuredAt, r.backwards.avgSpeedKmh, r.backwards.flow, r.backwards.relativeSpeed)
-    }
+    const cutoff = Date.now() - BASELINE_RETENTION_DAYS * 86_400_000
+    db.prepare('DELETE FROM detector_sample WHERE measured_at < ?').run(cutoff)
+  } catch {
+    // Non-critical: database write failure just means this poll's samples
+    // weren't recorded. The next poll will try again.
   }
-  const cutoff = Date.now() - BASELINE_RETENTION_DAYS * 86_400_000
-  db.prepare('DELETE FROM detector_sample WHERE measured_at < ?').run(cutoff)
 }
 
 function percentile(sortedAsc: number[], p: number): number {
@@ -71,46 +80,47 @@ function percentile(sortedAsc: number[], p: number): number {
 // single pass over at most 28 days × 116 detectors × 2 directions × ~288
 // samples/day, all in memory.
 export function recomputeBaselines(): void {
-  const db = getDb()
-  const cutoff = Date.now() - BASELINE_RETENTION_DAYS * 86_400_000
-  const rows = db
-    .prepare('SELECT detector_id, direction, avg_speed, flow, relative_speed FROM detector_sample WHERE measured_at >= ?')
-    .all(cutoff) as unknown as SampleRow[]
+  try {
+    const db = getDb()
+    const cutoff = Date.now() - BASELINE_RETENTION_DAYS * 86_400_000
+    const rows = db
+      .prepare('SELECT detector_id, direction, avg_speed, flow, relative_speed FROM detector_sample WHERE measured_at >= ?')
+      .all(cutoff) as unknown as SampleRow[]
 
-  const byKey = new Map<string, { flowFiltered: number[]; freeFlowOnly: number[] }>()
-  for (const row of rows) {
-    const key = `${row.detector_id}|${row.direction}`
-    let bucket = byKey.get(key)
-    if (!bucket) {
-      bucket = { flowFiltered: [], freeFlowOnly: [] }
-      byKey.set(key, bucket)
+    const byKey = new Map<string, { flowFiltered: number[]; freeFlowOnly: number[] }>()
+    for (const row of rows) {
+      const key = `${row.detector_id}|${row.direction}`
+      let bucket = byKey.get(key)
+      if (!bucket) {
+        bucket = { flowFiltered: [], freeFlowOnly: [] }
+        byKey.set(key, bucket)
+      }
+      if (row.flow != null && row.flow >= MIN_FLOW_FOR_BASELINE) bucket.flowFiltered.push(row.avg_speed)
+      if (row.relative_speed === 1) bucket.freeFlowOnly.push(row.avg_speed)
     }
-    if (row.flow != null && row.flow >= MIN_FLOW_FOR_BASELINE) bucket.flowFiltered.push(row.avg_speed)
-    if (row.relative_speed === 1) bucket.freeFlowOnly.push(row.avg_speed)
-  }
 
-  const now = Date.now()
-  const upsert = db.prepare(`
-    INSERT INTO detector_baseline (detector_id, direction, free_flow_kmh, sample_count, computed_at)
-    VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT(detector_id, direction) DO UPDATE SET
-      free_flow_kmh = excluded.free_flow_kmh,
-      sample_count = excluded.sample_count,
-      computed_at = excluded.computed_at
-  `)
+    const now = Date.now()
+    const upsert = db.prepare(`
+      INSERT INTO detector_baseline (detector_id, direction, free_flow_kmh, sample_count, computed_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(detector_id, direction) DO UPDATE SET
+        free_flow_kmh = excluded.free_flow_kmh,
+        sample_count = excluded.sample_count,
+        computed_at = excluded.computed_at
+    `)
 
-  for (const [key, bucket] of byKey) {
-    const [detectorId, direction] = key.split('|')
-    if (bucket.flowFiltered.length >= MIN_BASELINE_SAMPLES) {
-      const sorted = [...bucket.flowFiltered].sort((a, b) => a - b)
-      upsert.run(detectorId, direction, percentile(sorted, FREE_FLOW_PERCENTILE), bucket.flowFiltered.length, now)
-    } else if (bucket.freeFlowOnly.length >= MIN_BOOTSTRAP_SAMPLES) {
-      const mean = bucket.freeFlowOnly.reduce((s, v) => s + v, 0) / bucket.freeFlowOnly.length
-      upsert.run(detectorId, direction, mean, bucket.freeFlowOnly.length, now)
+    for (const [key, bucket] of byKey) {
+      const [detectorId, direction] = key.split('|')
+      if (bucket.flowFiltered.length >= MIN_BASELINE_SAMPLES) {
+        const sorted = [...bucket.flowFiltered].sort((a, b) => a - b)
+        upsert.run(detectorId, direction, percentile(sorted, FREE_FLOW_PERCENTILE), bucket.flowFiltered.length, now)
+      } else if (bucket.freeFlowOnly.length >= MIN_BOOTSTRAP_SAMPLES) {
+        const mean = bucket.freeFlowOnly.reduce((s, v) => s + v, 0) / bucket.freeFlowOnly.length
+        upsert.run(detectorId, direction, mean, bucket.freeFlowOnly.length, now)
+      }
     }
-    // Neither threshold met yet: leave this detector/direction unpublished
-    // (or, if it already had an older baseline row, leave that row as-is)
-    // rather than force a low-confidence number in either direction.
+  } catch {
+    // Non-critical: baseline recomputation failure just skips this cycle.
   }
 }
 
@@ -127,12 +137,17 @@ export function getBaselines(): Map<string, number> {
   if (baselineCache && now - baselineCache.timestamp < BASELINE_READ_CACHE_TTL) {
     return baselineCache.data
   }
-  const db = getDb()
-  const rows = db.prepare('SELECT detector_id, direction, free_flow_kmh FROM detector_baseline').all() as unknown as BaselineRow[]
-  const map = new Map<string, number>()
-  for (const row of rows) map.set(`${row.detector_id}|${row.direction}`, row.free_flow_kmh)
-  baselineCache = { data: map, timestamp: now }
-  return map
+  try {
+    const db = getDb()
+    const rows = db.prepare('SELECT detector_id, direction, free_flow_kmh FROM detector_baseline').all() as unknown as BaselineRow[]
+    const map = new Map<string, number>()
+    for (const row of rows) map.set(`${row.detector_id}|${row.direction}`, row.free_flow_kmh)
+    baselineCache = { data: map, timestamp: now }
+    return map
+  } catch {
+    // Non-critical: return last known cache or empty if none
+    return baselineCache?.data || new Map()
+  }
 }
 
 // Test-only: force the next getBaselines() to re-read the database instead

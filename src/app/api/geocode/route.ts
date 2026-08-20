@@ -10,6 +10,11 @@ import {
   CITIES,
 } from '@/lib/constants'
 import { foldName, tokenize, scoreName, clusterByLocation, nearestCityName, distanceToNearestActiveCity } from '@/lib/stop-search'
+
+// Cache warming flag — set to true once the initial load completes, so
+// simultaneous cache-miss requests don't all re-fetch from OTP
+let isCacheWarming = false
+
 const TRANSIT_STOPS_QUERY = `
 query {
   rail: routes(transportModes: [RAIL]) {
@@ -431,6 +436,7 @@ async function searchTransitStops(query: string, activeCities: ActiveCity[] = []
   // it itself before sending, since a rider-facing payload has no use for it.
   return results.slice(0, STOP_SEARCH_MAX_RESULTS).map((r) => ({ name: r.name, lat: r.lat, lng: r.lng, stopId: r.stopId, score: r.score }))
 }
+
 async function searchEstonianAddresses(query: string): Promise<GeoResult[]> {
   try {
     const url = 'https://inaadress.maaamet.ee/inaadress/gazetteer?address=' + encodeURIComponent(query) + '&results=8&lang=et'
@@ -456,6 +462,24 @@ function resolveActiveCities(searchParams: URLSearchParams): ActiveCity[] {
   if (ids.size === 0 || ids.size >= CITIES.length) return []
   return CITIES.filter((c) => ids.has(c.id)).map((c) => ({ lat: c.lat, lng: c.lng }))
 }
+
+// Warm the cache on app start — run in the background so requests never block
+// on the nationwide transit-stops query. This endpoint is hit on app load by
+// the LocationInput components in SearchPanel, which otherwise would stall
+// the UI while fetching all stops from OTP.
+async function warmCache() {
+  if (isCacheWarming) return
+  isCacheWarming = true
+  try {
+    await loadTransitStops()
+  } catch {
+    // Failure is non-critical — the cache will just miss and load on first request
+  } finally {
+    isCacheWarming = false
+  }
+}
+// Kick off cache warming immediately on module load, without waiting
+warmCache()
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)

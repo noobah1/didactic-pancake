@@ -53,11 +53,11 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
         aria-label="Cities"
-        className="flex items-center gap-1.5 h-10 px-3 bg-white dark:bg-gray-800 rounded-full shadow-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center gap-1.5 h-10 px-3 bg-white dark:bg-gray-800 rounded-full shadow-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
       >
         <MapPin size={14} />
         {label}
-        <svg className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+        <svg className={`w-3 h-3 ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
         </svg>
       </button>
@@ -75,7 +75,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                     onSetAll([...CITIES])
                   }
                 }}
-                className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
+                className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
                   activeCities.length === CITIES.length
                     ? 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900'
                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -85,7 +85,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
               </button>
               <button
                 onClick={() => setExpanded(false)}
-                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <X size={14} className="text-gray-400" />
               </button>
@@ -101,7 +101,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                 <div key={county} className="flex flex-col gap-1">
                   <button
                     onClick={() => onToggleCounty(cities)}
-                    className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded transition-colors text-left ${
+                    className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded text-left ${
                       allActive
                         ? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/50'
                         : someActive
@@ -118,7 +118,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                         <button
                           key={city.id}
                           onClick={() => onToggle(city)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border ${
                             active
                               ? 'text-white bg-blue-600 border-blue-600'
                               : 'text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'

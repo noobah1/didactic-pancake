@@ -19,7 +19,7 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
     <button
       type="button"
       onClick={onClick}
-      className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-colors border-2 backdrop-blur-xl ${
+      className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center border-2 backdrop-blur-xl ${
         active
           ? 'bg-amber-100/90 dark:bg-amber-900/80 border-amber-500'
           : degraded

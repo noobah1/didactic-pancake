@@ -47,7 +47,7 @@ export function FavoriteChip({ favorite, onSelect, onRemove, onSetReminder, push
         <button
           type="button"
           onClick={onSelect}
-          className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-200 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
+          className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-200 hover:text-blue-700 dark:hover:text-blue-400"
         >
           <Star size={12} fill="#F59E0B" stroke="#F59E0B" />
           <span className="max-w-[10rem] truncate">{favorite.fromName}</span>
@@ -59,7 +59,7 @@ export function FavoriteChip({ favorite, onSelect, onRemove, onSetReminder, push
           onClick={openEditor}
           title={hasReminder ? `Leave-now reminder at ${favorite.reminderTime}` : 'Set a leave-now reminder'}
           aria-label={hasReminder ? `Leave-now reminder at ${favorite.reminderTime}` : 'Set a leave-now reminder'}
-          className={`p-0.5 rounded-full transition-colors ${
+          className={`p-0.5 rounded-full ${
             hasReminder
               ? 'text-blue-600 dark:text-blue-400'
               : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
@@ -71,7 +71,7 @@ export function FavoriteChip({ favorite, onSelect, onRemove, onSetReminder, push
           type="button"
           onClick={onRemove}
           aria-label={`Remove favorite ${favorite.fromName} to ${favorite.toName}`}
-          className="p-0.5 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="p-0.5 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
         >
           <X size={12} />
         </button>

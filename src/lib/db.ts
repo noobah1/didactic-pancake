@@ -24,8 +24,11 @@ function migrate(database: DatabaseSync): void {
   // file handles well. Use simple DELETE journal mode with normal sync.
   database.exec('PRAGMA journal_mode = DELETE')
   database.exec('PRAGMA synchronous = NORMAL')
-  // 5-second timeout for locked database instead of instant failure
-  database.exec('PRAGMA busy_timeout = 5000')
+  // 30-second timeout for locked database — OneDrive can be slow, so give
+  // retries a chance to succeed rather than instant failure
+  database.exec('PRAGMA busy_timeout = 30000')
+  // Increase cache size to reduce disk I/O
+  database.exec('PRAGMA cache_size = -10000')
   database.exec(`
     CREATE TABLE IF NOT EXISTS detector_sample (
       detector_id TEXT NOT NULL,

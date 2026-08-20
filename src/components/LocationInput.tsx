@@ -103,7 +103,7 @@ export function LocationInput({
             disabled={locating}
             title="Use my current location"
             aria-label="Use my current location"
-            className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 disabled:opacity-50 transition-colors"
+            className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 disabled:opacity-50"
           >
             {locating ? (
               <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">

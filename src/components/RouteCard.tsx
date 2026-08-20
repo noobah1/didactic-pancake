@@ -24,6 +24,13 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Tallinn' })
 }
 
+function formatDuration(totalMinutes: number): string {
+  if (totalMinutes < 60) return `${totalMinutes} min`
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}min`
+}
+
 function ExpandableLeg({ leg }: { leg: RouteLeg }) {
   const [expanded, setExpanded] = useState(false)
   const color = MODE_COLORS[leg.mode as keyof typeof MODE_COLORS] || '#6B7280'
@@ -50,7 +57,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
           <span className="text-xs text-gray-400 dark:text-gray-500">{Math.round(leg.duration / 60)} min</span>
           {stops.length > 0 && (
             <svg
-              className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              className={`w-3.5 h-3.5 text-gray-400 ${expanded ? 'rotate-180' : ''}`}
               fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
@@ -136,7 +143,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
       tabIndex={0}
       onClick={onSelect}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect() }}
-      className={`w-full text-left p-3 rounded-lg border transition-colors cursor-pointer ${
+      className={`w-full text-left p-3 rounded-lg border cursor-pointer ${
         selected
           ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -175,7 +182,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
             </>
           )}
         </div>
-        <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{totalMinutes} min</span>
+        <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatDuration(totalMinutes)}</span>
       </div>
       <div className="flex items-center justify-between mt-1">
         <span className="text-xs text-gray-500 dark:text-gray-400">{startTime} &rarr; {endTime}</span>

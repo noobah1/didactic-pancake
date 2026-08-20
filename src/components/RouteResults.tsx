@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'motion/react'
 import { Check, Share2, X } from 'lucide-react'
 import { RouteResult, RouteTrafficEstimate } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -9,20 +8,6 @@ import { RouteCard } from './RouteCard'
 
 type SortMode = 'duration' | 'departure'
 type ShareState = 'idle' | 'sharing' | 'error'
-
-// Riders trigger this panel by tapping the search button, which sits at
-// the bottom of the From/To input stack right above where this panel
-// appears — so it should read as rising up out of that button (Google
-// Maps' directions-panel effect) rather than dropping down from above.
-// Critically damped, no bounce — this is a tap response, not a flung
-// gesture, so an overshoot would read as wrong per the apple-design skill.
-const ENTRANCE_SPRING = { type: 'spring', damping: 1, duration: 0.35 } as const
-const entranceProps = {
-  initial: { opacity: 0, scale: 0.94, y: 16 },
-  animate: { opacity: 1, scale: 1, y: 0 },
-  transition: ENTRANCE_SPRING,
-  style: { transformOrigin: 'bottom right' },
-} as const
 
 interface RouteResultsProps {
   routes: RouteResult[]
@@ -96,11 +81,21 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   }
 
   if (loading) {
-    return <motion.div {...entranceProps} className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">Searching routes...</motion.div>
+    return (
+      <div className="rounded-t-2xl sm:rounded-xl shadow-lg bg-white dark:bg-gray-800">
+        <SheetHandle />
+        <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">Searching routes...</div>
+      </div>
+    )
   }
 
   if (error) {
-    return <motion.div {...entranceProps} className="p-4 text-center text-red-500 dark:text-red-400 text-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2">{error}</motion.div>
+    return (
+      <div className="rounded-t-2xl sm:rounded-xl shadow-lg bg-white dark:bg-gray-800">
+        <SheetHandle />
+        <div className="p-4 text-center text-red-500 dark:text-red-400 text-sm">{error}</div>
+      </div>
+    )
   }
 
   if (routes.length === 0) return null
@@ -115,8 +110,9 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   const visible = selectedId ? sorted.filter((route) => route.id === selectedId) : sorted
 
   return (
-    <motion.div {...entranceProps} className={`flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-2 ${selectedId ? 'max-h-[40vh] sm:max-h-[24rem]' : 'max-h-44 sm:max-h-80'}`}>
-      <div className="flex items-center justify-between px-3 pt-3 pb-1">
+    <div className={`flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg ${selectedId ? 'max-h-[50vh] sm:max-h-[24rem]' : 'max-h-[40vh] sm:max-h-80'}`}>
+      <SheetHandle />
+      <div className="flex items-center justify-between px-3 pt-1 pb-1">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? 'Your journey' : 'Routes'}</h2>
         {selectedId && (
           <button
@@ -128,7 +124,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             disabled={shareState === 'sharing'}
             title="Get a link to this journey"
             aria-label="Get a link to this journey"
-            className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded-full transition-colors ${shareState === 'error' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+            className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded-full ${shareState === 'error' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
           >
             {shareState === 'error' ? (
               'Failed'
@@ -144,14 +140,14 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             <button
               type="button"
               onClick={() => setSortBy('duration')}
-              className={`px-2 py-1.5 text-xs rounded-full transition-colors ${sortBy === 'duration' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'duration' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               Fastest
             </button>
             <button
               type="button"
               onClick={() => setSortBy('departure')}
-              className={`px-2 py-1.5 text-xs rounded-full transition-colors ${sortBy === 'departure' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'departure' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               Departure
             </button>
@@ -201,6 +197,6 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
         />
       ))}
       </div>
-    </motion.div>
+    </div>
   )
 }
