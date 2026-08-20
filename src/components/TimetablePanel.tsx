@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { motion } from 'motion/react'
 import { X } from 'lucide-react'
-import { AnimatedOverlay, TAP_SPRING } from '@/components/AnimatedOverlay'
 import { VehiclePosition, TripStopInfo } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { LATE_BUFFER_SEC } from '@/lib/delay'
@@ -220,8 +218,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
       : null
 
   return (
-    <AnimatedOverlay
-      anchor="bottom-left"
+    <div
       className="absolute bottom-3 left-3 z-50 w-64 max-h-[38vh] sm:max-h-[55vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden"
     >
       {/* Header */}
@@ -235,12 +232,11 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
         </div>
         <div className="flex items-center gap-5 min-w-0">
           {/* The expand/collapse button */}
-          <motion.button
+          <button
+            type="button"
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
             aria-label="Expand/Collapse"
-            whileTap={{ scale: 0.85 }}
-            transition={TAP_SPRING}
             className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
           >
             <svg
@@ -249,15 +245,14 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
             </svg>
-          </motion.button>
-          <motion.button
+          </button>
+          <button
+            type="button"
             onClick={onClose}
-            whileTap={{ scale: 0.85 }}
-            transition={TAP_SPRING}
             className="p-1 rounded-full hover:bg-white/20 transition-colors shrink-0"
           >
             <X size={18} />
-          </motion.button>
+          </button>
         </div>
       </div>
 
@@ -394,7 +389,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
           )}
         </div>
       </div>
-    </AnimatedOverlay>
+    </div>
   )
 }
 
