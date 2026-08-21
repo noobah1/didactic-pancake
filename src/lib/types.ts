@@ -80,6 +80,14 @@ export interface LegPlace {
   stopId?: string
   departure?: string
   arrival?: string
+  // Elron trains only (see src/lib/elron-platform.ts) — absent for every
+  // other mode, and when this stop/time/destination couldn't be matched
+  // against Elron's own live-map board. Never guess a platform. `from`'s
+  // platform is where to board; a train leg's `to` carries one too (the
+  // arrival platform), independently matched — they are frequently different
+  // tracks at the same station.
+  platform?: string
+  platformChanged?: boolean
 }
 
 export interface ServiceAlert {
@@ -123,6 +131,11 @@ export interface StopDeparture {
   // Only present when realtime is true — never default to 0, same rule as
   // TripStopInfo.delaySeconds (absent means no live evidence, not "on time").
   delaySeconds?: number
+  // Elron trains only (see src/lib/elron-platform.ts) — absent for every
+  // other mode, and for a train whose station/time/destination couldn't be
+  // matched against Elron's own live-map board. Never guess a platform.
+  platform?: string
+  platformChanged?: boolean
 }
 
 export interface StopBoardData {

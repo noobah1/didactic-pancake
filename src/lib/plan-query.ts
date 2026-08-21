@@ -1,5 +1,6 @@
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { TransportMode, RouteResult, RouteLeg, LegPlace } from '@/lib/types'
+import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
 
 // Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
 // TROLLEYBUS route_type in the data), so trip planning requests BUS for it too.
@@ -16,6 +17,11 @@ const MODE_TO_OTP: Record<TransportMode, string> = {
   nightbus: 'BUS',
 }
 
+// leg.headsign is the trip's overall destination, static for the whole trip
+// regardless of which stop a given leg boards/alights at (confirmed live: a
+// Tallinn-Tartu leg that's part of a Tallinn-Valga service reports headsign
+// "Valga", not "Tartu") — this is what lines up with Elron's own "sihtjaam"
+// field, see elron-platform.ts.
 const PLAN_QUERY = `
 query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean, $banned: InputBanned, $searchWindow: Long) {
   plan(
@@ -36,6 +42,7 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
       walkDistance
       legs {
         mode
+        headsign
         start { scheduledTime estimated { time } }
         end { scheduledTime estimated { time } }
         from {
@@ -86,6 +93,7 @@ interface GqlPlace {
 
 interface GqlLeg {
   mode: string
+  headsign?: string | null
   start: GqlTime
   end: GqlTime
   from: GqlPlace
@@ -174,7 +182,7 @@ export async function planTrip(
     }
 
     if (primary.itineraries.length > 0) {
-      return { routes: mapItineraries(primary.itineraries) }
+      return { routes: await buildRoutes(primary.itineraries) }
     }
 
     // OTP sizes its own default search window from the typical service
@@ -189,7 +197,7 @@ export async function planTrip(
     const widened = await fetchItineraries({ ...variables, searchWindow: WIDE_SEARCH_WINDOW_SECONDS })
     if (widened.itineraries.length > 0) {
       return {
-        routes: mapItineraries(widened.itineraries),
+        routes: await buildRoutes(widened.itineraries),
         notice: 'Service is infrequent on this route — showing the next available departure.',
       }
     }
@@ -245,6 +253,68 @@ async function fetchItineraries(
   }
 
   return { itineraries }
+}
+
+// mapItineraries plus Elron platform enrichment for any RAIL legs — kept as
+// the one path both the primary and widened-search branches of planTrip go
+// through, so a train leg never appears without a platform lookup attempt
+// regardless of which OTP search actually produced it.
+async function buildRoutes(itineraries: GqlItinerary[]): Promise<RouteResult[]> {
+  const routes = mapItineraries(itineraries)
+  await enrichTrainPlatforms(itineraries, routes)
+  return routes
+}
+
+function formatTallinnHHMM(isoTime: string): string {
+  return new Date(isoTime).toLocaleTimeString('en-GB', { timeZone: 'Europe/Tallinn', hour: '2-digit', minute: '2-digit' })
+}
+
+// Attaches a departure platform to each RAIL leg's `from` and an arrival
+// platform to its `to`, mutating the already-built RouteResult[] in place —
+// itineraries and routes share the same [itinerary][leg] indexing since
+// mapItineraries is a plain 1:1 map with no filtering. See
+// src/lib/elron-platform.ts for how the lookup itself works (this mirrors
+// /api/stop-board/route.ts's enrichment).
+async function enrichTrainPlatforms(itineraries: GqlItinerary[], routes: RouteResult[]): Promise<void> {
+  const stationNames = new Set<string>()
+  for (const it of itineraries) {
+    for (const leg of it.legs) {
+      if (leg.mode !== 'RAIL') continue
+      if (leg.from.name) stationNames.add(leg.from.name)
+      if (leg.to.name) stationNames.add(leg.to.name)
+    }
+  }
+  if (stationNames.size === 0) return
+
+  const indexes = new Map(
+    await Promise.all(
+      [...stationNames].map(
+        async (name) => [name, await fetchStationPlatformIndex(name)] as [string, Awaited<ReturnType<typeof fetchStationPlatformIndex>>],
+      ),
+    ),
+  )
+
+  itineraries.forEach((it, i) => {
+    it.legs.forEach((leg, j) => {
+      if (leg.mode !== 'RAIL') return
+      const headsign = leg.headsign || ''
+      const routeLeg = routes[i].legs[j]
+
+      const fromIndex = leg.from.name ? indexes.get(leg.from.name) : null
+      const fromMatch = fromIndex && resolvePlatform(fromIndex, formatTallinnHHMM(leg.start.scheduledTime), headsign)
+      if (fromMatch) {
+        routeLeg.from.platform = fromMatch.platform
+        routeLeg.from.platformChanged = fromMatch.changed
+      }
+
+      const toIndex = leg.to.name ? indexes.get(leg.to.name) : null
+      const toMatch = toIndex && resolvePlatform(toIndex, formatTallinnHHMM(leg.end.scheduledTime), headsign)
+      if (toMatch) {
+        routeLeg.to.platform = toMatch.platform
+        routeLeg.to.platformChanged = toMatch.changed
+      }
+    })
+  })
 }
 
 function mapItineraries(itineraries: GqlItinerary[]): RouteResult[] {

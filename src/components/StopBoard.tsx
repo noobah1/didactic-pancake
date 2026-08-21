@@ -68,6 +68,18 @@ export function StopBoard({ stop, onClose, onSelectDeparture }: StopBoardProps) 
                 <span className="flex-1 min-w-0 truncate text-sm text-gray-800 dark:text-gray-100">
                   {dep.headsign}
                 </span>
+                {dep.platform && (
+                  <span
+                    title={dep.platformChanged ? 'Platform changed' : undefined}
+                    className={`shrink-0 px-1.5 py-0.5 rounded text-[11px] font-semibold ${
+                      dep.platformChanged
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    Pl {dep.platform}
+                  </span>
+                )}
                 <span className="shrink-0 text-right">
                   <span className="block text-sm font-medium text-gray-900 dark:text-gray-50">
                     {mins <= 0 ? 'now' : `${mins} min`}

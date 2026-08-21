@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Footprints, X } from 'lucide-react'
-import { RouteResult, RouteLeg, TransportMode, RouteTrafficEstimate } from '@/lib/types'
+import { RouteResult, RouteLeg, LegPlace, TransportMode, RouteTrafficEstimate } from '@/lib/types'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -22,6 +22,25 @@ interface RouteCardProps {
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Tallinn' })
+}
+
+// Elron trains only — see LegPlace.platform. A leg's `from` and `to` are
+// looked up independently (departure vs. arrival platform), so they're
+// frequently different tracks at the same station.
+function PlatformBadge({ place }: { place: LegPlace }) {
+  if (!place.platform) return null
+  return (
+    <span
+      title={place.platformChanged ? 'Platform changed' : undefined}
+      className={`shrink-0 px-1 py-0.5 rounded text-[10px] font-semibold ${
+        place.platformChanged
+          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
+          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+      }`}
+    >
+      Pl {place.platform}
+    </span>
+  )
 }
 
 function formatDuration(totalMinutes: number): string {
@@ -52,6 +71,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400">{formatTime(leg.startTime)}</span>
           <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name} &rarr; {leg.to.name}</span>
+          <PlatformBadge place={leg.from} />
         </div>
         <div className="flex items-center gap-1">
           <span className="text-xs text-gray-400 dark:text-gray-500">{Math.round(leg.duration / 60)} min</span>
@@ -71,6 +91,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
             <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.startTime)}</span>
             <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name}</span>
+            <PlatformBadge place={leg.from} />
           </div>
           {stops.map((stop, i) => (
             <div key={i} className="flex items-center gap-2 py-0.5">
@@ -83,6 +104,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
             <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.endTime)}</span>
             <span className="text-xs text-gray-600 dark:text-gray-300">{leg.to.name}</span>
+            <PlatformBadge place={leg.to} />
           </div>
         </div>
       )}
@@ -208,7 +230,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
               // schedule-interpolated vehicles.
               <span
                 className="text-xs text-amber-600 dark:text-amber-400 font-medium border border-amber-400 dark:border-amber-600 rounded px-1"
-                title={`${routeEstimate.detectorCount} traffic detector${routeEstimate.detectorCount === 1 ? '' : 's'} along this route — not a GPS-confirmed delay`}
+                title={`${routeEstimate.detectorCount} traffic measurement point${routeEstimate.detectorCount === 1 ? '' : 's'} along this route — not a GPS-confirmed delay`}
               >
                 ~{Math.round(routeEstimate.minSeconds / 60)}
                 {Math.round(routeEstimate.maxSeconds / 60) > Math.round(routeEstimate.minSeconds / 60)

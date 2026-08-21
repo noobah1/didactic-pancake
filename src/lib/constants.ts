@@ -40,6 +40,35 @@ export const TALLINN_TRANSPORT_AGENCY_GTFS_ID = '1:10312960'
 // feed's copy is the one that's actually kept current.
 export const ELRON_AGENCY_GTFS_ID = '1:10520953'
 
+// Elron's own live-map page (elron.ee) calls this undocumented endpoint —
+// found in its bundled JS — to build the station board shown at
+// elron.ee/peatused/{station}. Unlike the GTFS feeds above, individual rows
+// here carry a platform ("peatuskoht") per departing train. Confirmed live:
+// Tapa returns exactly platforms {1,2,4,5}, matching Elron's own published
+// Tapa platform notice; Balti jaam (Tallinn) returns 1-9 matching its known
+// track count. No GTFS-RT feed or static GTFS field carries this anywhere
+// (both rail stops in the graph, "1:10137"/"1:10138", have platformCode
+// null) — this is the only source of platform data found. Cloudflare-fronted
+// and 403s a bare urllib/no-UA request, so always send a real User-Agent.
+export const ELRON_LIVE_MAP_STOP_URL = 'https://elron.ee/live-map/stop/'
+// Elron's own site polls this for its live map, and only tegelik_aeg/status
+// fields change between polls — the platform assignment itself is set well
+// ahead of time. 60s keeps the board feeling live without hammering someone
+// else's production site on every /api/stop-board poll (which happens every
+// POLL_INTERVALS.stopBoard = 20s).
+export const ELRON_PLATFORM_CACHE_TTL = 60_000
+// A few station names differ between the OTP graph (GTFS stop_name) and
+// Elron's own live-map station list even after foldName() folding — verified
+// live: of 125 GTFS rail stop names, 123 match one of Elron's 141 station
+// names once folded; these are the 2 exceptions (the ~18 further names on
+// Elron's side are all Rail Baltica-adjacent Latvian/Lithuanian stations
+// Elron trains don't actually call at in this graph). Keys here are already
+// folded (foldName output), matching how the lookup lib applies this map.
+export const ELRON_STATION_NAME_ALIASES: Record<string, string> = {
+  'klooga aedlinn': 'klooga-aedlinn',
+  'riia raudteejaam': 'riia',
+}
+
 // Tark Tee's live traffic-detector layer — the same unauthenticated ArcGIS
 // host getRoadDisruptionAlerts() already queries for road closures (see
 // tarktee.ts) also serves current per-detector speed/flow readings.

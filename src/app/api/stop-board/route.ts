@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { StopBoardData, StopDeparture, TransportMode } from '@/lib/types'
+import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
 
 const STOP_FIELDS = `
   name
@@ -116,9 +117,9 @@ export async function GET(request: Request) {
     // platforms (a loop route) — key on trip+departure time so it only
     // shows once.
     const seen = new Set<string>()
-    const departures: StopDeparture[] = stops
-      .flatMap((stop) => stop.stoptimesWithoutPatterns)
-      .map((st): StopDeparture => ({
+    const departures = stops
+      .flatMap((stop) => stop.stoptimesWithoutPatterns.map((st) => ({ st, stationName: stop.name })))
+      .map(({ st, stationName }): StopDeparture & { stationName: string; scheduledHHMM: string } => ({
         tripId: st.trip.gtfsId,
         line: st.trip.route.shortName,
         mode: otpModeToLocal(st.trip.route.mode),
@@ -126,6 +127,15 @@ export async function GET(request: Request) {
         departureEpochSec: st.serviceDay + (st.realtime ? st.realtimeDeparture : st.scheduledDeparture),
         realtime: st.realtime,
         delaySeconds: st.realtime ? st.realtimeDeparture - st.scheduledDeparture : undefined,
+        stationName,
+        // Elron's board keys departures by the originally SCHEDULED time, so
+        // this must ignore realtime/delay — never derive it from
+        // departureEpochSec above once that's gone realtime.
+        scheduledHHMM: new Date((st.serviceDay + st.scheduledDeparture) * 1000).toLocaleTimeString('en-GB', {
+          timeZone: 'Europe/Tallinn',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
       }))
       .filter((dep) => {
         const key = `${dep.tripId}-${dep.departureEpochSec}`
@@ -136,7 +146,36 @@ export async function GET(request: Request) {
       .sort((a, b) => a.departureEpochSec - b.departureEpochSec)
       .slice(0, 12)
 
-    const board: StopBoardData = { stopName: stops[0].name, lat: stops[0].lat, lng: stops[0].lon, departures }
+    // Only bother calling elron.ee when this board actually has a train on
+    // it — the common case (bus/tram stops) never needs it.
+    const trainStations = [...new Set(departures.filter((d) => d.mode === 'train').map((d) => d.stationName))]
+    if (trainStations.length > 0) {
+      const indexes = new Map(
+        await Promise.all(
+          trainStations.map(async (name): Promise<[string, Awaited<ReturnType<typeof fetchStationPlatformIndex>>]> => [
+            name,
+            await fetchStationPlatformIndex(name),
+          ]),
+        ),
+      )
+      for (const dep of departures) {
+        if (dep.mode !== 'train') continue
+        const index = indexes.get(dep.stationName)
+        const match = index && resolvePlatform(index, dep.scheduledHHMM, dep.headsign)
+        if (match) {
+          dep.platform = match.platform
+          dep.platformChanged = match.changed
+        }
+      }
+    }
+
+    const board: StopBoardData = {
+      stopName: stops[0].name,
+      lat: stops[0].lat,
+      lng: stops[0].lon,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      departures: departures.map(({ stationName, scheduledHHMM, ...dep }) => dep),
+    }
     cache.set(stopIdParam, { data: board, timestamp: Date.now() })
     return NextResponse.json(board)
   } catch (error) {
