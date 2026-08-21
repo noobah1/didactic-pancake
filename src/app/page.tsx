@@ -31,6 +31,18 @@ import { useDelayToast } from '@/hooks/use-delay-toast'
 import { useTheme } from '@/hooks/use-theme'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
 
+// How far a disruption/delayed/searched-for vehicle can be from a selected
+// city (or a line search's own anchor stop) and still count as belonging to
+// it — wide enough to cover a city's own fanned-out regional routes, tight
+// enough that another city never bleeds in (any two of the top-15 cities are
+// 30km+ apart, most far more). Without this, selecting Tartu still showed
+// Tallinn's own delays/disruptions mixed in with Tartu's, right alongside
+// every other city's — impossible to actually read; and picking a line
+// number Tallinn also happens to run (e.g. "2") could match Tallinn's own bus
+// out of the nationwide delay board instead of Tartu's, since a plain
+// nearest-candidate search has nothing else to rule it out.
+const CITY_RELEVANCE_RADIUS_M = 30_000
+
 function HomeContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -343,17 +355,22 @@ function HomeContent() {
   // vehicle happens to come first grabbed the wrong town's bus whenever a
   // closer/earlier-indexed one shared the number. Picking the candidate
   // nearest the anchor keeps the result matching the town the rider actually
-  // searched.
+  // searched — and rejecting one that's still further than a town's own
+  // plausible radius (e.g. Tallinn's own "line 2" turning up for a Tartu
+  // "line 2" search, ~180km from the anchor, because it was simply the only
+  // candidate on the Tallinn-only delay board) makes this branch fall through
+  // to the next one instead of confidently showing the wrong city's bus.
   const handleSelectLine = async (mode: string, line: string, anchorLat: number, anchorLng: number): Promise<boolean> => {
     // Fly to the picked line's own town right away, independent of whether a
     // live vehicle turns up below — see focusLine's own comment for why.
     setFocusLine({ lat: anchorLat, lng: anchorLng })
-    const nearest = <T extends { lat: number; lng: number }>(candidates: T[]): T | undefined =>
-      candidates.length === 0
-        ? undefined
-        : candidates.reduce((best, v) =>
-            distanceMeters(v.lat, v.lng, anchorLat, anchorLng) < distanceMeters(best.lat, best.lng, anchorLat, anchorLng) ? v : best,
-          )
+    const nearest = <T extends { lat: number; lng: number }>(candidates: T[]): T | undefined => {
+      if (candidates.length === 0) return undefined
+      const best = candidates.reduce((best, v) =>
+        distanceMeters(v.lat, v.lng, anchorLat, anchorLng) < distanceMeters(best.lat, best.lng, anchorLat, anchorLng) ? v : best,
+      )
+      return distanceMeters(best.lat, best.lng, anchorLat, anchorLng) <= CITY_RELEVANCE_RADIUS_M ? best : undefined
+    }
 
     const delayed = nearest((delayData.data?.vehicles || []).filter((v) => v.mode === mode && v.line === line))
     if (delayed) {
@@ -400,14 +417,6 @@ function HomeContent() {
   // "All" (or none) selected means no city filter is actually active — show
   // everything nationwide, same as /api/vehicles treats an empty cities param.
   const showAllCities = activeCities.length === 0 || activeCities.length === CITIES.length
-  // How far a disruption/delayed vehicle can be from a selected city and
-  // still count as belonging to it — wide enough to cover a city's own
-  // fanned-out regional routes, tight enough that another city never bleeds
-  // in (any two of the top-15 cities are 30km+ apart, most far more).
-  // Without this, selecting Tartu still showed Tallinn's own delays/
-  // disruptions mixed in with Tartu's, right alongside every other city's —
-  // impossible to actually read.
-  const CITY_RELEVANCE_RADIUS_M = 30_000
 
   const activeAlerts = useMemo(() => {
     const filtered = (alertData.data?.alerts || []).filter(
