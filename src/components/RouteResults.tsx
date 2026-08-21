@@ -63,11 +63,12 @@ interface RouteResultsProps {
   notice?: string | null
   selectedId: string | null
   onSelect: (id: string | null) => void
+  onClose?: () => void
   delayVehicles?: DelayedVehicle[]
   trafficEstimates?: RouteTrafficEstimate[]
 }
 
-export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, delayVehicles, trafficEstimates }: RouteResultsProps) {
+export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, trafficEstimates }: RouteResultsProps) {
   const [sortBy, setSortBy] = useState<SortMode>('duration')
   const [shareState, setShareState] = useState<ShareState>('idle')
   const [shareLink, setShareLink] = useState<string | null>(null)
@@ -239,7 +240,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           </div>
         )}
         {!selectedId && (
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setSortBy('duration')}
@@ -254,6 +255,17 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             >
               Departure
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                title="Close routes"
+                aria-label="Close routes"
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
         )}
       </div>

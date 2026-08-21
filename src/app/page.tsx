@@ -62,6 +62,20 @@ function HomeContent() {
   // board just showed for the same vehicle. Cleared on a plain map click,
   // which has no such trip to hand over.
   const [selectedVehicleInitialTripId, setSelectedVehicleInitialTripId] = useState<string | null>(null)
+  // A vehicle handleSelectLine found via its nationwide, city-unscoped
+  // fallback fetch (see that function's own comments) — set alongside
+  // selectedVehicle only in that one branch. vehicleData is always scoped to
+  // activeCities, so a line picked outside the map's currently active
+  // cities (e.g. Tartu's bus 5 while only Tallinn is active) resolves a real
+  // vehicle that never appears in vehicleData itself: MapView draws markers
+  // strictly from its vehicles prop, so without this the camera would fly
+  // to the right town and the route/timetable would open, but no dot would
+  // ever show up — exactly as if nothing had been found. Merged into the
+  // vehicles list handed to MapView/TimetablePanel below so that one vehicle
+  // still gets a marker despite being outside the scoped fetch. Cleared on
+  // every other selection path so it never lingers on top of an unrelated
+  // pick.
+  const [extraMapVehicle, setExtraMapVehicle] = useState<VehiclePosition | null>(null)
   const [showIssues, setShowIssues] = useState(false)
   const [showNearby, setShowNearby] = useState(false)
   const [focusedAlert, setFocusedAlert] = useState<ServiceAlert | null>(null)
@@ -264,6 +278,7 @@ function HomeContent() {
     })
     setSelectedVehicleInitialTripId(null)
     setSelectedVehicleDelayed(false)
+    setExtraMapVehicle(null)
   }
 
   const handleSelectDelayedVehicle = (vehicle: DelayedVehicle) => {
@@ -286,6 +301,7 @@ function HomeContent() {
     setSelectedVehicleInitialTripId(vehicle.tripId)
     setSelectedVehicleDelayed(true)
     setShowIssues(false)
+    setExtraMapVehicle(null)
   }
 
   // Line search (see SearchPanel's Departures-tab search, mixed in with
@@ -340,6 +356,7 @@ function HomeContent() {
       setSelectedVehicle(scheduled)
       setSelectedVehicleInitialTripId(null)
       setSelectedVehicleDelayed(false)
+      setExtraMapVehicle(null)
       return true
     }
     try {
@@ -351,6 +368,10 @@ function HomeContent() {
           setSelectedVehicle(nationwide)
           setSelectedVehicleInitialTripId(null)
           setSelectedVehicleDelayed(false)
+          // Not necessarily inside vehicleData's activeCities-scoped fetch
+          // (that's the whole reason this branch had to run its own
+          // nationwide request) — see extraMapVehicle's own comment.
+          setExtraMapVehicle(nationwide)
           return true
         }
       }
@@ -364,6 +385,7 @@ function HomeContent() {
     setSelectedVehicle(vehicle)
     setSelectedVehicleInitialTripId(null)
     setSelectedVehicleDelayed(false)
+    setExtraMapVehicle(null)
   }
 
   // "All" (or none) selected means no city filter is actually active — show
@@ -507,6 +529,16 @@ function HomeContent() {
 
 const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.data?.vehicles)
 
+  // vehicleData is scoped to activeCities, so a vehicle handleSelectLine
+  // found via its nationwide fallback (see extraMapVehicle's own comment)
+  // can be entirely missing from it — appending it here is what actually
+  // gets that vehicle a marker on the map instead of just a camera move.
+  const mapVehicles = useMemo(() => {
+    if (!extraMapVehicle) return vehicleData.data?.vehicles
+    if (vehicleData.data?.vehicles?.some((v) => v.id === extraMapVehicle.id)) return vehicleData.data.vehicles
+    return [...(vehicleData.data?.vehicles || []), extraMapVehicle]
+  }, [vehicleData.data?.vehicles, extraMapVehicle])
+
   return (
     <main className="h-dvh relative overflow-hidden">
       {/* Fullscreen map base layer */}
@@ -518,7 +550,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         }
       >
         <MapView
-          vehicles={vehicleData.data?.vehicles}
+          vehicles={mapVehicles}
           activeModes={activeModes}
           selectedRoute={selectedRoute}
           journeyVehicles={journeyVehicles}
@@ -542,9 +574,9 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         <TimetablePanel
           key="timetable"
           vehicle={selectedVehicle}
-          vehicles={vehicleData.data?.vehicles}
+          vehicles={mapVehicles}
           initialTripId={selectedVehicleInitialTripId}
-          onClose={() => { setSelectedVehicle(null); setSelectedVehicleInitialTripId(null) }}
+          onClose={() => { setSelectedVehicle(null); setSelectedVehicleInitialTripId(null); setExtraMapVehicle(null) }}
           onLateChange={setSelectedVehicleDelayed}
         />
       )}
@@ -622,6 +654,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
               notice={notice}
               selectedId={selectedRouteId}
               onSelect={selectRoute}
+              onClose={handleClear}
               delayVehicles={delayData.data?.vehicles}
               trafficEstimates={delayData.data?.estimates}
             />
