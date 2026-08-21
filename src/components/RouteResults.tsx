@@ -207,25 +207,36 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
       <div className="flex items-center justify-between px-3 pt-1 pb-1">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? 'Your journey' : 'Routes'}</h2>
         {selectedId && (
-          <button
-            type="button"
-            onClick={() => {
-              const route = routes.find((r) => r.id === selectedId)
-              if (route) handleShare(route)
-            }}
-            disabled={shareState === 'sharing'}
-            title="Get a link to this journey"
-            aria-label="Get a link to this journey"
-            className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded-full ${shareState === 'error' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-          >
-            {shareState === 'error' ? (
-              'Failed'
-            ) : (
-              <>
-                <Share2 size={13} /> {shareState === 'sharing' ? 'Sharing…' : 'Share'}
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                const route = routes.find((r) => r.id === selectedId)
+                if (route) handleShare(route)
+              }}
+              disabled={shareState === 'sharing'}
+              title="Get a link to this journey"
+              aria-label="Get a link to this journey"
+              className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded-full ${shareState === 'error' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+            >
+              {shareState === 'error' ? (
+                'Failed'
+              ) : (
+                <>
+                  <Share2 size={13} /> {shareState === 'sharing' ? 'Sharing…' : 'Share'}
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelect(null)}
+              title="Remove journey"
+              aria-label="Remove journey"
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <X size={15} />
+            </button>
+          </div>
         )}
         {!selectedId && (
           <div className="flex gap-1">
