@@ -10,15 +10,9 @@ services:
     environment:
       NODE_ENV: production
       OTP_BASE_URL: http://otp:8080
-      PUSH_DATA_DIR: /data
       SHARE_DATA_DIR: /share-data
       TRAFFIC_DATA_DIR: /traffic-data
-      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
-      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
-      VAPID_SUBJECT: ${VAPID_SUBJECT}
-      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     volumes:
-      - ./push-data:/data
       - ./share-data:/share-data
       - ./traffic-data:/traffic-data
     ports:

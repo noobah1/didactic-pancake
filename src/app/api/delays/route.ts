@@ -253,11 +253,7 @@ async function fetchTallinnGpsVehicles(): Promise<VehiclePosition[]> {
   return gpsCache.data
 }
 
-// Exported for the push-notification checker (src/lib/push-checker.ts),
-// which calls this directly rather than round-tripping through its own
-// GET handler — same computation, just invoked server-internally instead
-// of over HTTP.
-export async function computeDelays(): Promise<DelaysResponse> {
+async function computeDelays(): Promise<DelaysResponse> {
   const now = Date.now()
 
   // These four are independent of each other (two unrelated live-position

@@ -3,10 +3,9 @@ import fs from 'fs'
 import path from 'path'
 import { RouteResult, SharePosition } from '@/lib/types'
 
-// One JSON file per share, not push-store's single dictionary file — shares
-// are created far more often than push subscriptions and, unlike a
-// subscription, are never rewritten after creation, so there's no reason to
-// read-modify-write one shared file for every link someone generates.
+// One JSON file per share — shares are created often and, once created, are
+// never rewritten, so there's no reason to read-modify-write one shared file
+// for every link someone generates.
 const DATA_DIR = process.env.SHARE_DATA_DIR || path.join(process.cwd(), 'share-data')
 // A shared journey is a snapshot of a specific plan, useful for as long as
 // the trip it describes is still relevant — long enough to forward and

@@ -15,8 +15,7 @@
     "maplibre-gl": "^5.19.0",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "web-push": "^3.6.7"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
@@ -25,7 +24,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "eslint-config-prettier": "^10.1.8",

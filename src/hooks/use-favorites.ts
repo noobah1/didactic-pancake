@@ -5,9 +5,8 @@ import { FavoriteRoute } from '@/lib/types'
 
 const STORAGE_KEY = 'favoriteRoutes'
 // Fired on every persist() so other useFavorites() instances elsewhere in
-// the tree (e.g. use-push-notifications.ts, which needs the latest list to
-// re-sync with the server) notice the change immediately — plain 'storage'
-// events only fire in *other* tabs, never the one that made the write.
+// the tree notice the change immediately — plain 'storage' events only fire
+// in *other* tabs, never the one that made the write.
 const CHANGE_EVENT = 'favorites-changed'
 // A "same commute" match is by rounded coordinates, not exact equality —
 // re-picking the same stop from search can land a few decimal places off
@@ -88,18 +87,5 @@ export function useFavorites() {
     [favorites, persist],
   )
 
-  const setReminder = useCallback(
-    (id: string, reminder: { enabled: boolean; time: string; leadMinutes: number }) => {
-      persist(
-        favorites.map((f) =>
-          f.id === id
-            ? { ...f, reminderEnabled: reminder.enabled, reminderTime: reminder.time, reminderLeadMinutes: reminder.leadMinutes }
-            : f,
-        ),
-      )
-    },
-    [favorites, persist],
-  )
-
-  return { favorites, addFavorite, removeFavorite, findFavorite, setReminder }
+  return { favorites, addFavorite, removeFavorite, findFavorite }
 }

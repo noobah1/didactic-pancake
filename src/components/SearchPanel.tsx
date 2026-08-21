@@ -25,16 +25,9 @@ interface SearchPanelProps {
   // hence async), so this panel can show an inline "not running right now"
   // message on a miss without page.tsx needing to own that UI state.
   onSelectLine?: (mode: string, line: string, lat: number, lng: number) => boolean | Promise<boolean>
-  // Passed down rather than calling usePushNotifications() again in here —
-  // that hook's enabled/busy state is a separate useState per call site
-  // with no cross-instance sync, so a second instance would drift from the
-  // NotificationToggle's after any toggle.
-  pushSupported: boolean
-  pushEnabled: boolean
-  onEnablePush: () => Promise<boolean>
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard, onSelectLine, pushSupported, pushEnabled, onEnablePush }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard, onSelectLine }: SearchPanelProps) {
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
   const [toText, setToText] = useState('')
@@ -47,7 +40,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   // Set only when a picked line has no currently-active trip to show (see
   // onSelectLine) — cleared on the next successful pick or a fresh search.
   const [lineNotRunning, setLineNotRunning] = useState<string | null>(null)
-  const { favorites, addFavorite, removeFavorite, findFavorite, setReminder } = useFavorites()
+  const { favorites, addFavorite, removeFavorite, findFavorite } = useFavorites()
 
   const handleSearch = (from = fromCoords, to = toCoords) => {
     if (!from || !to) return
@@ -241,10 +234,6 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               favorite={favorite}
               onSelect={() => handleFavoriteClick(favorite)}
               onRemove={() => removeFavorite(favorite.id)}
-              onSetReminder={(reminder) => setReminder(favorite.id, reminder)}
-              pushSupported={pushSupported}
-              pushEnabled={pushEnabled}
-              onEnablePush={onEnablePush}
             />
           ))}
         </div>

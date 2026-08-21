@@ -16,7 +16,6 @@ import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
-import { NotificationToggle } from '@/components/NotificationToggle'
 import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
@@ -28,7 +27,6 @@ import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
 import { useDelayToast } from '@/hooks/use-delay-toast'
 import { useTheme } from '@/hooks/use-theme'
-import { usePushNotifications } from '@/hooks/use-push-notifications'
 
 // How far a disruption/delayed/searched-for vehicle can be from a selected
 // city (or a line search's own anchor stop) and still count as belonging to
@@ -49,7 +47,6 @@ function HomeContent() {
   // synced to the OS/browser preference (including a live change while the
   // tab stays open); see use-theme.ts.
   useTheme()
-  const { enabled: notificationsEnabled, busy: notificationsBusy, enable: enableNotifications, disable: disableNotifications, supported: pushSupported } = usePushNotifications()
 
   const modesFromUrl = searchParams.get('modes')
   const citiesFromUrl = searchParams.get('cities')
@@ -599,7 +596,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
       >
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} pushSupported={pushSupported} pushEnabled={notificationsEnabled} onEnablePush={enableNotifications} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} />
         </div>
         {stopBoard && (
           <div className="pointer-events-auto mt-8 sm:mt-0">
@@ -716,15 +713,12 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         </ErrorBoundary>
       )}
 
-      {/* Bottom-right FAB row. A single flex container rather than per-button
-          right-N offsets: NotificationToggle is conditional on pushSupported,
-          so a hardcoded offset for a 4th button would leave a visible gap
-          whenever push isn't supported. This makes <main> the nearest
-          positioned ancestor for any absolute badge inside these buttons —
-          see the `relative` added to IssuesButton's own <button>. z-45 (above
-          the z-40 route-results sheet) so these stay reachable on mobile
-          even when the bottom sheet's full-width card is tall enough to
-          reach this corner, instead of getting buried under it. */}
+      {/* Bottom-right FAB row. This makes <main> the nearest positioned
+          ancestor for any absolute badge inside these buttons — see the
+          `relative` added to IssuesButton's own <button>. z-45 (above the
+          z-40 route-results sheet) so these stay reachable on mobile even
+          when the bottom sheet's full-width card is tall enough to reach
+          this corner, instead of getting buried under it. */}
       <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
         <NearbyButton
           active={showNearby}
@@ -733,14 +727,6 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
             setShowIssues(false)
           }}
         />
-
-        {pushSupported && (
-          <NotificationToggle
-            enabled={notificationsEnabled}
-            busy={notificationsBusy}
-            onToggle={() => (notificationsEnabled ? disableNotifications() : enableNotifications())}
-          />
-        )}
 
         <IssuesButton
           active={showIssues}

@@ -11,9 +11,8 @@ const SAMPLE_INTERVAL_MS = 5 * 60_000
 const BASELINE_RECOMPUTE_INTERVAL_MS = 24 * 60 * 60_000
 
 let started = false
-// Same re-entrancy guard push-checker.ts uses for its own setInterval —
-// without it, a slow upstream fetch could still be running when the next
-// tick fires.
+// Re-entrancy guard for the setInterval below — without it, a slow upstream
+// fetch could still be running when the next tick fires.
 let sampling = false
 let lastBaselineRecompute = 0
 

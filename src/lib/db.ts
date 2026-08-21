@@ -2,11 +2,11 @@ import { DatabaseSync } from 'node:sqlite'
 import path from 'node:path'
 import fs from 'node:fs'
 
-// Same bind-mount-on-disk pattern as push-store.ts/share-store.ts, so this
-// survives a redeploy the same way those do — the in-process caches
-// elsewhere in this app (delays, vehicles, tarktee) don't need to, but a
-// learned traffic baseline takes days to rebuild from scratch (see
-// traffic/baseline.ts), so it can't reset on every deploy the way those can.
+// Same bind-mount-on-disk pattern as share-store.ts, so this survives a
+// redeploy the same way that does — the in-process caches elsewhere in this
+// app (delays, vehicles, tarktee) don't need to, but a learned traffic
+// baseline takes days to rebuild from scratch (see traffic/baseline.ts), so
+// it can't reset on every deploy the way those can.
 const DATA_DIR = process.env.TRAFFIC_DATA_DIR || path.join(process.cwd(), 'traffic-data')
 
 let db: DatabaseSync | null = null

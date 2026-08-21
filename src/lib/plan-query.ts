@@ -127,11 +127,9 @@ export interface PlanResult {
   status?: number
 }
 
-// Shared by /api/plan (rider-facing search) and the push-notification
-// checker (src/lib/push-checker.ts, re-planning each favorite in the
-// background) — extracted so the OTP query/mapping logic exists in exactly
-// one place rather than being duplicated between an HTTP route and a
-// server-internal caller.
+// Extracted from /api/plan so the OTP query/mapping logic exists in exactly
+// one place rather than being duplicated between an HTTP route and any
+// other server-internal caller.
 export async function planTrip(
   fromLat: number,
   fromLng: number,
