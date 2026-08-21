@@ -12,6 +12,15 @@ cd "$(dirname "$0")/.."
 
 git fetch origin main
 git reset --hard origin/main
+
+# A deploy that gets killed mid-recreate (e.g. an SSH timeout) can leave
+# behind an orphaned "<hash>_<service>-<n>" container: docker compose
+# renames the old container to that form to free up its name for the new
+# one, then never gets to remove it. Left in place, it blocks every future
+# recreate with a "name already in use" conflict, so clear any such
+# leftovers before deploying.
+docker ps -a --format '{{.Names}}' | grep -E '^[0-9a-f]+_app-[a-zA-Z0-9-]+-[0-9]+$' | xargs -r docker rm -f
+
 docker compose build
 docker compose up -d
 docker image prune -f
