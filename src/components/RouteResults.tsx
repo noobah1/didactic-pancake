@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check, MapPin, Share2, X } from 'lucide-react'
 import { RouteResult, RouteTrafficEstimate } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -10,12 +10,47 @@ import { useLiveShare } from '@/hooks/use-live-share'
 type SortMode = 'duration' | 'departure'
 type ShareState = 'idle' | 'sharing' | 'error'
 
-// Purely decorative affordance marking this as a sheet anchored to the
-// bottom edge on mobile — hidden from sm: up, where the panel floats as a
-// regular card instead and a drag handle would be a lie (nothing to drag).
-function SheetHandle() {
+// How far the sheet can be dragged, in vh — small enough to always leave
+// the search fields up top reachable, tall enough to read a long journey.
+const MIN_SHEET_VH = 25
+const MAX_SHEET_VH = 88
+
+// Drag handle for resizing the bottom sheet on mobile — hidden from sm: up,
+// where the panel floats as a regular card instead and dragging its edge
+// wouldn't read as a sheet gesture.
+function SheetHandle({ heightVh, onResize }: { heightVh?: number; onResize?: (deltaVh: number) => void }) {
+  const dragStartY = useRef<number | null>(null)
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragStartY.current = e.clientY
+  }
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartY.current === null) return
+    // Dragging the handle up should make the sheet taller, so the delta is
+    // inverted relative to screen-space Y.
+    const deltaVh = ((dragStartY.current - e.clientY) / window.innerHeight) * 100
+    dragStartY.current = e.clientY
+    onResize?.(deltaVh)
+  }
+  const handlePointerUp = () => {
+    dragStartY.current = null
+  }
+
   return (
-    <div className="flex justify-center pt-2 pb-1 sm:hidden">
+    <div
+      className="flex justify-center pt-2 pb-1 sm:hidden cursor-ns-resize touch-none"
+      role="slider"
+      aria-label="Resize journey panel"
+      aria-orientation="vertical"
+      aria-valuemin={MIN_SHEET_VH}
+      aria-valuemax={MAX_SHEET_VH}
+      aria-valuenow={Math.round(heightVh ?? 0)}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+    >
       <div className="w-9 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
     </div>
   )
@@ -44,6 +79,22 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   // list, or a different route entirely) without explicitly turning it off.
   const [sharedRouteId, setSharedRouteId] = useState<string | null>(null)
   const liveShare = useLiveShare(shareId, shareToken)
+  // User-resized sheet height, in vh — null until the handle is dragged, at
+  // which point it overrides the default max-h-* classes. Reset whenever
+  // the panel switches between the route list and a single journey, since
+  // those two views have different natural defaults.
+  const [sheetHeightVh, setSheetHeightVh] = useState<number | null>(null)
+  const defaultSheetVh = selectedId ? 50 : 40
+  const resizeSheet = (deltaVh: number) => {
+    setSheetHeightVh((prev) => {
+      const base = prev ?? defaultSheetVh
+      return Math.min(MAX_SHEET_VH, Math.max(MIN_SHEET_VH, base + deltaVh))
+    })
+  }
+
+  useEffect(() => {
+    setSheetHeightVh(null)
+  }, [selectedId])
 
   useEffect(() => {
     if (sharedRouteId && selectedId !== sharedRouteId && liveShare.sharing) {
@@ -148,8 +199,11 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   const visible = selectedId ? sorted.filter((route) => route.id === selectedId) : sorted
 
   return (
-    <div className={`flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg ${selectedId ? 'max-h-[50vh] sm:max-h-[24rem]' : 'max-h-[40vh] sm:max-h-80'}`}>
-      <SheetHandle />
+    <div
+      className={`flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg ${sheetHeightVh === null ? (selectedId ? 'max-h-[50vh] sm:max-h-[24rem]' : 'max-h-[40vh] sm:max-h-80') : 'sm:max-h-[24rem]'}`}
+      style={sheetHeightVh !== null ? { maxHeight: `${sheetHeightVh}vh` } : undefined}
+    >
+      <SheetHandle heightVh={sheetHeightVh ?? defaultSheetVh} onResize={resizeSheet} />
       <div className="flex items-center justify-between px-3 pt-1 pb-1">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? 'Your journey' : 'Routes'}</h2>
         {selectedId && (
