@@ -187,10 +187,17 @@ interface MapViewProps {
   // there" treatment as focusAlert, so opening the board actually shows
   // where the stop is instead of leaving the map wherever it already was.
   focusStop?: { lat: number; lng: number } | null
+  // A line result picked from the departure-board search — flown to as soon
+  // as it's picked, same "fly the camera there" treatment as focusStop.
+  // Unlike selectedVehicle's own flyTo (below), this doesn't wait on a live
+  // vehicle actually being found for that line, since that lookup can
+  // legitimately miss — a rider picking a line outside the map's current
+  // view still needs to see the map go there.
+  focusLine?: { lat: number; lng: number } | null
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -825,6 +832,14 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     if (!map || !focusStop) return
     map.flyTo({ center: [focusStop.lng, focusStop.lat], zoom: 16, duration: 1500 })
   }, [focusStop])
+
+  // Fly to a line picked from the departure-board search — see focusLine's
+  // own comment on why this can't just piggyback on selectedVehicle's flyTo.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !focusLine) return
+    map.flyTo({ center: [focusLine.lng, focusLine.lat], zoom: 13, duration: 1500 })
+  }, [focusLine])
 
   // When a route is selected, only its own trips should show on the map —
   // every other vehicle is noise while you're following one journey.

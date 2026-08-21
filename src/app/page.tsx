@@ -66,6 +66,17 @@ function HomeContent() {
   const [showNearby, setShowNearby] = useState(false)
   const [focusedAlert, setFocusedAlert] = useState<ServiceAlert | null>(null)
   const [stopBoard, setStopBoard] = useState<StopBoardTarget | null>(null)
+  // A line result picked from the departure-board search — flown to
+  // immediately on pick, same "fly the camera there" treatment as
+  // focusStop/focusAlert. Needed because handleSelectLine's own vehicle
+  // lookup can legitimately miss (the picked line simply has no bus/train
+  // currently mid-trip), and previously a miss left the map exactly where
+  // it was — for a line outside the map's current view (e.g. Tartu's bus 5
+  // while centered on Tallinn) that read as the click doing nothing at all,
+  // even though the search itself found the right line. Flying here always,
+  // whether or not a live vehicle also gets found, means picking a line
+  // always visibly goes to that line's own town.
+  const [focusLine, setFocusLine] = useState<{ lat: number; lng: number } | null>(null)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
 
@@ -309,6 +320,9 @@ function HomeContent() {
   // nearest the anchor keeps the result matching the town the rider actually
   // searched.
   const handleSelectLine = async (mode: string, line: string, anchorLat: number, anchorLng: number): Promise<boolean> => {
+    // Fly to the picked line's own town right away, independent of whether a
+    // live vehicle turns up below — see focusLine's own comment for why.
+    setFocusLine({ lat: anchorLat, lng: anchorLng })
     const nearest = <T extends { lat: number; lng: number }>(candidates: T[]): T | undefined =>
       candidates.length === 0
         ? undefined
@@ -518,6 +532,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           cities={activeCities}
           focusAlert={focusedAlert}
           focusStop={stopBoard}
+          focusLine={focusLine}
           onVehicleClick={handleVehicleClick}
         />
       </ErrorBoundary>
