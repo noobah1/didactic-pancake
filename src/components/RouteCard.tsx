@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Footprints } from 'lucide-react'
+import { Footprints, X } from 'lucide-react'
 import { RouteResult, RouteLeg, TransportMode, RouteTrafficEstimate } from '@/lib/types'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
@@ -182,7 +182,20 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
             </>
           )}
         </div>
-        <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatDuration(totalMinutes)}</span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatDuration(totalMinutes)}</span>
+          {selected && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onSelect() }}
+              title="Remove journey"
+              aria-label="Remove journey"
+              className="p-0.5 -m-0.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex items-center justify-between mt-1">
         <span className="text-xs text-gray-500 dark:text-gray-400">{startTime} &rarr; {endTime}</span>
