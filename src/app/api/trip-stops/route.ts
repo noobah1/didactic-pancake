@@ -4,6 +4,7 @@ import { TripStopInfo } from '@/lib/types'
 import { LATE_BUFFER_SEC, computeStatusFromGPS, findBestTrip } from '@/lib/delay'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
 import { buildRoutesByIdQuery } from '@/lib/route-query'
+import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
 
 // Direct lookup by trip ID — includes pattern geometry for route line
 const TRIP_STOPS_QUERY = `
@@ -270,6 +271,52 @@ function buildResponse(
   }
 }
 
+// scheduledArrival/scheduledDeparture are GTFS "seconds since the service
+// day's midnight" (can exceed 86400 for a post-midnight trip encoded under
+// yesterday's service date, see service-date.ts) — not an epoch, so this
+// wraps rather than going through Date/timezone conversion like
+// elron-platform.ts's other two callers do.
+function secondsToHHMM(totalSeconds: number): string {
+  const s = ((totalSeconds % 86400) + 86400) % 86400
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+}
+
+// Attaches a platform to every stop of a RAIL trip's own live timetable
+// panel — mutates `stops` in place. The trip's true final destination (what
+// Elron's board keys collisions on, see elron-platform.ts) is just the last
+// stop in this same list; no separate headsign field needed, unlike
+// plan-query.ts's per-leg version of this same enrichment.
+async function enrichTrainPlatforms(stops: TripStopInfo[]): Promise<void> {
+  if (stops.length === 0) return
+  const destination = stops[stops.length - 1].name
+
+  const stationNames = new Set(stops.map((s) => s.name))
+  const indexes = new Map(
+    await Promise.all(
+      [...stationNames].map(
+        async (name) => [name, await fetchStationPlatformIndex(name)] as [string, Awaited<ReturnType<typeof fetchStationPlatformIndex>>],
+      ),
+    ),
+  )
+
+  stops.forEach((stop, i) => {
+    const index = indexes.get(stop.name)
+    if (!index) return
+    // Elron's board shows a continuing stop's DEPARTURE time, but the
+    // terminus's arrival time (confirmed live: a Turba-Tallinn terminus row
+    // matches Tallinn's arrival, not a nonexistent later departure).
+    const isLast = i === stops.length - 1
+    const hhmm = secondsToHHMM(isLast ? stop.scheduledArrival : stop.scheduledDeparture)
+    const match = resolvePlatform(index, hhmm, destination)
+    if (match) {
+      stop.platform = match.platform
+      stop.platformChanged = match.changed
+    }
+  })
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const tripId = searchParams.get('tripId')
@@ -315,9 +362,11 @@ export async function GET(request: Request) {
 
       // Method 1 positions are interpolated/scheduled unless the caller
       // says otherwise — never claim a confirmed delay off a guessed position.
-      return NextResponse.json(
-        buildResponse(trip, nowSec, undefined, undefined, vehicleLat, vehicleLng, hasLiveGps),
-      )
+      const result = buildResponse(trip, nowSec, undefined, undefined, vehicleLat, vehicleLng, hasLiveGps)
+      if (result.mode === 'RAIL') {
+        await enrichTrainPlatforms(result.stops)
+      }
+      return NextResponse.json(result)
     } catch (error) {
       console.error('Failed to fetch trip stops:', error)
       return NextResponse.json({ error: 'Failed to fetch trip stops' }, { status: 502 })
@@ -385,8 +434,16 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'No active trip found for this route' }, { status: 404 })
       }
 
-      // Method 2 vehicles are matched from real live GPS positions.
-      return NextResponse.json(buildResponse(bestTrip, nowSec, line, otpMode, vehicleLat, vehicleLng, true))
+      // Method 2 vehicles are matched from real live GPS positions. In
+      // practice this never fires for RAIL — Elron trains always carry a
+      // known tripId and go through Method 1 instead (see hasLiveGps's own
+      // comment above) — but gate on mode here too rather than relying on
+      // that staying true.
+      const result = buildResponse(bestTrip, nowSec, line, otpMode, vehicleLat, vehicleLng, true)
+      if (result.mode === 'RAIL') {
+        await enrichTrainPlatforms(result.stops)
+      }
+      return NextResponse.json(result)
     } catch (error) {
       console.error('Failed to match trip:', error)
       return NextResponse.json({ error: 'Failed to match trip' }, { status: 502 })

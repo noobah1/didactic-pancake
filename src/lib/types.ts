@@ -114,6 +114,11 @@ export interface TripStopInfo {
   scheduledDeparture: number // seconds since midnight
   status: 'passed' | 'current' | 'upcoming'
   delaySeconds?: number // absent = no live GPS evidence, NEVER default to 0
+  // Elron trains only (see src/lib/elron-platform.ts) — absent for every
+  // other mode, and when this stop/time/destination couldn't be matched
+  // against Elron's own live-map board. Never guess a platform.
+  platform?: string
+  platformChanged?: boolean
 }
 
 export interface SearchFilters {

@@ -345,6 +345,18 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
                           <span className="text-xs text-gray-400 dark:text-gray-500">
                             {formatTime(stop.scheduledArrival)}
                           </span>
+                          {stop.platform && (
+                            <span
+                              title={stop.platformChanged ? 'Platform changed' : undefined}
+                              className={`text-[10px] font-semibold px-1 py-0.5 rounded ${
+                                stop.platformChanged
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
+                                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                              }`}
+                            >
+                              Pl {stop.platform}
+                            </span>
+                          )}
                           {isCurrent && (
                             <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900 px-1.5 py-0.5 rounded">
                               NOW
