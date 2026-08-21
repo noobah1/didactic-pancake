@@ -1,12 +1,11 @@
 'use client'
 import { useJourneyMonitor } from '@/hooks/use-journey-monitor'
 import { DelayBanner } from '@/components/DelayBanner'
-import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 const logo3 = '/logo3.png'
 import { SearchPanel } from '@/components/SearchPanel'
-import { FilterChips } from '@/components/FilterChips'
 import { RouteResults } from '@/components/RouteResults'
 import { MapView } from '@/components/MapView'
 import { IssuesButton } from '@/components/IssuesButton'
@@ -62,7 +61,7 @@ function HomeContent() {
     }
     return [CITIES[0]]
   })
-  const [activeModes, setActiveModes] = useState<TransportMode[]>(
+  const [activeModes] = useState<TransportMode[]>(
     modesFromUrl ? (modesFromUrl.split(',') as TransportMode[]) : [...ALL_MODES],
   )
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
@@ -248,24 +247,6 @@ function HomeContent() {
     }
     router.replace(`?${params.toString()}`, { scroll: false })
   }
-
-  const handleToggle = useCallback(
-    (mode: TransportMode) => {
-      const next = activeModes.includes(mode)
-        ? activeModes.filter((m) => m !== mode)
-        : [...activeModes, mode]
-      if (next.length === 0) return
-      setActiveModes(next)
-      const params = new URLSearchParams(searchParams.toString())
-      if (next.length === ALL_MODES.length) {
-        params.delete('modes')
-      } else {
-        params.set('modes', next.join(','))
-      }
-      router.replace(`?${params.toString()}`, { scroll: false })
-    },
-    [activeModes, searchParams, router],
-  )
 
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => {
     setStopBoard(null)
@@ -628,11 +609,6 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
             >
               <StopBoard stop={stopBoard} onClose={() => setStopBoard(null)} onSelectDeparture={handleSelectDeparture} />
             </ErrorBoundary>
-          </div>
-        )}
-        {!selectedRouteId && (
-          <div className="pointer-events-auto mt-2 flex flex-wrap justify-start gap-2">
-            <FilterChips activeModes={activeModes} onToggle={handleToggle} />
           </div>
         )}
       </div>
