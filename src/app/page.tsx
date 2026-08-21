@@ -95,6 +95,15 @@ function HomeContent() {
   const testAlerts = searchParams.get('test_alerts') === '1'
 
   const vehicleData = useVehicles(activeModes, activeCities)
+  // Keeps extraMapVehicle's position live once handleSelectLine's nationwide
+  // fallback finds a vehicle outside activeCities' scope — vehicleData never
+  // covers it (it's fetched scoped to activeCities), so without a poll of its
+  // own that vehicle's position would freeze at the moment it was picked,
+  // making both its map marker and TimetablePanel's live schedule (which
+  // re-reads that position every 10s) increasingly wrong as the real vehicle
+  // keeps moving. Disabled whenever there's no extra vehicle, so this never
+  // runs an unscoped nationwide poll for nothing.
+  const extraVehicleData = useVehicles(extraMapVehicle ? [extraMapVehicle.mode] : [], [], !!extraMapVehicle)
   const { routes, loading, error, notice, search, clear, selectedRouteId, selectRoute, loadSharedRoute, setShareError } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
   const delayData = useDelays()
@@ -528,6 +537,17 @@ function HomeContent() {
   const { toast, dismiss: dismissToast } = useDelayToast(journeyDelayVehicles, selectedRoute?.id ?? null)
 
 const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.data?.vehicles)
+
+  // Sync extraMapVehicle (and the selectedVehicle it was set alongside, in
+  // handleSelectLine's nationwide branch) to each fresh position reported by
+  // extraVehicleData — see that hook's own comment for why this is needed.
+  useEffect(() => {
+    if (!extraMapVehicle) return
+    const fresh = extraVehicleData.data?.vehicles?.find((v) => v.id === extraMapVehicle.id)
+    if (!fresh || fresh === extraMapVehicle) return
+    setExtraMapVehicle(fresh)
+    setSelectedVehicle((prev) => (prev?.id === fresh.id ? fresh : prev))
+  }, [extraVehicleData.data, extraMapVehicle])
 
   // vehicleData is scoped to activeCities, so a vehicle handleSelectLine
   // found via its nationwide fallback (see extraMapVehicle's own comment)
