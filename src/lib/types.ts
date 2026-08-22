@@ -185,6 +185,34 @@ export interface FavoriteRoute {
   toLng: number
 }
 
+// An auto-logged trip search, distinct from FavoriteRoute — the rider never
+// opted in, so these are capped and pruned (see use-recent-searches.ts)
+// rather than kept forever like a favorite.
+export interface RecentSearch {
+  id: string
+  fromName: string
+  fromLat: number
+  fromLng: number
+  toName: string
+  toLat: number
+  toLng: number
+  searchedAt: number // epoch ms
+}
+
+export interface SavedPlace {
+  name: string
+  lat: number
+  lng: number
+}
+
+// The rider's two named-place shortcuts (see use-home-work.ts). Deliberately
+// not a FavoriteRoute — a single place, not a from/to pair, since "home" and
+// "work" are each one end of many different trips.
+export interface HomeWorkPlaces {
+  home?: SavedPlace
+  work?: SavedPlace
+}
+
 // A road-speed-inferred slowdown for a whole intercity/regional route — the
 // only delay signal that exists for the ~251 routes in
 // src/lib/traffic/route-coverage.json, none of which have live GPS or any

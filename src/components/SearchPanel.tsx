@@ -5,9 +5,13 @@ import { Star } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
+import { RecentChip } from './RecentChip'
+import { HomeWorkChip } from './HomeWorkChip'
 import { TransportMode } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
+import { useRecentSearches } from '@/hooks/use-recent-searches'
+import { useHomeWork } from '@/hooks/use-home-work'
 
 interface SearchPanelProps {
   onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => void
@@ -41,12 +45,19 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   // onSelectLine) — cleared on the next successful pick or a fresh search.
   const [lineNotRunning, setLineNotRunning] = useState<string | null>(null)
   const { favorites, addFavorite, removeFavorite, findFavorite } = useFavorites()
+  const { recents, logSearch, removeRecent } = useRecentSearches()
+  const { places: homeWork, setPlace: setHomeWork, clearPlace: clearHomeWork } = useHomeWork()
 
-  const handleSearch = (from = fromCoords, to = toCoords) => {
+  const handleSearch = (from = fromCoords, to = toCoords, fromName = fromText, toName = toText) => {
     if (!from || !to) return
     const fromPlace = `${from.lat},${from.lng}`
     const toPlace = `${to.lat},${to.lng}`
     onSearch?.(fromPlace, toPlace, modes, dateTime || undefined, timeMode === 'arrive' ? true : undefined)
+    // Favorites already get their own always-visible chip — logging one as
+    // a recent too would just show the same trip twice in the quick-pick row.
+    if (!findFavorite(from.lat, from.lng, to.lat, to.lng)) {
+      logSearch(fromName, from.lat, from.lng, toName, to.lat, to.lng)
+    }
   }
 
   const handleClear = () => {
@@ -64,7 +75,49 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     const to = { lat: favorite.toLat, lng: favorite.toLng }
     setFromCoords(from)
     setToCoords(to)
-    handleSearch(from, to)
+    handleSearch(from, to, favorite.fromName, favorite.toName)
+  }
+
+  const handleRecentClick = (recent: (typeof recents)[number]) => {
+    setFromText(recent.fromName)
+    setToText(recent.toName)
+    const from = { lat: recent.fromLat, lng: recent.fromLng }
+    const to = { lat: recent.toLat, lng: recent.toLng }
+    setFromCoords(from)
+    setToCoords(to)
+    handleSearch(from, to, recent.fromName, recent.toName)
+  }
+
+  // Tapping a set Home/Work chip fills "To" with it. If "From" is already
+  // picked, search right away; otherwise fall back to the rider's current
+  // position, same as LocationInput's "use my location" button, since a
+  // home/work shortcut with no "From" set would otherwise just sit there
+  // needing a manual pick to do anything.
+  const handleHomeWorkClick = (slot: 'home' | 'work') => {
+    const place = homeWork[slot]
+    if (!place) return
+    setToText(place.name)
+    setToCoords({ lat: place.lat, lng: place.lng })
+    if (fromCoords) {
+      handleSearch(fromCoords, { lat: place.lat, lng: place.lng }, fromText, place.name)
+      return
+    }
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude }
+        setFromText('My location')
+        setFromCoords(coords)
+        handleSearch(coords, { lat: place.lat, lng: place.lng }, 'My location', place.name)
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }
+
+  const handleSetHomeWork = (slot: 'home' | 'work') => {
+    if (!toCoords) return
+    setHomeWork(slot, { name: toText, lat: toCoords.lat, lng: toCoords.lng })
   }
 
   const activeFavorite = fromCoords && toCoords ? findFavorite(fromCoords.lat, fromCoords.lng, toCoords.lat, toCoords.lng) : null
@@ -81,7 +134,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     // Same "act immediately" pattern as picking a favorite chip -- if the
     // swapped fields already form a valid trip, there's no reason to make
     // someone press search again just to see the reversed direction.
-    if (newFromCoords && newToCoords) handleSearch(newFromCoords, newToCoords)
+    if (newFromCoords && newToCoords) handleSearch(newFromCoords, newToCoords, newFromText, newToText)
   }
 
   const hasInput = fromText || toText
@@ -171,7 +224,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 setFromText(name)
                 const coords = { lat, lng }
                 setFromCoords(coords)
-                if (toCoords) handleSearch(coords, toCoords)
+                if (toCoords) handleSearch(coords, toCoords, name, toText)
               }}
             />
           </div>
@@ -185,7 +238,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 setToText(name)
                 const coords = { lat, lng }
                 setToCoords(coords)
-                if (fromCoords) handleSearch(fromCoords, coords)
+                if (fromCoords) handleSearch(fromCoords, coords, fromText, name)
               }}
               trailing={
                 fromCoords && toCoords ? (
@@ -226,8 +279,28 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           </div>
         )}
       </div>
-      {!hasInput && favorites.length > 0 && (
+      {!hasInput && (homeWork.home || homeWork.work || favorites.length > 0 || recents.length > 0) && (
         <div className="flex flex-wrap gap-1.5">
+          {homeWork.home && (
+            <HomeWorkChip
+              slot="home"
+              place={homeWork.home}
+              canSet={!!toCoords}
+              onSelect={() => handleHomeWorkClick('home')}
+              onSet={() => handleSetHomeWork('home')}
+              onClear={() => clearHomeWork('home')}
+            />
+          )}
+          {homeWork.work && (
+            <HomeWorkChip
+              slot="work"
+              place={homeWork.work}
+              canSet={!!toCoords}
+              onSelect={() => handleHomeWorkClick('work')}
+              onSet={() => handleSetHomeWork('work')}
+              onClear={() => clearHomeWork('work')}
+            />
+          )}
           {favorites.map((favorite) => (
             <FavoriteChip
               key={favorite.id}
@@ -236,6 +309,40 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               onRemove={() => removeFavorite(favorite.id)}
             />
           ))}
+          {recents
+            .filter((recent) => !findFavorite(recent.fromLat, recent.fromLng, recent.toLat, recent.toLng))
+            .map((recent) => (
+              <RecentChip
+                key={recent.id}
+                recent={recent}
+                onSelect={() => handleRecentClick(recent)}
+                onRemove={() => removeRecent(recent.id)}
+              />
+            ))}
+        </div>
+      )}
+      {/* Once a destination is picked, offer to save it as Home/Work right
+          there instead of only in the (now-hidden) quick-pick row above. */}
+      {hasInput && toCoords && (!homeWork.home || !homeWork.work) && (
+        <div className="flex flex-wrap gap-1.5">
+          {!homeWork.home && (
+            <HomeWorkChip
+              slot="home"
+              canSet
+              onSelect={() => {}}
+              onSet={() => handleSetHomeWork('home')}
+              onClear={() => {}}
+            />
+          )}
+          {!homeWork.work && (
+            <HomeWorkChip
+              slot="work"
+              canSet
+              onSelect={() => {}}
+              onSet={() => handleSetHomeWork('work')}
+              onClear={() => {}}
+            />
+          )}
         </div>
       )}
       {/* Departure time selector + city selector */}
