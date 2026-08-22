@@ -5,6 +5,7 @@ import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
 import { MODE_LABELS } from '@/lib/constants'
 import { TransportMode } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
+import { formatMinutes } from '@/lib/format-minutes'
 
 const TOAST_DURATION_MS = 6_000
 
@@ -43,7 +44,7 @@ export function useDelayToast(vehicles: DelayedVehicle[], resetKey: string | nul
 
     const text =
       newlyDelayed.length === 1
-        ? `${MODE_LABELS[newlyDelayed[0].mode as TransportMode]} ${newlyDelayed[0].line} → ${newlyDelayed[0].destination} is running ${Math.round(newlyDelayed[0].delaySeconds / 60)} min late`
+        ? `${MODE_LABELS[newlyDelayed[0].mode as TransportMode]} ${newlyDelayed[0].line} → ${newlyDelayed[0].destination} is running ${formatMinutes(Math.round(newlyDelayed[0].delaySeconds / 60))} late`
         : `${newlyDelayed.length} vehicles are now running late`
 
     // eslint-disable-next-line react-hooks/set-state-in-effect

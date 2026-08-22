@@ -5,6 +5,7 @@ import { RouteResult, TransportMode } from '@/lib/types'
 import { MODE_LABELS } from '@/lib/constants'
 import { LIVE_BANNER_THRESHOLD_SEC } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
+import { formatMinutes } from '@/lib/format-minutes'
 
 export interface DelayWarning {
   legIndex: number
@@ -45,7 +46,7 @@ export function useJourneyMonitor(selectedRoute: RouteResult | null, delayVehicl
           legIndex: index,
           route: leg.route || leg.mode,
           delaySecs: match.delaySeconds,
-          message: `${MODE_LABELS[leg.mode as TransportMode]} ${leg.route || ''} is running about ${Math.round(match.delaySeconds / 60)} min late`,
+          message: `${MODE_LABELS[leg.mode as TransportMode]} ${leg.route || ''} is running about ${formatMinutes(Math.round(match.delaySeconds / 60))} late`,
         }
       })
       .filter((w): w is DelayWarning => w !== null)

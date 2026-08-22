@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import { VehiclePosition, TripStopInfo } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { LATE_BUFFER_SEC } from '@/lib/delay'
+import { formatMinutes } from '@/lib/format-minutes'
 
 interface TimetablePanelProps {
   vehicle: VehiclePosition
@@ -214,7 +215,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
   // is the default expectation and doesn't need announcing.
   const headline =
     !currentStop && nextStop && arrivalInfo?.late && arrivalInfo.minutes > 0
-      ? { text: `${arrivalInfo.minutes} min late` }
+      ? { text: `${formatMinutes(arrivalInfo.minutes)} late` }
       : null
 
   return (
@@ -372,12 +373,12 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
                                     : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
                               }`}
                             >
-                              {arrivalInfo.late ? `${arrivalInfo.minutes} min late` : `${arrivalInfo.minutes} min`}
+                              {arrivalInfo.late ? `${formatMinutes(arrivalInfo.minutes)} late` : formatMinutes(arrivalInfo.minutes)}
                             </span>
                           )}
                           {!isPassed && !isCurrent && !isNextStop && minutesAway !== null && minutesAway > 0 && (
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                              {minutesAway} min
+                              {formatMinutes(minutesAway)}
                             </span>
                           )}
                         </div>

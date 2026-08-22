@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft, AlertCircle } from 'lucide-react'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
+import { formatMinutes } from '@/lib/format-minutes'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { ServiceAlert, RouteTrafficEstimate } from '@/lib/types'
 import { FeedStatus } from '@/lib/feed-status'
@@ -125,7 +126,7 @@ export function IssuesPanel({
                       </span>
                     </div>
                     <span className="text-xs text-amber-600 dark:text-amber-400 font-medium shrink-0">
-                      {Math.round(v.delaySeconds / 60)}min
+                      {formatMinutes(Math.round(v.delaySeconds / 60))}
                     </span>
                   </button>
                 ))}
@@ -141,7 +142,7 @@ export function IssuesPanel({
                     <div
                       key={e.routeGtfsId}
                       className="flex items-center justify-between gap-2 px-4 py-2.5"
-                      title={`${e.detectorCount} traffic detector${e.detectorCount === 1 ? '' : 's'} along this route`}
+                      title={`${e.detectorCount} traffic measurement point${e.detectorCount === 1 ? '' : 's'} along this route`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="px-2 py-0.5 rounded text-xs font-bold text-amber-700 dark:text-amber-300 border border-amber-400 dark:border-amber-600 shrink-0">

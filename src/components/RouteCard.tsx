@@ -6,6 +6,7 @@ import { RouteResult, RouteLeg, LegPlace, TransportMode, RouteTrafficEstimate } 
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
+import { formatMinutes } from '@/lib/format-minutes'
 
 // Modes with a live position feed behind them: Tallinn's own for the road
 // modes, Elron's for trains (see src/lib/elron.ts). Ferry has none, so a
@@ -41,13 +42,6 @@ function PlatformBadge({ place }: { place: LegPlace }) {
       Pl {place.platform}
     </span>
   )
-}
-
-function formatDuration(totalMinutes: number): string {
-  if (totalMinutes < 60) return `${totalMinutes} min`
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}min`
 }
 
 function ExpandableLeg({ leg }: { leg: RouteLeg }) {
@@ -205,7 +199,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatDuration(totalMinutes)}</span>
+          <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatMinutes(totalMinutes)}</span>
           {selected && (
             <button
               type="button"
@@ -242,7 +236,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
               <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Scheduled</span>
             )
           ) : delayMinutes > 0 ? (
-            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{delayMinutes}min delay</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{formatMinutes(delayMinutes)} delay</span>
           ) : (
             <span className="text-xs text-green-600 dark:text-green-400 font-medium">on time</span>
           )
