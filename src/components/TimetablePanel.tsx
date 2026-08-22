@@ -5,7 +5,18 @@ import { X } from 'lucide-react'
 import { VehiclePosition, TripStopInfo } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { LATE_BUFFER_SEC } from '@/lib/delay'
-import { formatMinutes } from '@/lib/format-minutes'
+import { SheetHandle } from './SheetHandle'
+import { useResizableSheet } from '@/hooks/use-resizable-sheet'
+import { useTranslation } from '@/lib/i18n/context'
+import { formatMinutesLocalized } from '@/lib/i18n/format'
+
+// How far the panel can be dragged, in vh — same drag-to-resize pattern as
+// RouteResults' journey panel, so a long stop list isn't stuck scrolling
+// inside a small fixed box. Default matches the previous fixed max-h-[38vh]
+// mobile cap.
+const MIN_SHEET_VH = 20
+const MAX_SHEET_VH = 75
+const DEFAULT_SHEET_VH = 38
 
 interface TimetablePanelProps {
   vehicle: VehiclePosition
@@ -59,8 +70,10 @@ function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
 }
 
 export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initialTripId }: TimetablePanelProps) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(true)
   const [showAllStops, setShowAllStops] = useState(false)
+  const { heightVh: sheetHeightVh, resize: resizeSheet } = useResizableSheet(DEFAULT_SHEET_VH, MIN_SHEET_VH, MAX_SHEET_VH)
   const [stops, setStops] = useState<TripStopInfo[] | null>(null)
   const [delaySeconds, setDelaySeconds] = useState<number | undefined>(undefined)
   const [matchedTripId, setMatchedTripId] = useState<string | null>(null)
@@ -120,7 +133,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
 
       fetch(url)
         .then((res) => {
-          if (!res.ok) throw new Error('No schedule found')
+          if (!res.ok) throw new Error(t('timetable.noScheduleFound'))
           return res.json()
         })
         .then((result: TripStopsResponse) => {
@@ -215,13 +228,25 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
   // is the default expectation and doesn't need announcing.
   const headline =
     !currentStop && nextStop && arrivalInfo?.late && arrivalInfo.minutes > 0
-      ? { text: `${formatMinutes(arrivalInfo.minutes)} late` }
+      ? { text: t('timetable.lateSuffix', { duration: formatMinutesLocalized(arrivalInfo.minutes, t) }) }
       : null
 
   return (
     <div
-      className="absolute bottom-3 left-3 z-50 w-64 max-h-[38vh] sm:max-h-[55vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden"
+      className={`absolute bottom-3 left-3 z-50 w-64 ${sheetHeightVh === null ? 'max-h-[38vh] sm:max-h-[55vh]' : 'sm:max-h-[55vh]'} bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden`}
+      style={sheetHeightVh !== null ? { maxHeight: `${sheetHeightVh}vh` } : undefined}
     >
+      {/* Anchored to the bottom (same as RouteResults' bottom sheet), so the
+          panel grows upward — the handle sits at the top edge. */}
+      <SheetHandle
+        heightVh={sheetHeightVh ?? DEFAULT_SHEET_VH}
+        minVh={MIN_SHEET_VH}
+        maxVh={MAX_SHEET_VH}
+        onResize={resizeSheet}
+        direction="grow-up"
+        label={t('timetable.resizePanel')}
+      />
+
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3 text-white shrink-0"
@@ -237,7 +262,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
             type="button"
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
-            aria-label="Expand/Collapse"
+            aria-label={t('timetable.expandCollapse')}
             className="p-1 rounded-full hover:bg-white/20 shrink-0"
           >
             <svg
@@ -278,14 +303,14 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
             onClick={() => setShowAllStops(false)}
             className="mx-4 mb-1 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 shrink-0 text-left"
           >
-            Show fewer stops
+            {t('timetable.showFewerStops')}
           </button>
         )}
 
         {/* Content */}
         <div className="overflow-y-auto flex-1">
           {loading && (
-            <div className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">Loading timetable...</div>
+            <div className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">{t('timetable.loadingTimetable')}</div>
           )}
 
           {error && (
@@ -348,19 +373,19 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
                           </span>
                           {stop.platform && (
                             <span
-                              title={stop.platformChanged ? 'Platform changed' : undefined}
+                              title={stop.platformChanged ? t('route.platformChanged') : undefined}
                               className={`text-[10px] font-semibold px-1 py-0.5 rounded ${
                                 stop.platformChanged
                                   ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
                                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                               }`}
                             >
-                              Pl {stop.platform}
+                              {t('route.platformShort', { n: stop.platform })}
                             </span>
                           )}
                           {isCurrent && (
                             <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900 px-1.5 py-0.5 rounded">
-                              NOW
+                              {t('timetable.now')}
                             </span>
                           )}
                           {isNextStop && arrivalInfo && (
@@ -373,12 +398,12 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
                                     : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
                               }`}
                             >
-                              {arrivalInfo.late ? `${formatMinutes(arrivalInfo.minutes)} late` : formatMinutes(arrivalInfo.minutes)}
+                              {arrivalInfo.late ? t('timetable.lateSuffix', { duration: formatMinutesLocalized(arrivalInfo.minutes, t) }) : formatMinutesLocalized(arrivalInfo.minutes, t)}
                             </span>
                           )}
                           {!isPassed && !isCurrent && !isNextStop && minutesAway !== null && minutesAway > 0 && (
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                              {formatMinutes(minutesAway)}
+                              {formatMinutesLocalized(minutesAway, t)}
                             </span>
                           )}
                         </div>
@@ -397,7 +422,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose, onLateChange, initi
               onClick={() => setShowAllStops(!showAllStops)}
               className="w-full py-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-t border-gray-100 dark:border-gray-700"
             >
-              {showAllStops ? 'Show less' : `Show full route (${trimmedStops.length} stops)`}
+              {showAllStops ? t('timetable.showLess') : t('timetable.showFullRoute', { n: trimmedStops.length })}
             </button>
           )}
         </div>

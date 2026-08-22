@@ -1,11 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, MapPin, Share2, X } from 'lucide-react'
 import { RouteResult, RouteTrafficEstimate } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { RouteCard } from './RouteCard'
+import { SheetHandle } from './SheetHandle'
 import { useLiveShare } from '@/hooks/use-live-share'
+import { useResizableSheet } from '@/hooks/use-resizable-sheet'
+import { useTranslation } from '@/lib/i18n/context'
 
 type SortMode = 'duration' | 'departure'
 type ShareState = 'idle' | 'sharing' | 'error'
@@ -14,47 +17,6 @@ type ShareState = 'idle' | 'sharing' | 'error'
 // the search fields up top reachable, tall enough to read a long journey.
 const MIN_SHEET_VH = 25
 const MAX_SHEET_VH = 88
-
-// Drag handle for resizing the bottom sheet on mobile — hidden from sm: up,
-// where the panel floats as a regular card instead and dragging its edge
-// wouldn't read as a sheet gesture.
-function SheetHandle({ heightVh, onResize }: { heightVh?: number; onResize?: (deltaVh: number) => void }) {
-  const dragStartY = useRef<number | null>(null)
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId)
-    dragStartY.current = e.clientY
-  }
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (dragStartY.current === null) return
-    // Dragging the handle up should make the sheet taller, so the delta is
-    // inverted relative to screen-space Y.
-    const deltaVh = ((dragStartY.current - e.clientY) / window.innerHeight) * 100
-    dragStartY.current = e.clientY
-    onResize?.(deltaVh)
-  }
-  const handlePointerUp = () => {
-    dragStartY.current = null
-  }
-
-  return (
-    <div
-      className="flex justify-center pt-2 pb-1 sm:hidden cursor-ns-resize touch-none"
-      role="slider"
-      aria-label="Resize journey panel"
-      aria-orientation="vertical"
-      aria-valuemin={MIN_SHEET_VH}
-      aria-valuemax={MAX_SHEET_VH}
-      aria-valuenow={Math.round(heightVh ?? 0)}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-    >
-      <div className="w-9 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-    </div>
-  )
-}
 
 interface RouteResultsProps {
   routes: RouteResult[]
@@ -69,6 +31,7 @@ interface RouteResultsProps {
 }
 
 export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, trafficEstimates }: RouteResultsProps) {
+  const { t } = useTranslation()
   const [sortBy, setSortBy] = useState<SortMode>('duration')
   const [shareState, setShareState] = useState<ShareState>('idle')
   const [shareLink, setShareLink] = useState<string | null>(null)
@@ -84,18 +47,12 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   // which point it overrides the default max-h-* classes. Reset whenever
   // the panel switches between the route list and a single journey, since
   // those two views have different natural defaults.
-  const [sheetHeightVh, setSheetHeightVh] = useState<number | null>(null)
   const defaultSheetVh = selectedId ? 50 : 40
-  const resizeSheet = (deltaVh: number) => {
-    setSheetHeightVh((prev) => {
-      const base = prev ?? defaultSheetVh
-      return Math.min(MAX_SHEET_VH, Math.max(MIN_SHEET_VH, base + deltaVh))
-    })
-  }
+  const { heightVh: sheetHeightVh, resize: resizeSheet, reset: resetSheetHeight } = useResizableSheet(defaultSheetVh, MIN_SHEET_VH, MAX_SHEET_VH)
 
   useEffect(() => {
-    setSheetHeightVh(null)
-  }, [selectedId])
+    resetSheetHeight()
+  }, [selectedId, resetSheetHeight])
 
   useEffect(() => {
     if (sharedRouteId && selectedId !== sharedRouteId && liveShare.sharing) {
@@ -148,7 +105,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
       // WhatsApp, email, ...) beats making someone copy-paste a link.
       if (navigator.share) {
         try {
-          await navigator.share({ title: 'My journey', url: link })
+          await navigator.share({ title: t('results.shareTitle'), url: link })
           setShareState('idle')
           return
         } catch (shareErr) {
@@ -173,8 +130,8 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   if (loading) {
     return (
       <div className="rounded-t-2xl sm:rounded-xl shadow-lg bg-white dark:bg-gray-800">
-        <SheetHandle />
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">Searching routes...</div>
+        <SheetHandle minVh={MIN_SHEET_VH} maxVh={MAX_SHEET_VH} label={t('results.resizePanel')} />
+        <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">{t('results.searching')}</div>
       </div>
     )
   }
@@ -182,7 +139,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   if (error) {
     return (
       <div className="rounded-t-2xl sm:rounded-xl shadow-lg bg-white dark:bg-gray-800">
-        <SheetHandle />
+        <SheetHandle minVh={MIN_SHEET_VH} maxVh={MAX_SHEET_VH} label={t('results.resizePanel')} />
         <div className="p-4 text-center text-red-500 dark:text-red-400 text-sm">{error}</div>
       </div>
     )
@@ -204,9 +161,9 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
       className={`flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg ${sheetHeightVh === null ? (selectedId ? 'max-h-[50vh] sm:max-h-[24rem]' : 'max-h-[40vh] sm:max-h-80') : 'sm:max-h-[24rem]'}`}
       style={sheetHeightVh !== null ? { maxHeight: `${sheetHeightVh}vh` } : undefined}
     >
-      <SheetHandle heightVh={sheetHeightVh ?? defaultSheetVh} onResize={resizeSheet} />
+      <SheetHandle heightVh={sheetHeightVh ?? defaultSheetVh} minVh={MIN_SHEET_VH} maxVh={MAX_SHEET_VH} onResize={resizeSheet} label={t('results.resizePanel')} />
       <div className="flex items-center justify-between px-3 pt-1 pb-1">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? 'Your journey' : 'Routes'}</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedId ? t('results.yourJourney') : t('results.routes')}</h2>
         {selectedId && (
           <div className="flex items-center gap-1">
             <button
@@ -216,23 +173,23 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
                 if (route) handleShare(route)
               }}
               disabled={shareState === 'sharing'}
-              title="Get a link to this journey"
-              aria-label="Get a link to this journey"
+              title={t('results.getLink')}
+              aria-label={t('results.getLink')}
               className={`flex items-center gap-1 px-2 py-1.5 text-xs rounded-full ${shareState === 'error' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               {shareState === 'error' ? (
-                'Failed'
+                t('results.failed')
               ) : (
                 <>
-                  <Share2 size={13} /> {shareState === 'sharing' ? 'Sharing…' : 'Share'}
+                  <Share2 size={13} /> {shareState === 'sharing' ? t('results.sharing') : t('results.share')}
                 </>
               )}
             </button>
             <button
               type="button"
               onClick={() => onSelect(null)}
-              title="Remove journey"
-              aria-label="Remove journey"
+              title={t('route.removeJourney')}
+              aria-label={t('route.removeJourney')}
               className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700"
             >
               <X size={15} />
@@ -246,21 +203,21 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
               onClick={() => setSortBy('duration')}
               className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'duration' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
-              Fastest
+              {t('results.fastest')}
             </button>
             <button
               type="button"
               onClick={() => setSortBy('departure')}
               className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'departure' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
-              Departure
+              {t('results.departure')}
             </button>
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                title="Close routes"
-                aria-label="Close routes"
+                title={t('results.closeRoutes')}
+                aria-label={t('results.closeRoutes')}
                 className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700"
               >
                 <X size={15} />
@@ -279,16 +236,16 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           >
             {linkCopied ? (
               <>
-                <Check size={12} /> Copied
+                <Check size={12} /> {t('results.copied')}
               </>
             ) : (
-              'Copy'
+              t('results.copy')
             )}
           </button>
           <button
             type="button"
             onClick={() => setShareLink(null)}
-            aria-label="Dismiss share link"
+            aria-label={t('results.dismissShareLink')}
             className="shrink-0 text-blue-400 hover:text-blue-600 dark:hover:text-blue-200"
           >
             <X size={12} />
@@ -299,7 +256,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
         <div className="mx-3 mb-2 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-gray-50 dark:bg-gray-900 text-xs">
           <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
             <MapPin size={12} className={liveShare.sharing ? 'text-blue-600 dark:text-blue-400' : ''} />
-            {liveShare.sharing ? 'Sharing your live location' : 'Share your live location on this link'}
+            {liveShare.sharing ? t('results.sharingLiveLocation') : t('results.shareLiveLocationPrompt')}
           </span>
           <button
             type="button"
@@ -310,13 +267,13 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
             }`}
           >
-            {liveShare.sharing ? 'On' : 'Off'}
+            {liveShare.sharing ? t('results.on') : t('results.off')}
           </button>
         </div>
       )}
       {liveShare.sharing && (
         <div className="mx-3 mb-2 px-2.5 py-1 text-[11px] text-gray-400 dark:text-gray-500">
-          Your screen will stay on while sharing so your location keeps updating.
+          {t('results.screenStaysOn')}
         </div>
       )}
       {liveShare.error && (
