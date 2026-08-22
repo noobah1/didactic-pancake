@@ -88,6 +88,57 @@ docker compose logs -f otp
 
 ---
 
+## 🔑 Environment Variables
+
+Set in `.env.local` for local development, and in the shell/`.env` Docker Compose reads for deployment.
+
+| Variable | Required | What it does |
+|---|---|---|
+| `OTP_BASE_URL` | no | OpenTripPlanner endpoint. Defaults to `http://localhost:8080`; compose sets `http://otp:8080`. |
+| `TOMTOM_API_KEY` | for city delays | Enables road-speed delay estimates for city bus routes outside Tallinn — see below. Without it that feature is simply off; nothing else changes. |
+| `TOMTOM_DAILY_REQUEST_BUDGET` | no | Hard ceiling on TomTom requests per UTC day. Defaults to 2000, under TomTom's ~2500/day free tier. |
+| `TRAFFIC_DATA_DIR` / `SHARE_DATA_DIR` | no | Where the SQLite/JSON stores live. Compose sets both to bind-mounted volumes. Defaults to `./traffic-data` and `./share-data`, except `TRAFFIC_DATA_DIR` on Windows — see below. |
+
+> **Never point `TRAFFIC_DATA_DIR` at a cloud-synced folder** (OneDrive,
+> Dropbox, iCloud Drive). The sync client rewrites the database underneath
+> SQLite's open handle and cross-links its pages, which corrupts it beyond
+> what any journal mode can prevent — this happened to the repo's own
+> `traffic.db` and is what kept the sampler switched off for a while. On
+> Windows the default is therefore `%LOCALAPPDATA%\livetravel	raffic-data`,
+> outside any synced tree. The app now runs `PRAGMA quick_check` at startup
+> and, on a corrupt file, renames it to `traffic.db.corrupt-<timestamp>` and
+> starts a fresh one rather than failing every query forever.
+
+### Where delay information comes from
+
+Not every delay on the board is the same kind of fact, and the app never
+presents them as if they were:
+
+- **GPS-confirmed** — a real vehicle's live position measured against its own
+  schedule. Available for Tallinn bus/tram/trolleybus/nightbus
+  (`transport.tallinn.ee/gps.txt`, Tallinn-only) and for Elron trains
+  nationwide. This is the only source that can name a specific vehicle.
+- **Estimated from road speed** — "cars on this road are running slower than
+  usual," several removes from any specific bus, and always labelled as an
+  estimate in the UI. Two feeds: Tark Tee's state-highway detectors for ~251
+  intercity/regional routes (free, no key), and TomTom Traffic Flow for city
+  bus routes in the top-15 cities (needs `TOMTOM_API_KEY`).
+
+No Estonian city other than Tallinn publishes live vehicle positions — the
+national journey planner (api.peatus.ee, a Digitransit/OTP deployment) returns
+`"realtime": false` for every departure in the country, and Transitous lists
+exactly one GTFS-RT source for Estonia (Elron's). The TomTom path exists
+because road speed is the only signal that reaches a city bus in Tartu, Narva
+or Pärnu at all.
+
+City probe points are generated, not hand-written. After a GTFS graph rebuild:
+
+```bash
+npx ts-node --compiler-options '{"module":"commonjs"}' scripts/generate-city-probes.ts
+```
+
+---
+
 ## 📦 GitHub Rules — Read Before Committing!
 
 - ✅ Only commit code files

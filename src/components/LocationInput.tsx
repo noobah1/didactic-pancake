@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useGeocode } from '@/hooks/use-geocode'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface LocationInputProps {
   label: string
@@ -35,6 +36,7 @@ export function LocationInput({
   cityIds,
   trailing,
 }: LocationInputProps) {
+  const { t } = useTranslation()
   const [showDropdown, setShowDropdown] = useState(false)
   const [locating, setLocating] = useState(false)
   const [locateError, setLocateError] = useState<string | null>(null)
@@ -65,7 +67,7 @@ export function LocationInput({
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
-      setLocateError('Geolocation not supported')
+      setLocateError(t('location.geolocationUnsupported'))
       return
     }
     setLocating(true)
@@ -73,13 +75,13 @@ export function LocationInput({
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocating(false)
-        onSelect('My location', position.coords.latitude, position.coords.longitude)
+        onSelect(t('location.myLocation'), position.coords.latitude, position.coords.longitude)
         setShowDropdown(false)
         clear()
       },
       (error) => {
         setLocating(false)
-        setLocateError(error.code === error.PERMISSION_DENIED ? 'Location access denied' : 'Could not get location')
+        setLocateError(error.code === error.PERMISSION_DENIED ? t('location.locationDenied') : t('location.locationUnavailable'))
       },
       { enableHighAccuracy: true, timeout: 10000 },
     )
@@ -101,8 +103,8 @@ export function LocationInput({
             type="button"
             onClick={handleUseMyLocation}
             disabled={locating}
-            title="Use my current location"
-            aria-label="Use my current location"
+            title={t('location.useMyLocation')}
+            aria-label={t('location.useMyLocation')}
             className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 disabled:opacity-50"
           >
             {locating ? (

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
+import { LanguageProvider } from '@/lib/i18n/context'
 import './globals.css'
 
 const geistSans = Geist({
@@ -41,6 +42,14 @@ export const viewport: Viewport = {
 // browser chrome matches from the first frame too.
 const themeInitScript = `(function(){try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark');document.querySelector('meta[name="theme-color"]').setAttribute('content','#15202B');}}catch(e){}})()`
 
+// Sets <html lang> before first paint, same "read the DOM immediately on the
+// client instead of a post-hydration correction" pattern as themeInitScript
+// above — see LanguageProvider's initialLocale for the client-side read this
+// pairs with. A remembered choice (localStorage) wins outright; otherwise
+// the browser's own language list picks among the three supported locales,
+// falling back to Estonian (this app's home market) rather than English.
+const langInitScript = `(function(){try{var s=localStorage.getItem('lt-lang');var l=(s==='en'||s==='et'||s==='ru')?s:null;if(!l){var langs=navigator.languages||[navigator.language||''];for(var i=0;i<langs.length;i++){var p=(langs[i]||'').slice(0,2).toLowerCase();if(p==='ru'||p==='en'||p==='et'){l=p;break;}}}document.documentElement.lang=l||'et';}catch(e){}})()`
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -50,10 +59,11 @@ export default function RootLayout({
     <html lang="et" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: langInitScript }} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ServiceWorkerRegistration />
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   )

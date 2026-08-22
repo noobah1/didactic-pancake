@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { RouteResult, TransportMode } from '@/lib/types'
-import { MODE_LABELS } from '@/lib/constants'
 import { LIVE_BANNER_THRESHOLD_SEC } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
-import { formatMinutes } from '@/lib/format-minutes'
+import { useTranslation } from '@/lib/i18n/context'
+import { formatMinutesLocalized } from '@/lib/i18n/format'
 
 export interface DelayWarning {
   legIndex: number
@@ -15,6 +15,7 @@ export interface DelayWarning {
 }
 
 export function useJourneyMonitor(selectedRoute: RouteResult | null, delayVehicles?: DelayedVehicle[]) {
+  const { t, modeLabel } = useTranslation()
   const [warnings, setWarnings] = useState<DelayWarning[]>([])
   const dismissedRef = useRef<Set<number>>(new Set())
   const routeIdRef = useRef<string | null>(null)
@@ -46,13 +47,17 @@ export function useJourneyMonitor(selectedRoute: RouteResult | null, delayVehicl
           legIndex: index,
           route: leg.route || leg.mode,
           delaySecs: match.delaySeconds,
-          message: `${MODE_LABELS[leg.mode as TransportMode]} ${leg.route || ''} is running about ${formatMinutes(Math.round(match.delaySeconds / 60))} late`,
+          message: t('journeyMonitor.runningLate', {
+            mode: modeLabel(leg.mode as TransportMode),
+            route: leg.route || '',
+            duration: formatMinutesLocalized(Math.round(match.delaySeconds / 60), t),
+          }),
         }
       })
       .filter((w): w is DelayWarning => w !== null)
 
     setWarnings(newWarnings)
-  }, [selectedRoute, delayVehicles])
+  }, [selectedRoute, delayVehicles, t, modeLabel])
 
   const dismissWarning = useCallback((legIndex: number) => {
     dismissedRef.current.add(legIndex)

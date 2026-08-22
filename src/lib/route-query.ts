@@ -15,7 +15,7 @@ export function buildRoutesByIdQuery(ids: string[], options: { includeGeometry?:
   const fields = ids
     .map(
       (id, i) =>
-        `r${i}: route(id: ${JSON.stringify(id)}) { patterns { ${
+        `r${i}: route(id: ${JSON.stringify(id)}) { patterns { headsign ${
           includeGeometry ? 'patternGeometry { points } ' : ''
         }tripsForDate(serviceDate: $date) { gtfsId stoptimes { scheduledArrival scheduledDeparture stop { name lat lon gtfsId } } } } }`,
     )

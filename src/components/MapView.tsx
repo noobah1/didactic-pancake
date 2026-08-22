@@ -7,6 +7,7 @@ import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/consta
 import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, TravellerPosition, TravellerSource } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
 import { formatAgo } from '@/lib/format-ago'
+import { useTranslation } from '@/lib/i18n/context'
 
 function formatSecondsToTime(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -198,6 +199,21 @@ interface MapViewProps {
 }
 
 export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick }: MapViewProps) {
+  const { t, locale, modeLabel } = useTranslation()
+  // Popups/titles are built inside map event closures set up once at mount
+  // (see the click/marker-creation effects below), not re-created on every
+  // render — reading through these refs (rather than closing over t/locale/
+  // modeLabel directly) is what lets a language switch reach text that's
+  // already-built HTML sitting in a maplibre Popup, on the next click/poll,
+  // without having to tear down and rebuild the whole map.
+  const tRef = useRef(t)
+  const localeRef = useRef(locale)
+  const modeLabelRef = useRef(modeLabel)
+  useEffect(() => {
+    tRef.current = t
+    localeRef.current = locale
+    modeLabelRef.current = modeLabel
+  })
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -741,20 +757,20 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
 
       if (hasSchedule && (arrivalTime || departureTime)) {
         html += `<div style="margin-top:4px;font-size:13px;color:#374151">`
-        if (arrivalTime) html += `<span style="color:#6B7280">Arr</span> ${arrivalTime}`
+        if (arrivalTime) html += `<span style="color:#6B7280">${tRef.current('mapPopup.arr')}</span> ${arrivalTime}`
         if (arrivalTime && departureTime) html += `&nbsp;&nbsp;`
-        if (departureTime) html += `<span style="color:#6B7280">Dep</span> ${departureTime}`
+        if (departureTime) html += `<span style="color:#6B7280">${tRef.current('mapPopup.dep')}</span> ${departureTime}`
         html += `</div>`
 
-        const statusLabel = status === 'passed' ? 'Passed'
-          : status === 'current' ? 'At stop'
-          : 'Upcoming'
+        const statusLabel = status === 'passed' ? tRef.current('mapPopup.passed')
+          : status === 'current' ? tRef.current('mapPopup.atStop')
+          : tRef.current('mapPopup.upcoming')
         const statusColor = status === 'passed' ? '#6B7280'
           : status === 'current' ? '#F59E0B'
           : '#10B981'
         html += `<div style="margin-top:4px"><span style="display:inline-block;padding:1px 8px;border-radius:4px;font-size:11px;font-weight:600;color:white;background:${statusColor}">${statusLabel}</span></div>`
       } else if (!hasSchedule) {
-        html += `<div style="margin-top:4px;font-size:12px;color:#9CA3AF">Live GPS &mdash; schedule not available</div>`
+        html += `<div style="margin-top:4px;font-size:12px;color:#9CA3AF">${tRef.current('mapPopup.liveGpsNoSchedule')}</div>`
       }
 
       popup.setLngLat(coords).setHTML(html).addTo(map)
@@ -884,8 +900,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.borderStyle = vehicle.estimated ? 'dashed' : 'solid'
           el.style.borderColor = markerOutlineColor
           el.title = vehicle.estimated
-            ? `${vehicle.mode} ${vehicle.line} → ${vehicle.destination} (estimated from schedule — not live tracked)`
-            : `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
+            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current('mapPopup.estimatedNotLive')})`
+            : `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination}`
 
           const arrowEntry = arrowMarkersRef.current.get(vehicle.id)
           if (arrowEntry) {
@@ -921,8 +937,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.whiteSpace = 'nowrap'
           el.textContent = vehicle.line
           el.title = vehicle.estimated
-            ? `${vehicle.mode} ${vehicle.line} → ${vehicle.destination} (estimated from schedule — not live tracked)`
-            : `${vehicle.mode} ${vehicle.line} → ${vehicle.destination}`
+            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current('mapPopup.estimatedNotLive')})`
+            : `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination}`
 
           el.addEventListener('click', (e) => {
             e.stopPropagation()
@@ -939,7 +955,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
               new maplibregl.Popup({ offset: 10 }).setHTML(
                 `<strong>${escapeHtml(vehicle.line)}</strong><br/>${escapeHtml(vehicle.destination)}${
                   vehicle.estimated
-                    ? '<br/><span style="color:#9CA3AF;font-size:11px">Estimated from schedule — not live tracked</span>'
+                    ? `<br/><span style="color:#9CA3AF;font-size:11px">${tRef.current('mapPopup.estimatedNotLive')}</span>`
                     : ''
                 }`,
               ),
@@ -1240,7 +1256,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         el.style.fontFamily = 'system-ui, sans-serif'
         el.style.whiteSpace = 'nowrap'
         el.textContent = jv.line
-        el.title = `Your ${jv.mode} ${jv.line} → ${jv.destination}`
+        el.title = `${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })} ${jv.line} → ${jv.destination}`
 
         // A hover-only tooltip is easy to miss entirely — this marker can
         // legitimately sit well off the drawn route line (the vehicle is
@@ -1249,7 +1265,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         // rather than "here's your bus, right now". Open immediately
         // instead of waiting for a hover/click that may never happen.
         const popup = new maplibregl.Popup({ offset: 20, closeButton: false, closeOnClick: false }).setHTML(
-          `<strong>Your ${jv.mode}</strong><br/>${jv.line} → ${escapeHtml(jv.destination)}`,
+          `<strong>${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })}</strong><br/>${jv.line} → ${escapeHtml(jv.destination)}`,
         )
         const marker = new maplibregl.Marker({ element: el }).setLngLat([jv.lng, jv.lat]).setPopup(popup).addTo(map)
         marker.togglePopup()
@@ -1325,7 +1341,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
       // inferred tiers ageMs reflects the last real fix, not the (always
       // freshly-computed) inferred position itself, so showing it there
       // would read as staler than the estimate actually is.
-      const popupExtra = source === 'gps' ? `<br/>Updated ${formatAgo(ageMs)}` : ''
+      const popupExtra = source === 'gps' ? `<br/>${tRef.current('mapPopup.updatedAgo', { ago: formatAgo(ageMs, localeRef.current) })}` : ''
       const popupHtml = `<strong>${escapeHtml(label)}</strong>${popupExtra}`
 
       let marker = sharedPositionMarkerRef.current
@@ -1500,7 +1516,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FBBF24" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`
 
         const popup = new maplibregl.Popup({ offset: 15, maxWidth: '250px' }).setHTML(
-          `<div style="padding:4px"><strong style="color:${color}">${escapeHtml(alert.headerText)}</strong>${alert.descriptionText ? `<p style="margin:4px 0 0;font-size:13px;color:#374151">${escapeHtml(alert.descriptionText)}</p>` : ''}<p style="margin:4px 0 0;font-size:11px;color:#6B7280">Affected: ${escapeHtml(alert.affectedRoutes.join(', '))}</p></div>`,
+          `<div style="padding:4px"><strong style="color:${color}">${escapeHtml(alert.headerText)}</strong>${alert.descriptionText ? `<p style="margin:4px 0 0;font-size:13px;color:#374151">${escapeHtml(alert.descriptionText)}</p>` : ''}<p style="margin:4px 0 0;font-size:11px;color:#6B7280">${tRef.current('mapPopup.affected', { routes: escapeHtml(alert.affectedRoutes.join(', ')) })}</p></div>`,
         )
 
         const marker = new maplibregl.Marker({ element: el }).setLngLat(point).setPopup(popup).addTo(map)

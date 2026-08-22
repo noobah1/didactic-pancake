@@ -12,6 +12,10 @@ services:
       OTP_BASE_URL: http://otp:8080
       SHARE_DATA_DIR: /share-data
       TRAFFIC_DATA_DIR: /traffic-data
+      # Optional: enables road-speed delay estimates for city bus routes
+      # outside Tallinn (see README). Unset simply leaves that feature off.
+      TOMTOM_API_KEY: ${TOMTOM_API_KEY:-}
+      TOMTOM_DAILY_REQUEST_BUDGET: ${TOMTOM_DAILY_REQUEST_BUDGET:-}
     volumes:
       - ./share-data:/share-data
       - ./traffic-data:/traffic-data

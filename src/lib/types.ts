@@ -148,6 +148,12 @@ export interface StopBoardData {
   lat: number
   lng: number
   departures: StopDeparture[]
+  // Present when OTP failed and the server served its own stale in-memory
+  // cache entry instead (see /api/stop-board) -- same convention as
+  // NearbyStopsData.stale below. Distinct from useStopBoard's client-side
+  // offline fallback (see use-stop-board.ts): that one kicks in when the
+  // request never reached the server at all.
+  stale?: boolean
 }
 
 export interface StopBoardTarget {
@@ -213,10 +219,27 @@ export interface HomeWorkPlaces {
   work?: SavedPlace
 }
 
-// A road-speed-inferred slowdown for a whole intercity/regional route — the
-// only delay signal that exists for the ~251 routes in
-// src/lib/traffic/route-coverage.json, none of which have live GPS or any
-// real-time feed at all (see src/lib/traffic/index.ts). Deliberately its own
+// A compact summary of a favorite route's top itinerary, cached client-side
+// after a successful /api/plan search matches a saved FavoriteRoute (see
+// use-favorite-departure.ts) -- just enough to show "Bus 12, 14:32 · last
+// known 6 min ago" on the favorite's chip later, without keeping full
+// RouteResult objects (walk geometry, every leg) around for a trip the
+// rider isn't even looking at right now. Deliberately never live -- there's
+// no background polling per favorite, so this is always a snapshot of
+// whatever the rider last actually searched.
+export interface FavoriteDeparture {
+  mode: TransportMode
+  line?: string
+  startTime: string // ISO timestamp, RouteResult.startTime of the cached itinerary
+}
+
+// A road-speed-inferred slowdown for a whole route — the only delay signal
+// that exists for routes with no live GPS or real-time feed of their own,
+// which is most of the country: the ~251 intercity/regional routes in
+// src/lib/traffic/route-coverage.json (Tark Tee highway detectors, see
+// src/lib/traffic/index.ts) and every city bus route outside Tallinn in
+// src/lib/traffic/city-probes.json (TomTom probe points, see
+// src/lib/traffic/city-estimate.ts). Deliberately its own
 // type, never merged into DelayedVehicle.delaySeconds or
 // TripStopInfo.delaySeconds — those are a specific vehicle's GPS position
 // against its own schedule; this is "cars on this road are running slower
@@ -226,9 +249,10 @@ export interface TrafficEstimate {
   minSeconds: number
   maxSeconds: number
   evidence: 'traffic-estimate'
-  // How many distinct Tark Tee detectors contributed to this estimate —
-  // shown alongside the number so a rider can judge "one sensor 40km away"
-  // from "six sensors along the actual corridor" at a glance.
+  // How many distinct measurement points contributed to this estimate —
+  // Tark Tee detectors for a highway corridor, TomTom probe points for a
+  // city route. Shown alongside the number so a rider can judge "one sensor
+  // 40km away" from "six sensors along the actual corridor" at a glance.
   detectorCount: number
   // Fraction (0-1) of the route's scheduled in-motion time that a nearby,
   // fresh, baselined detector actually speaks to. Never surfaced as a

@@ -3,6 +3,7 @@
 import { MapPin, X } from 'lucide-react'
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { CityDef, CITIES, COUNTIES } from '@/lib/constants'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface CitySelectorProps {
   activeCities: CityDef[]
@@ -12,17 +13,18 @@ interface CitySelectorProps {
 }
 
 export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll }: CitySelectorProps) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const activeIds = new Set(activeCities.map((c) => c.id))
   const label = activeCities.length === CITIES.length
-    ? 'All'
+    ? t('city.all')
     : activeCities.length === 0
-      ? 'None'
+      ? t('city.none')
       : activeCities.length === 1
         ? activeCities[0].name
-        : `${activeCities.length} cities`
+        : t('city.countN', { n: activeCities.length })
 
   const citiesByCounty = useMemo(() => {
     const map = new Map<string, CityDef[]>()
@@ -52,7 +54,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
       <button
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
-        aria-label="Cities"
+        aria-label={t('city.citiesLabel')}
         className="flex items-center gap-1.5 h-10 px-3 bg-white dark:bg-gray-800 rounded-full shadow-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
       >
         <MapPin size={14} />
@@ -65,7 +67,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
         <div ref={dropdownRef} className="fixed top-12 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 w-[calc(100vw-24px)] sm:w-[460px] max-h-[60vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Counties</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('city.counties')}</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
@@ -81,7 +83,7 @@ export function CitySelector({ activeCities, onToggle, onToggleCounty, onSetAll 
                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                {activeCities.length === CITIES.length ? 'Deselect all' : 'Select all'}
+                {activeCities.length === CITIES.length ? t('city.deselectAll') : t('city.selectAll')}
               </button>
               <button
                 onClick={() => setExpanded(false)}

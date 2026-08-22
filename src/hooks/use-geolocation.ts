@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useTranslation } from '@/lib/i18n/context'
 
 export interface GeoPosition {
   lat: number
@@ -12,13 +13,14 @@ export interface GeoPosition {
 // two error strings) so a rider never sees two different phrasings of the
 // same failure depending on which part of the app asked.
 export function useGeolocation() {
+  const { t } = useTranslation()
   const [position, setPosition] = useState<GeoPosition | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const request = useCallback(() => {
     if (!navigator.geolocation) {
-      setError('Geolocation not supported')
+      setError(t('location.geolocationUnsupported'))
       return
     }
     setLoading(true)
@@ -30,11 +32,11 @@ export function useGeolocation() {
       },
       (err) => {
         setLoading(false)
-        setError(err.code === err.PERMISSION_DENIED ? 'Location access denied' : 'Could not get location')
+        setError(err.code === err.PERMISSION_DENIED ? t('location.locationDenied') : t('location.locationUnavailable'))
       },
       { enableHighAccuracy: true, timeout: 10000 },
     )
-  }, [])
+  }, [t])
 
   return { position, error, loading, request }
 }

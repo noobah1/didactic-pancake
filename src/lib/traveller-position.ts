@@ -2,6 +2,12 @@ import { RouteResult, RouteLeg, VehiclePosition, SharePosition, TravellerPositio
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { findVehicleForLeg, positionAlongLeg } from '@/lib/delay'
 import { formatAgo } from '@/lib/format-ago'
+import type { Locale } from '@/lib/i18n/types'
+import en from '@/lib/i18n/en'
+import et from '@/lib/i18n/et'
+import ru from '@/lib/i18n/ru'
+
+const TRAVELLER_DICTS = { en, et, ru }
 
 // A real GPS fix younger than this is trusted outright. Older than this and
 // the sender's phone may simply have gone quiet (screen locked, app
@@ -15,10 +21,6 @@ export const FRESH_GPS_MAX_AGE_MS = 90_000
 // still attempted — long enough to cover ordinary lateness, short enough
 // that a journey nobody ever closed out doesn't keep "estimating" forever.
 export const JOURNEY_END_GRACE_MS = 30 * 60 * 1000
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
 
 // Same three-step chain page.tsx's own journeyVehicles already uses to find
 // the live vehicle running a leg: exact tripId against the GPS-confirmed
@@ -77,8 +79,12 @@ export function resolveTravellerPosition(input: {
   delayVehicles?: DelayedVehicle[]
   vehicles?: VehiclePosition[]
   nowMs: number
+  // Defaults to English so existing callers/tests that don't pass one see
+  // the same labels as before.
+  locale?: Locale
 }): TravellerPosition | null {
-  const { route, position, sharing, delayVehicles = [], vehicles = [], nowMs } = input
+  const { route, position, sharing, delayVehicles = [], vehicles = [], nowMs, locale = 'en' } = input
+  const dict = TRAVELLER_DICTS[locale]
 
   if (!position && !sharing) return null
 
@@ -92,7 +98,7 @@ export function resolveTravellerPosition(input: {
   if (position) {
     const ageMs = nowMs - position.updatedAt
     if (ageMs <= FRESH_GPS_MAX_AGE_MS) {
-      return { lat: position.lat, lng: position.lng, source: 'gps', label: 'Live', ageMs }
+      return { lat: position.lat, lng: position.lng, source: 'gps', label: dict.traveller.live, ageMs }
     }
   }
 
@@ -105,7 +111,13 @@ export function resolveTravellerPosition(input: {
   if (!sharing || pastGrace) {
     if (!position) return null
     const ageMs = nowMs - position.updatedAt
-    return { lat: position.lat, lng: position.lng, source: 'stale', label: `Last seen ${formatAgo(ageMs)}`, ageMs }
+    return {
+      lat: position.lat,
+      lng: position.lng,
+      source: 'stale',
+      label: dict.traveller.lastSeen.replace('{ago}', formatAgo(ageMs, locale)),
+      ageMs,
+    }
   }
 
   const ageMs = position ? nowMs - position.updatedAt : 0
@@ -117,12 +129,14 @@ export function resolveTravellerPosition(input: {
       lat: legVehicle.lat,
       lng: legVehicle.lng,
       source: 'vehicle',
-      label: `On ${capitalize(legVehicle.mode)} ${legVehicle.line} · estimated`,
+      label: dict.traveller.onVehicle
+        .replace('{mode}', dict.modes[legVehicle.mode])
+        .replace('{line}', legVehicle.line),
       ageMs,
       mode: legVehicle.mode,
     }
   }
 
   const { lat, lng } = positionAlongLeg(leg, nowMs)
-  return { lat, lng, source: 'schedule', label: 'Estimated from timetable', ageMs }
+  return { lat, lng, source: 'schedule', label: dict.traveller.estimatedFromTimetable, ageMs }
 }

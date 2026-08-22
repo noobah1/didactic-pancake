@@ -30,6 +30,7 @@ query RouteTrips($name: String!, $modes: [Mode!], $date: String!) {
     mode
     agency { gtfsId }
     patterns {
+      headsign
       patternGeometry { points }
       tripsForDate(serviceDate: $date) {
         gtfsId
@@ -68,6 +69,7 @@ interface GqlTrip {
   pattern?: { patternGeometry?: { points: string } | null } | null
   stoptimes: GqlStoptime[]
   _patternGeometry?: string // attached during route matching
+  headsign?: string // attached during route matching — GTFS's own "what the destination sign says", see findBestTrip
 }
 
 // Lightweight index of Tallinn's own routes (shortName+mode -> gtfsId),
@@ -163,7 +165,7 @@ async function fetchTripsNationwide(routeName: string, otpMode: string, date: st
     throw new Error(data.errors[0].message)
   }
 
-  const substringMatches: { shortName: string; mode: string; agency?: { gtfsId: string } | null; patterns: { patternGeometry?: { points: string } | null; tripsForDate: GqlTrip[] }[] }[] =
+  const substringMatches: { shortName: string; mode: string; agency?: { gtfsId: string } | null; patterns: { headsign?: string | null; patternGeometry?: { points: string } | null; tripsForDate: GqlTrip[] }[] }[] =
     data.data?.routes || []
   if (substringMatches.length === 0) return []
 
@@ -188,8 +190,10 @@ async function fetchTripsNationwide(routeName: string, otpMode: string, date: st
   for (const route of routes) {
     for (const pattern of route.patterns) {
       const geo = pattern.patternGeometry?.points || undefined
+      const headsign = pattern.headsign || undefined
       for (const trip of pattern.tripsForDate) {
         if (geo) trip._patternGeometry = geo
+        if (headsign) trip.headsign = headsign
         allTrips.push(trip)
       }
     }
@@ -409,12 +413,14 @@ export async function GET(request: Request) {
 
         allTrips = []
         matchedIds.forEach((_, i) => {
-          const route: { patterns: { patternGeometry?: { points: string } | null; tripsForDate: GqlTrip[] }[] } | null = data.data?.[`r${i}`]
+          const route: { patterns: { headsign?: string | null; patternGeometry?: { points: string } | null; tripsForDate: GqlTrip[] }[] } | null = data.data?.[`r${i}`]
           if (!route) return
           for (const pattern of route.patterns) {
             const geo = pattern.patternGeometry?.points || undefined
+            const headsign = pattern.headsign || undefined
             for (const trip of pattern.tripsForDate) {
               if (geo) trip._patternGeometry = geo
+              if (headsign) trip.headsign = headsign
               allTrips.push(trip)
             }
           }

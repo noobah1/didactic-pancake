@@ -27,6 +27,9 @@ import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
 import { useDelayToast } from '@/hooks/use-delay-toast'
 import { useTheme } from '@/hooks/use-theme'
+import { useTranslation } from '@/lib/i18n/context'
+import { useFavorites } from '@/hooks/use-favorites'
+import { cacheFavoriteDeparture } from '@/hooks/use-favorite-departure'
 
 // How far a disruption/delayed/searched-for vehicle can be from a selected
 // city (or a line search's own anchor stop) and still count as belonging to
@@ -47,6 +50,7 @@ function HomeContent() {
   // synced to the OS/browser preference (including a live change while the
   // tab stays open); see use-theme.ts.
   useTheme()
+  const { t, locale } = useTranslation()
 
   const modesFromUrl = searchParams.get('modes')
   const citiesFromUrl = searchParams.get('cities')
@@ -114,7 +118,14 @@ function HomeContent() {
   const extraVehicleData = useVehicles(extraMapVehicle ? [extraMapVehicle.mode] : [], [], !!extraMapVehicle)
   const { routes, loading, error, notice, search, clear, selectedRouteId, selectRoute, loadSharedRoute, setShareError } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
-  const delayData = useDelays()
+  const delayData = useDelays(activeCities)
+  const { findFavorite } = useFavorites()
+  // The from/to of the search that produced the current `routes`, kept only
+  // to check afterwards whether it matches a saved favorite -- SearchPanel
+  // owns the actual from/to input state, this is just enough to cache a
+  // favorite's next departure (see use-favorite-departure.ts) without lifting
+  // its whole form state up here.
+  const [lastSearchPlaces, setLastSearchPlaces] = useState<{ fromPlace: string; toPlace: string } | null>(null)
 
   // A journey opened from a shared link (see RouteResults' Share button)
   // arrives as a fully-formed RouteResult, not a search to re-run — pull it
@@ -151,7 +162,7 @@ function HomeContent() {
         setLiveShareRouteId(data.route.id)
       })
       .catch(() => {
-        if (!cancelled) setShareError('This shared journey has expired or could not be found.')
+        if (!cancelled) setShareError(t('page.shareExpired'))
       })
       .finally(() => {
         if (cancelled) return
@@ -248,7 +259,24 @@ function HomeContent() {
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => {
     setStopBoard(null)
     search(fromPlace, toPlace, modes, dateTime, arriveBy)
+    setLastSearchPlaces({ fromPlace, toPlace })
   }
+
+  // Opportunistic-only caching (see use-favorite-departure.ts): whenever a
+  // search actually completes and its from/to is a saved favorite, stash the
+  // top itinerary's first transit leg so the favorite's chip can still show
+  // "last known" departure info offline, even though nothing here polls a
+  // favorite in the background. fromPlace/toPlace are always "lat,lng" --
+  // every caller of onSearch (LocationInput picks, favorite/recent/home-work
+  // chips) resolves to coordinates before calling it.
+  useEffect(() => {
+    if (!lastSearchPlaces || routes.length === 0) return
+    const [fromLat, fromLng] = lastSearchPlaces.fromPlace.split(',').map(Number)
+    const [toLat, toLng] = lastSearchPlaces.toPlace.split(',').map(Number)
+    if ([fromLat, fromLng, toLat, toLng].some((n) => Number.isNaN(n))) return
+    const favorite = findFavorite(fromLat, fromLng, toLat, toLng)
+    if (favorite) cacheFavoriteDeparture(favorite.id, routes)
+  }, [routes, lastSearchPlaces, findFavorite])
 
   const handleClear = () => {
     clear()
@@ -498,8 +526,9 @@ function HomeContent() {
       delayVehicles: delayData.data?.vehicles,
       vehicles: vehicleData.data?.vehicles,
       nowMs,
+      locale,
     })
-  }, [selectedRoute, liveShareRouteId, sharedPosition, sharing, delayData.data?.vehicles, vehicleData.data?.vehicles, nowMs])
+  }, [selectedRoute, liveShareRouteId, sharedPosition, sharing, delayData.data?.vehicles, vehicleData.data?.vehicles, nowMs, locale])
 
   const delayedVehicleCount = activeDelayedVehicles.filter(
     (v) => v.delaySeconds >= OVERVIEW_THRESHOLD_SEC,
@@ -552,7 +581,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       <ErrorBoundary
         fallback={
           <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
-            Map unavailable
+            {t('page.mapUnavailable')}
           </div>
         }
       >
@@ -602,7 +631,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           <div className="pointer-events-auto mt-8 sm:mt-0">
             <ErrorBoundary
               key="stop-board"
-              fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">Departure board unavailable</div>}
+              fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">{t('page.departureBoardUnavailable')}</div>}
             >
               <StopBoard stop={stopBoard} onClose={() => setStopBoard(null)} onSelectDeparture={handleSelectDeparture} />
             </ErrorBoundary>
@@ -620,7 +649,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
       >
         <div className="pointer-events-auto">
           <ErrorBoundary
-            fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg">Route search unavailable</div>}
+            fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg">{t('page.routeSearchUnavailable')}</div>}
           >
             {/* Rendered above the results card (not below) so it reads as a
                 warning floating over the sheet rather than getting pushed
@@ -699,7 +728,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           key="nearby"
           fallback={
             <div className="absolute bottom-24 right-4 z-40 w-80 p-4 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-              Nearby stops unavailable
+              {t('page.nearbyStopsUnavailable')}
             </div>
           }
         >
@@ -741,7 +770,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
 
       {/* Logo - bottom center */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
-        <Image src={logo3} alt="Logo" width={80} height={24} className="w-auto" />
+        <Image src={logo3} alt={t('page.logoAlt')} width={80} height={24} className="w-auto" />
       </div>
     </main>
   )

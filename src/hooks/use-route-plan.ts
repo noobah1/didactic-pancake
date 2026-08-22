@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { RouteResult, TransportMode } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface PlanResponse {
   routes: RouteResult[]
@@ -51,6 +52,7 @@ function saveStored(state: Omit<StoredState, 'savedAt'>) {
 }
 
 export function useRoutePlan() {
+  const { t } = useTranslation()
   // Always starts empty — matching what the server rendered — so hydration
   // never has to reconcile a client-only localStorage read against SSR
   // output. The stored journey (if any) is applied a moment later in the
@@ -115,13 +117,13 @@ export function useRoutePlan() {
           setNotice(data.notice || null)
         }
       } catch {
-        setError('Route planning service unavailable')
+        setError(t('page.routePlanningUnavailable'))
         setRoutes([])
       } finally {
         setLoading(false)
       }
     },
-    [],
+    [t],
   )
 
   const clear = useCallback(() => {

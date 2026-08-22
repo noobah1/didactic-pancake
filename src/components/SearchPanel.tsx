@@ -7,11 +7,14 @@ import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
 import { RecentChip } from './RecentChip'
 import { HomeWorkChip } from './HomeWorkChip'
+import { LanguageSelector } from './LanguageSelector'
 import { TransportMode } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
 import { useRecentSearches } from '@/hooks/use-recent-searches'
 import { useHomeWork } from '@/hooks/use-home-work'
+import { useTranslation } from '@/lib/i18n/context'
+import { localeTag } from '@/lib/i18n/format'
 
 interface SearchPanelProps {
   onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => void
@@ -32,6 +35,7 @@ interface SearchPanelProps {
 }
 
 export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard, onSelectLine }: SearchPanelProps) {
+  const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
   const [toText, setToText] = useState('')
@@ -106,9 +110,9 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const coords = { lat: position.coords.latitude, lng: position.coords.longitude }
-        setFromText('My location')
+        setFromText(t('location.myLocation'))
         setFromCoords(coords)
-        handleSearch(coords, { lat: place.lat, lng: place.lng }, 'My location', place.name)
+        handleSearch(coords, { lat: place.lat, lng: place.lng }, t('location.myLocation'), place.name)
       },
       () => {},
       { enableHighAccuracy: true, timeout: 10000 },
@@ -141,30 +145,33 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
 
   return (
     <div className="flex flex-col gap-2">
-      {onViewStopBoard && (
-        <div className="flex gap-1 self-start bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-full p-0.5 shadow-md border border-gray-300 dark:border-gray-600">
-          <button
-            type="button"
-            onClick={() => setPanelMode('plan')}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
-          >
-            Plan trip
-          </button>
-          <button
-            type="button"
-            onClick={() => setPanelMode('board')}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
-          >
-            Departures
-          </button>
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        {onViewStopBoard ? (
+          <div className="flex gap-1 self-start bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-full p-0.5 shadow-md border border-gray-300 dark:border-gray-600">
+            <button
+              type="button"
+              onClick={() => setPanelMode('plan')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'plan' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            >
+              {t('search.planTrip')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPanelMode('board')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium ${panelMode === 'board' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            >
+              {t('search.departures')}
+            </button>
+          </div>
+        ) : <div />}
+        <LanguageSelector />
+      </div>
       {panelMode === 'board' && onViewStopBoard ? (
         <div className="flex flex-col gap-1">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
-              label="Stop or line"
-              placeholder="Search for a stop or line..."
+              label={t('search.stopOrLine')}
+              placeholder={t('search.searchStopOrLine')}
               value={boardText}
               onChange={(text) => {
                 setBoardText(text)
@@ -193,7 +200,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           </div>
           {lineNotRunning && (
             <p className="px-3 text-xs text-gray-500 dark:text-gray-400">
-              No vehicles currently running on line {lineNotRunning}.
+              {t('search.lineNotRunning', { line: lineNotRunning })}
             </p>
           )}
         </div>
@@ -205,8 +212,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           <button
             type="button"
             onClick={handleSwap}
-            title="Swap from and to"
-            aria-label="Swap from and to"
+            title={t('search.swap')}
+            aria-label={t('search.swap')}
             className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-600"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -215,8 +222,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           </button>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
-              label="From"
-              placeholder="Current location or search..."
+              label={t('search.from')}
+              placeholder={t('search.fromPlaceholder')}
               value={fromText}
               onChange={setFromText}
               allowMyLocation
@@ -230,8 +237,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-300 dark:border-gray-600">
             <LocationInput
-              label="To"
-              placeholder="Where to?"
+              label={t('search.to')}
+              placeholder={t('search.toPlaceholder')}
               value={toText}
               onChange={setToText}
               onSelect={(name, lat, lng) => {
@@ -248,8 +255,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                       if (activeFavorite) removeFavorite(activeFavorite.id)
                       else addFavorite(fromText, fromCoords.lat, fromCoords.lng, toText, toCoords.lat, toCoords.lng)
                     }}
-                    title={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
-                    aria-label={activeFavorite ? 'Remove favorite' : 'Save as favorite'}
+                    title={activeFavorite ? t('search.removeFavorite') : t('search.saveFavorite')}
+                    aria-label={activeFavorite ? t('search.removeFavorite') : t('search.saveFavorite')}
                     className="shrink-0 mr-2 p-1.5 text-gray-400 hover:text-amber-500 dark:hover:text-amber-400"
                   >
                     <Star
@@ -270,7 +277,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <button
               onClick={handleClear}
               className="w-12 h-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 shadow-md"
-              aria-label="Clear search"
+              aria-label={t('search.clearSearch')}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -361,7 +368,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 onClick={() => setPickerVisible(false)}
                 className="px-3 py-3 bg-blue-600 text-white rounded-full text-xs font-medium shadow-md"
               >
-                Done
+                {t('search.done')}
               </button>
             )}
           </div>
@@ -382,13 +389,13 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             }}
             className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
           >
-            {timeMode === 'now' && 'Depart now'}
+            {timeMode === 'now' && t('search.departNow')}
             {timeMode === 'depart' && (dateTime
-              ? `Depart ${new Date(dateTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })}`
-              : 'Depart at...')}
+              ? t('search.departTime', { time: new Date(dateTime).toLocaleString(localeTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) })
+              : t('search.departAt'))}
             {timeMode === 'arrive' && (dateTime
-              ? `Arrive ${new Date(dateTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })}`
-              : 'Arrive at...')}
+              ? t('search.arriveTime', { time: new Date(dateTime).toLocaleString(localeTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) })
+              : t('search.arriveAt'))}
           </button>
         )}
         {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (

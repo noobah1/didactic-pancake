@@ -1,6 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface DelayToastProps {
   text: string
@@ -9,6 +10,7 @@ interface DelayToastProps {
 }
 
 export function DelayToast({ text, onDismiss, onClick }: DelayToastProps) {
+  const { t } = useTranslation()
   return (
     <div
       onClick={onClick}
@@ -22,7 +24,7 @@ export function DelayToast({ text, onDismiss, onClick }: DelayToastProps) {
           onDismiss()
         }}
         className="shrink-0 p-0.5 rounded-full hover:bg-white/20"
-        aria-label="Dismiss"
+        aria-label={t('common.dismiss')}
       >
         <X size={14} />
       </button>

@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
-import { MODE_LABELS } from '@/lib/constants'
 import { TransportMode } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
-import { formatMinutes } from '@/lib/format-minutes'
+import { useTranslation } from '@/lib/i18n/context'
+import { formatMinutesLocalized } from '@/lib/i18n/format'
 
 const TOAST_DURATION_MS = 6_000
 
@@ -20,6 +20,7 @@ export interface DelayToastMessage {
 // "already existing") would fire an immediate toast for a route you haven't
 // even committed to yet, since its vehicle ids were never in seenIdsRef.
 export function useDelayToast(vehicles: DelayedVehicle[], resetKey: string | null = null) {
+  const { t, modeLabel } = useTranslation()
   const [toast, setToast] = useState<DelayToastMessage | null>(null)
   const seenIdsRef = useRef<Set<string> | null>(null)
   const resetKeyRef = useRef<string | null>(resetKey)
@@ -44,15 +45,20 @@ export function useDelayToast(vehicles: DelayedVehicle[], resetKey: string | nul
 
     const text =
       newlyDelayed.length === 1
-        ? `${MODE_LABELS[newlyDelayed[0].mode as TransportMode]} ${newlyDelayed[0].line} → ${newlyDelayed[0].destination} is running ${formatMinutes(Math.round(newlyDelayed[0].delaySeconds / 60))} late`
-        : `${newlyDelayed.length} vehicles are now running late`
+        ? t('delayToast.vehicleLate', {
+            mode: modeLabel(newlyDelayed[0].mode as TransportMode),
+            line: newlyDelayed[0].line,
+            destination: newlyDelayed[0].destination,
+            duration: formatMinutesLocalized(Math.round(newlyDelayed[0].delaySeconds / 60), t),
+          })
+        : t('delayToast.multipleLate', { n: newlyDelayed.length })
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setToast({ text })
 
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => setToast(null), TOAST_DURATION_MS)
-  }, [vehicles, resetKey])
+  }, [vehicles, resetKey, t, modeLabel])
 
   useEffect(() => {
     return () => {

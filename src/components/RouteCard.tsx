@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { Footprints, X } from 'lucide-react'
 import { RouteResult, RouteLeg, LegPlace, TransportMode, RouteTrafficEstimate } from '@/lib/types'
-import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
+import { MODE_COLORS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
-import { formatMinutes } from '@/lib/format-minutes'
+import { useTranslation } from '@/lib/i18n/context'
+import { formatMinutesLocalized } from '@/lib/i18n/format'
 
 // Modes with a live position feed behind them: Tallinn's own for the road
 // modes, Elron's for trains (see src/lib/elron.ts). Ferry has none, so a
@@ -29,22 +30,24 @@ function formatTime(iso: string): string {
 // looked up independently (departure vs. arrival platform), so they're
 // frequently different tracks at the same station.
 function PlatformBadge({ place }: { place: LegPlace }) {
+  const { t } = useTranslation()
   if (!place.platform) return null
   return (
     <span
-      title={place.platformChanged ? 'Platform changed' : undefined}
+      title={place.platformChanged ? t('route.platformChanged') : undefined}
       className={`shrink-0 px-1 py-0.5 rounded text-[10px] font-semibold ${
         place.platformChanged
           ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
       }`}
     >
-      Pl {place.platform}
+      {t('route.platformShort', { n: place.platform })}
     </span>
   )
 }
 
 function ExpandableLeg({ leg }: { leg: RouteLeg }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const color = MODE_COLORS[leg.mode as keyof typeof MODE_COLORS] || '#6B7280'
   const stops = leg.intermediateStops || []
@@ -68,7 +71,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
           <PlatformBadge place={leg.from} />
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-gray-400 dark:text-gray-500">{Math.round(leg.duration / 60)} min</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{t('common.minShort', { n: Math.round(leg.duration / 60) })}</span>
           {stops.length > 0 && (
             <svg
               className={`w-3.5 h-3.5 text-gray-400 ${expanded ? 'rotate-180' : ''}`}
@@ -107,6 +110,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
 }
 
 export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEstimates }: RouteCardProps) {
+  const { t, modeLabel } = useTranslation()
   const transitLegs = route.legs.filter((l) => l.mode !== 'walk')
   const walkMinutes = Math.round(
     route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0) / 60,
@@ -170,7 +174,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
           {transitLegs.length === 0 ? (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-400 text-white">
               <Footprints size={12} />
-              <span className="text-xs font-bold">Walk</span>
+              <span className="text-xs font-bold">{t('route.walk')}</span>
             </span>
           ) : (
             <>
@@ -180,7 +184,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
                   <span
                     className="px-2 py-0.5 rounded text-xs font-bold text-white"
                     style={{ backgroundColor: MODE_COLORS[leg.mode === 'walk' ? 'bus' : leg.mode] }}
-                    title={MODE_LABELS[leg.mode === 'walk' ? 'bus' : leg.mode]}
+                    title={modeLabel(leg.mode === 'walk' ? 'bus' : leg.mode)}
                   >
                     {leg.route || leg.mode}
                   </span>
@@ -189,23 +193,23 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
               {walkMinutes > 0 && (
                 <span
                   className="flex items-center gap-0.5 text-xs text-gray-400 dark:text-gray-500 shrink-0"
-                  title="Includes walking"
+                  title={t('route.includesWalking')}
                 >
                   <Footprints size={12} />
-                  {walkMinutes}min
+                  {t('route.durationMin', { n: walkMinutes })}
                 </span>
               )}
             </>
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatMinutes(totalMinutes)}</span>
+          <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatMinutesLocalized(totalMinutes, t)}</span>
           {selected && (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onSelect() }}
-              title="Remove journey"
-              aria-label="Remove journey"
+              title={t('route.removeJourney')}
+              aria-label={t('route.removeJourney')}
               className="p-0.5 -m-0.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X size={14} />
@@ -224,21 +228,21 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
               // schedule-interpolated vehicles.
               <span
                 className="text-xs text-amber-600 dark:text-amber-400 font-medium border border-amber-400 dark:border-amber-600 rounded px-1"
-                title={`${routeEstimate.detectorCount} traffic measurement point${routeEstimate.detectorCount === 1 ? '' : 's'} along this route — not a GPS-confirmed delay`}
+                title={t('route.trafficPointsTooltip', { n: routeEstimate.detectorCount, plural: routeEstimate.detectorCount === 1 ? '' : 's' })}
               >
-                ~{Math.round(routeEstimate.minSeconds / 60)}
-                {Math.round(routeEstimate.maxSeconds / 60) > Math.round(routeEstimate.minSeconds / 60)
-                  ? `-${Math.round(routeEstimate.maxSeconds / 60)}`
-                  : ''}
-                min slower
+                {t('route.delaySlower', {
+                  range: Math.round(routeEstimate.maxSeconds / 60) > Math.round(routeEstimate.minSeconds / 60)
+                    ? `${Math.round(routeEstimate.minSeconds / 60)}-${Math.round(routeEstimate.maxSeconds / 60)}`
+                    : `${Math.round(routeEstimate.minSeconds / 60)}`,
+                })}
               </span>
             ) : (
-              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Scheduled</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{t('route.scheduled')}</span>
             )
           ) : delayMinutes > 0 ? (
-            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{formatMinutes(delayMinutes)} delay</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{t('route.delaySuffix', { duration: formatMinutesLocalized(delayMinutes, t) })}</span>
           ) : (
-            <span className="text-xs text-green-600 dark:text-green-400 font-medium">on time</span>
+            <span className="text-xs text-green-600 dark:text-green-400 font-medium">{t('route.onTime')}</span>
           )
         )}
       </div>
@@ -249,7 +253,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
               {leg.mode === 'walk' ? (
                 <div className="flex items-center gap-2 py-1.5 text-xs text-gray-400 dark:text-gray-500">
                   <Footprints size={14} />
-                  <span>Walk {Math.round(leg.duration / 60)} min</span>
+                  <span>{t('route.walkMin', { n: Math.round(leg.duration / 60) })}</span>
                 </div>
               ) : (
                 <ExpandableLeg leg={leg} />

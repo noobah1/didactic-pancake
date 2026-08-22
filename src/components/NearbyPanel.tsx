@@ -4,20 +4,24 @@ import { useEffect } from 'react'
 import { X, RefreshCw } from 'lucide-react'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useNearbyStops } from '@/hooks/use-nearby-stops'
-import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
+import { MODE_COLORS } from '@/lib/constants'
 import { minutesUntil } from '@/lib/stop-time'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface NearbyPanelProps {
   onSelectStop: (name: string, lat: number, lng: number, stopId: string) => void
   onClose: () => void
 }
 
-function formatWalkDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)} m`
-  return `${(meters / 1000).toFixed(1)} km`
+function formatWalkDistance(meters: number, locale: 'en' | 'et' | 'ru'): string {
+  const unitM = locale === 'ru' ? 'м' : 'm'
+  const unitKm = locale === 'ru' ? 'км' : 'km'
+  if (meters < 1000) return `${Math.round(meters)} ${unitM}`
+  return `${(meters / 1000).toFixed(1)} ${unitKm}`
 }
 
 export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
+  const { t, locale, modeLabel } = useTranslation()
   const { position, error: geoError, loading: geoLoading, request } = useGeolocation()
   const { data, error, lastUpdated } = useNearbyStops(position)
 
@@ -33,14 +37,14 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
   return (
     <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-blue-600 text-white shrink-0">
-        <span className="text-sm font-semibold">Near you</span>
+        <span className="text-sm font-semibold">{t('nearby.nearYou')}</span>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={request}
             disabled={geoLoading}
-            aria-label="Refresh location"
-            title="Refresh location"
+            aria-label={t('nearby.refreshLocation')}
+            title={t('nearby.refreshLocation')}
             className="p-1 rounded-full hover:bg-white/20 disabled:opacity-50 shrink-0"
           >
             <RefreshCw size={16} className={geoLoading ? 'animate-spin' : ''} />
@@ -48,7 +52,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close nearby stops"
+            aria-label={t('nearby.closeNearby')}
             className="p-1 rounded-full hover:bg-white/20 shrink-0"
           >
             <X size={18} />
@@ -58,7 +62,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
 
       <div className="flex flex-col overflow-y-auto">
         {geoLoading && !position && (
-          <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">Finding your location...</div>
+          <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">{t('nearby.findingLocation')}</div>
         )}
 
         {geoError && (
@@ -71,33 +75,33 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
               onClick={request}
               className="text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline"
             >
-              Try again
+              {t('nearby.tryAgain')}
             </button>
           </div>
         )}
 
         {position && !data && !error && (
-          <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">Loading nearby stops...</div>
+          <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">{t('nearby.loadingStops')}</div>
         )}
 
         {error && !data && (
-          <div className="p-4 text-center text-red-500 dark:text-red-400 text-sm">Couldn&apos;t load nearby stops</div>
+          <div className="p-4 text-center text-red-500 dark:text-red-400 text-sm">{t('nearby.couldNotLoadStops')}</div>
         )}
 
         {data && data.stops.length === 0 && (
           <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-            {data.widened ? 'Nothing scheduled from stops near you right now' : `No stops within ${formatWalkDistance(data.radiusMeters)}`}
+            {data.widened ? t('nearby.nothingScheduled') : t('nearby.noStopsWithin', { distance: formatWalkDistance(data.radiusMeters, locale) })}
           </div>
         )}
 
         {data && data.widened && data.stops.length > 0 && (
           <div className="px-4 pt-2 text-[11px] text-gray-400 dark:text-gray-500">
-            Nothing nearby — showing stops up to {formatWalkDistance(data.radiusMeters)} away
+            {t('nearby.widenedNotice', { distance: formatWalkDistance(data.radiusMeters, locale) })}
           </div>
         )}
 
         {data && data.stale && (
-          <div className="px-4 pt-2 text-[11px] text-amber-500 dark:text-amber-400">Showing last known departures</div>
+          <div className="px-4 pt-2 text-[11px] text-amber-500 dark:text-amber-400">{t('nearby.staleNotice')}</div>
         )}
 
         {data && data.stops.length > 0 && (
@@ -113,7 +117,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
                     {stop.name}
                   </span>
                   <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                    {formatWalkDistance(stop.distanceMeters)}
+                    {formatWalkDistance(stop.distanceMeters, locale)}
                   </span>
                 </button>
                 <div className="flex flex-col pb-1.5">
@@ -127,7 +131,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
                         <span
                           className="shrink-0 min-w-[1.75rem] px-1.5 py-0.5 rounded text-white text-xs font-bold text-center"
                           style={{ backgroundColor: MODE_COLORS[dep.mode] }}
-                          title={MODE_LABELS[dep.mode]}
+                          title={modeLabel(dep.mode)}
                         >
                           {dep.line}
                         </span>
@@ -135,7 +139,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
                           {dep.headsign}
                         </span>
                         <span className="shrink-0 text-xs font-medium text-gray-900 dark:text-gray-100">
-                          {mins <= 0 ? 'now' : `${mins} min`}
+                          {mins <= 0 ? t('common.now') : t('common.minShort', { n: mins })}
                         </span>
                       </div>
                     )
@@ -149,7 +153,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
 
       {lastUpdated && (
         <div className="px-3 pb-2 text-[11px] text-gray-400 dark:text-gray-500">
-          Updated {new Date(lastUpdated).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          {t('nearby.updated', { time: new Date(lastUpdated).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) })}
         </div>
       )}
     </div>

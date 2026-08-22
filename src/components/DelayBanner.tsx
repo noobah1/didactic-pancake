@@ -1,6 +1,7 @@
 'use client'
 
 import { DelayWarning } from '@/hooks/use-journey-monitor'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface DelayBannerProps {
   warnings: DelayWarning[]
@@ -9,6 +10,7 @@ interface DelayBannerProps {
 }
 
 export function DelayBanner({ warnings, onGetAlternatives, onDismiss }: DelayBannerProps) {
+  const { t } = useTranslation()
   if (warnings.length === 0) return null
 
   return (
@@ -28,7 +30,7 @@ export function DelayBanner({ warnings, onGetAlternatives, onDismiss }: DelayBan
               onClick={onGetAlternatives}
               className="px-2 py-1 bg-amber-500 text-white rounded text-xs font-medium hover:bg-amber-600"
             >
-              Alternatives
+              {t('delayBanner.alternatives')}
             </button>
             <button
               type="button"

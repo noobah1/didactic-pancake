@@ -1,0 +1,3527 @@
+[
+  {
+    "cityId": "tallinn",
+    "probes": [
+      {
+        "id": "tallinn-1",
+        "lat": 59.432991,
+        "lon": 24.74838,
+        "routeCount": 65
+      },
+      {
+        "id": "tallinn-2",
+        "lat": 59.42304,
+        "lon": 24.790192,
+        "routeCount": 33
+      },
+      {
+        "id": "tallinn-3",
+        "lat": 59.442263,
+        "lon": 24.866753,
+        "routeCount": 24
+      },
+      {
+        "id": "tallinn-4",
+        "lat": 59.413188,
+        "lon": 24.635826,
+        "routeCount": 24
+      },
+      {
+        "id": "tallinn-5",
+        "lat": 59.42916,
+        "lon": 24.70352,
+        "routeCount": 19
+      },
+      {
+        "id": "tallinn-6",
+        "lat": 59.401154,
+        "lon": 24.694487,
+        "routeCount": 17
+      },
+      {
+        "id": "tallinn-7",
+        "lat": 59.46731,
+        "lon": 24.83377,
+        "routeCount": 14
+      },
+      {
+        "id": "tallinn-8",
+        "lat": 59.508916,
+        "lon": 24.83104,
+        "routeCount": 14
+      },
+      {
+        "id": "tallinn-9",
+        "lat": 59.445551,
+        "lon": 24.820133,
+        "routeCount": 14
+      },
+      {
+        "id": "tallinn-10",
+        "lat": 59.410564,
+        "lon": 24.737053,
+        "routeCount": 14
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:d339a3570f92545cd7b65dc8ee7f6bb7",
+        "shortName": "116C",
+        "longName": "Tallinn - Luige - Sausti - Kiili - Paekna",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:107bb5067b5e72c593a2a43e0a2eb174",
+        "shortName": "104A",
+        "longName": "Tallinn - Loo - Kostivere",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:a3e36adb0529aa81ea701eb0383115a9",
+        "shortName": "174",
+        "longName": "Tallinn - Viimsi - Haabneeme",
+        "probeIds": [
+          "tallinn-7",
+          "tallinn-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_21-1",
+        "shortName": "21",
+        "longName": "Viru keskus - Landi",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_65-1",
+        "shortName": "65",
+        "longName": "Priisle - Lennujaam (14.08-15.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-3",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:aa1a13e5872ebfbcdadddcf86203a217",
+        "shortName": "134",
+        "longName": "Tallinn - Jüri - Vana mnt - Vaida",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_9",
+        "shortName": "9",
+        "longName": "Kadaka - Estonia - Priisle",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_1-1",
+        "shortName": "1",
+        "longName": "Vana-Pääsküla - Viru - Viimsi",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-7",
+          "tallinn-8",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_5",
+        "shortName": "5",
+        "longName": "Männiku - Viru - Metsakooli tee",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_7",
+        "shortName": "7",
+        "longName": "Seli - Sõjamäe (al 16.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:d46f6f5622a38c52f2982de28a47823e",
+        "shortName": "132",
+        "longName": "Tallinn - Järveküla - Rae küla - Jüri",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:7f873264218b5885e913f113d5159498",
+        "shortName": "106",
+        "longName": "Tallinn - Laagna - Loo - Mõisa tee - Laagna - Tallinn",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_26A-1",
+        "shortName": "26A",
+        "longName": "Väike-Õismäe - Paljassaare põik",
+        "probeIds": [
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:7d52dda42c75c42c5479ab51bc8dc1ab",
+        "shortName": "111",
+        "longName": "Tallinn - Tabasalu - Vatsla - Harku - Tallinn",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:adbd74498099f789b34bbc544ae53219",
+        "shortName": "116B",
+        "longName": "Tallinn - Kangrumetsa - Kiili - Paekna - Sookaera",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_15-1",
+        "shortName": "15",
+        "longName": "Estonia - Bussijaam - Sõjamäe (al 17.08)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:623a375834173307326383bb5067c3b1",
+        "shortName": "125A",
+        "longName": "Tallinn - Põrguvälja - Jüri - Lagedi",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:a6da64a0ae8cb88138c98e864f4a32f4",
+        "shortName": "116",
+        "longName": "Tallinn - Luige - Kiili - Paekna",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_24-1",
+        "shortName": "24",
+        "longName": "Kadaka - Estonia",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_24A",
+        "shortName": "24A",
+        "longName": "Kadaka - Estonia",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:228559e2612a6cff4740a87b29a051cc",
+        "shortName": "103",
+        "longName": "Tallinn - Ülemiste - Lagedi - Loo - Muuga - Maardu",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_20-1",
+        "shortName": "20",
+        "longName": "Viru keskus - Teelise",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-6",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_2-1",
+        "shortName": "2",
+        "longName": "Balti jaam - Mõigu",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:96f5fb4a7a0185a058343708f11efa24",
+        "shortName": "106A",
+        "longName": "Tallinn - Loo - Lagedi",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:b4e5a054a1cf5a9a6a96f83268436506",
+        "shortName": "117A",
+        "longName": "Tallinn - Saku",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_49-1",
+        "shortName": "49",
+        "longName": "Viimsi keskus - Lennujaam (al 17.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-7",
+          "tallinn-8",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:0b7a27c933eba33e2de194efa5be3009",
+        "shortName": "102",
+        "longName": "Tallinn - Laagna - Muuga - Maardu",
+        "probeIds": [
+          "tallinn-3",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_8-1",
+        "shortName": "8",
+        "longName": "Väike-Õismäe - Balti jaam - Äigrumäe",
+        "probeIds": [
+          "tallinn-4",
+          "tallinn-5",
+          "tallinn-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_67-1",
+        "shortName": "67",
+        "longName": "Seli - Bussijaam - Sütiste (14.08)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_45-1",
+        "shortName": "45",
+        "longName": "Väike-Õismäe - Nõmme - Ülemiste (14.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:39147b5278f375701475aa59e610bf49",
+        "shortName": "120",
+        "longName": "Tallinn - Jüri",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_54-1",
+        "shortName": "54",
+        "longName": "Väike-Õismäe - Bussijaam - Priisle (14.08)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2",
+          "tallinn-3",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:44ad5a8097da62ee1b5d3adc236b56de",
+        "shortName": "106B",
+        "longName": "Tallinn - Loo",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:975cce0849512426d7d8c8655179b2fd",
+        "shortName": "120A",
+        "longName": "Tallinn - Põrguvälja - Jüri",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:481a8cf5a6094ab0215d1f73408aa200",
+        "shortName": "111A",
+        "longName": "Tallinn - Harku - Vatsla - Tabasalu - Tallinn",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_31A",
+        "shortName": "31A",
+        "longName": "Priisle - Iru hooldekodu - Estonia",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:52c93c3cafb307ea488a85701a0f6dc0",
+        "shortName": "172",
+        "longName": "Tallinn - Laagna - Muuga - Maardu",
+        "probeIds": [
+          "tallinn-3",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1170301fadfc3021178f8bab6a0201e1",
+        "shortName": "132A",
+        "longName": "Tallinn - Järveküla - Rae küla - Jüri - Vaida",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:61a5a11f8c6cefda8f813add8fa746c7",
+        "shortName": "160",
+        "longName": "Tallinn - Soodevahe",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_7-1",
+        "shortName": "7",
+        "longName": "Seli - Sõjamäe (14.08-15.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:432df6826f7d34ad85d85e68af318b26",
+        "shortName": "106C",
+        "longName": "Tallinn - Loo - Lagedi kool - Kostivere",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_19-1",
+        "shortName": "19",
+        "longName": "Reisadama D-terminal - Laagri alevik",
+        "probeIds": [
+          "tallinn-6",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:40aaf25bb42c0d689ca980a93d3f752c",
+        "shortName": "200",
+        "longName": "Tallinn (Maleva) - Kurna",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_83",
+        "shortName": "83",
+        "longName": "Mustamäe - Kaubamaja (trollibuss)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_81",
+        "shortName": "81",
+        "longName": "Mustamäe - Kaubamaja (trollibuss)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_26-1",
+        "shortName": "26",
+        "longName": "Väike-Õismäe - Paljassaare",
+        "probeIds": [
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_94",
+        "shortName": "94",
+        "longName": "ÖÖ Balti jaam - Priisle",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_95",
+        "shortName": "95",
+        "longName": "ÖÖ Balti jaam - Viimsi keskus",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-7",
+          "tallinn-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_96",
+        "shortName": "96",
+        "longName": "ÖÖ Balti jaam - Vana-Pääsküla",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:bb24c5abc998cfe42344d2cd01d91282",
+        "shortName": "121",
+        "longName": "Tallinn - Mõigu - Peetri - Järveküla - Peetri - Tallinn",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_91",
+        "shortName": "91",
+        "longName": "ÖÖ Balti jaam - Mustamäe",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_92",
+        "shortName": "92",
+        "longName": "ÖÖ Balti jaam - Väike-Õismäe",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_61",
+        "shortName": "61",
+        "longName": "Kotermaa - Järve haigla",
+        "probeIds": [
+          "tallinn-4",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_65",
+        "shortName": "65",
+        "longName": "Priisle - Lennujaam (al 17.08)",
+        "probeIds": [
+          "tallinn-3",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_67",
+        "shortName": "67",
+        "longName": "Seli - Bussijaam - Sütiste (al 15.08)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:3a194a6104a3ffe63dccb5e0c921fdf4",
+        "shortName": "114",
+        "longName": "Tallinn - Haabneeme - Rohuneeme",
+        "probeIds": [
+          "tallinn-7",
+          "tallinn-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_tram_T4",
+        "shortName": "T4",
+        "longName": "Tondi - Lennujaam",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_tram_T3",
+        "shortName": "T3",
+        "longName": "Tondi - Kadriorg",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:923428136a2c1ebf7dadec2b631b00e1",
+        "shortName": "181",
+        "longName": "Tallinn - Harkujärve - Liiva tee - Tabasalu",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_48",
+        "shortName": "48",
+        "longName": "Pirita keskus - Vesse",
+        "probeIds": [
+          "tallinn-3",
+          "tallinn-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_49",
+        "shortName": "49",
+        "longName": "Viimsi keskus - Lennujaam (14.08-15.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-7",
+          "tallinn-8",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_13-1",
+        "shortName": "13",
+        "longName": "Väike-Õismäe - Priisle (al 17.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-4",
+          "tallinn-6",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_40",
+        "shortName": "40",
+        "longName": "Priisle - Estonia - Pelguranna",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_41",
+        "shortName": "41",
+        "longName": "Balti jaam - Kakumäe",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_42",
+        "shortName": "42",
+        "longName": "Väike-Õismäe - Estonia - Priisle",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_45",
+        "shortName": "45",
+        "longName": "Väike-Õismäe - Nõmme - Ülemiste (al 15.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_46",
+        "shortName": "46",
+        "longName": "Väike-Õismäe - Estonia - Seli",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_54",
+        "shortName": "54",
+        "longName": "Väike-Õismäe - Bussijaam - Priisle (al 15.08)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2",
+          "tallinn-3",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1de74812c3a27647651817a6180370b2",
+        "shortName": "125",
+        "longName": "Tallinn - Jüri - Lagedi",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_28",
+        "shortName": "28",
+        "longName": "Vana-Lõuna - Väike-Õismäe",
+        "probeIds": [
+          "tallinn-4",
+          "tallinn-6",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_23",
+        "shortName": "23",
+        "longName": "Kadaka - Bussijaam",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_36",
+        "shortName": "36",
+        "longName": "Väike-Õismäe - Nõmme - Viru",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-4",
+          "tallinn-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_31",
+        "shortName": "31",
+        "longName": "Priisle - Estonia",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_35",
+        "shortName": "35",
+        "longName": "Seli - Pelguranna",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_15",
+        "shortName": "15",
+        "longName": "Estonia - Bussijaam - Sõjamäe (14.08-15.08)",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_16",
+        "shortName": "16",
+        "longName": "Väike-Õismäe - Estonia - Tallinn-Väike",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-4",
+          "tallinn-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_10",
+        "shortName": "10",
+        "longName": "Väike-Õismäe - Nõmme - Vana-Pääsküla",
+        "probeIds": [
+          "tallinn-4",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_11",
+        "shortName": "11",
+        "longName": "Kadaka - Kaubamaja",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_12",
+        "shortName": "12",
+        "longName": "Väike-Õismäe - Seli",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-3",
+          "tallinn-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_13",
+        "shortName": "13",
+        "longName": "Väike-Õismäe - Priisle (14.08-15.08)",
+        "probeIds": [
+          "tallinn-2",
+          "tallinn-4",
+          "tallinn-6",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:4e1fe1940277e7faf7df79f07fe1016b",
+        "shortName": "150",
+        "longName": "Tallinn - Laagna - Kostivere - Uus-Rebala - Tallinn",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:494c9948b6ead4057324e93f07dcf71f",
+        "shortName": "104C",
+        "longName": "Tallinn - Loo - Lagedi mõis - Kostivere - Jõelähtme",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_66-1",
+        "shortName": "66",
+        "longName": "Priisle - Balti jaam - Pelguranna",
+        "probeIds": [
+          "tallinn-3",
+          "tallinn-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:e64453cdf117eafef90b1cbf364d77b4",
+        "shortName": "162",
+        "longName": "Tallinn - Järvesuu - Peetri - Uuesalu",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:197651e9318645623aea20b7cf0676ca",
+        "shortName": "164",
+        "longName": "Tallinn - Jüri - Kiili",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tallinna-lin_bus_18-1",
+        "shortName": "18",
+        "longName": "Viru keskus - Urda",
+        "probeIds": [
+          "tallinn-1",
+          "tallinn-10"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "tartu",
+    "probes": [
+      {
+        "id": "tartu-1",
+        "lat": 58.376724,
+        "lon": 26.726653,
+        "routeCount": 43
+      },
+      {
+        "id": "tartu-2",
+        "lat": 58.364181,
+        "lon": 26.698124,
+        "routeCount": 25
+      },
+      {
+        "id": "tartu-3",
+        "lat": 58.322406,
+        "lon": 26.710134,
+        "routeCount": 16
+      },
+      {
+        "id": "tartu-4",
+        "lat": 58.354676,
+        "lon": 26.721266,
+        "routeCount": 15
+      },
+      {
+        "id": "tartu-5",
+        "lat": 58.361095,
+        "lon": 26.654782,
+        "routeCount": 14
+      },
+      {
+        "id": "tartu-6",
+        "lat": 58.344448,
+        "lon": 26.69954,
+        "routeCount": 12
+      },
+      {
+        "id": "tartu-7",
+        "lat": 58.356774,
+        "lon": 26.62024,
+        "routeCount": 11
+      },
+      {
+        "id": "tartu-8",
+        "lat": 58.372366,
+        "lon": 26.767025,
+        "routeCount": 10
+      },
+      {
+        "id": "tartu-9",
+        "lat": 58.323828,
+        "lon": 26.620368,
+        "routeCount": 9
+      },
+      {
+        "id": "tartu-10",
+        "lat": 58.341785,
+        "lon": 26.6579,
+        "routeCount": 8
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:778aa6871db34156c7aaa6cf53366778",
+        "shortName": "507",
+        "longName": "Tartu - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-5",
+          "tartu-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:dbc1a3729774a1558171052a7e5d8490",
+        "shortName": "13",
+        "longName": "Kasteheina - Puidu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:25f67c417307e5be2c66d9b7fbfec040",
+        "shortName": "328",
+        "longName": "Tartu - Tõrvandi - Külitse järve - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-5",
+          "tartu-6",
+          "tartu-7",
+          "tartu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:a96719d6c6821777993f46b4e566ba74",
+        "shortName": "360",
+        "longName": "Tartu - Eerika - Tõrvandi - Ülenurme keskus - Männi",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:82f00cbb707de581e42b137af67c479f",
+        "shortName": "1",
+        "longName": "Fi - Nõlvaku",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:f7be69cb23cf4ae1371d17bcef1cba5a",
+        "shortName": "242",
+        "longName": "Hariduse - Roiu - Suurekivi - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:392c8f1f48c4dd8387e1fe6c79de7ee3",
+        "shortName": "351",
+        "longName": "Tartu - Tõrvandi - Uhti keskus - Kambja park",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:3f4ed538859451408434b050dbfda339",
+        "shortName": "7",
+        "longName": "Tõrvandi - Raeplats - Kõrveküla",
+        "probeIds": [
+          "tartu-1",
+          "tartu-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:45ea9c05194967bca830ee7a26786da8",
+        "shortName": "361",
+        "longName": "Männi - Ülenurme keskus - Tõrvandi - Eerika - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:d4de616f8dcd383260aab8f12274382b",
+        "shortName": "22",
+        "longName": "Ööliin ( Kesklinn - Turu )",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-4",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:4a3e48f6df54dceb070ab34b241ccfd6",
+        "shortName": "224",
+        "longName": "Reola - Tõrvandi - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-3",
+          "tartu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:tartumaa332-04-26",
+        "shortName": "332",
+        "longName": "Lennujaam - Tõrvandi - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-3",
+          "tartu-4",
+          "tartu-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c93dd9d209fc0da5f94a7b30e6847841",
+        "shortName": "531",
+        "longName": "Tõrvandi tee - Rehe - Aia - Lemmatsi - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-5",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:482226129890dbf155a8bf5c9877657d",
+        "shortName": "241",
+        "longName": "Tartu - Lennujaam - Hobunurme - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-4",
+          "tartu-5",
+          "tartu-6",
+          "tartu-7",
+          "tartu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:350f8e4d0fe999fb3ee21f5284a2024a",
+        "shortName": "538",
+        "longName": "Tartu - Tõrvandi - Ülenurme Gümnaasium - Ringtee",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-5",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:3c46d5b0d4c1153c3748cc6f345cb090",
+        "shortName": "362",
+        "longName": "Tartu - Eerika - Tõrvandi - Ülenurme keskus - Männi",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:0c0c54ef34c0814f688fb18f73a69359",
+        "shortName": "506",
+        "longName": "Tartu - Haage - Hobunurme - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-5",
+          "tartu-7",
+          "tartu-9",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:4508b5a7bdec0cf51d466007ea7132ab",
+        "shortName": "510",
+        "longName": "Tartu - Ilmatsalu - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:91c12c1a5136abc697d94272ad8a3899",
+        "shortName": "508",
+        "longName": "Tartu - Haage - Ilmatsalu - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-5",
+          "tartu-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:600a268de4eac46ad4e181a0ee29aebd",
+        "shortName": "207",
+        "longName": "Tartu - Roiu kauplus - Kaagvere - Luunja kool - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:a480bede938ed672473ad5136f6a33f4",
+        "shortName": "337",
+        "longName": "Tartu - Rehe -Tõrvandi - Külitse järve - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-5",
+          "tartu-6",
+          "tartu-7",
+          "tartu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:f317f9d90c9f9470b9a73398a1c4a20c",
+        "shortName": "21",
+        "longName": "Ööliin ( Soola - Nõlvaku )",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-4",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ad7be154fae9ca223ff7c9fb38e7cf97",
+        "shortName": "4",
+        "longName": "Ringtee - Kummeli",
+        "probeIds": [
+          "tartu-1",
+          "tartu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:027809f6fec195d151ec512b08ad19cf",
+        "shortName": "343",
+        "longName": "Tartu - Lennujaam - Uhti keskus - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-3",
+          "tartu-4",
+          "tartu-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:403129538c26a780aff14c6114f48ca6",
+        "shortName": "419",
+        "longName": "Tartu - Külitse järve - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-5",
+          "tartu-7",
+          "tartu-9",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1dde0e81dd0007b4048bd3389297e33a",
+        "shortName": "9",
+        "longName": "Karlova - Annelinn - Raadi",
+        "probeIds": [
+          "tartu-1",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c0561dc788e518f704c223cc57cd3973",
+        "shortName": "443",
+        "longName": "Tartu - Külitse järve - Tõrvandi - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-4",
+          "tartu-6",
+          "tartu-9",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1ca81617a054f891529f672e32938dc2",
+        "shortName": "537",
+        "longName": "Ilmatsalu - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ae613439c9ac436afef59857fcdabebf",
+        "shortName": "10",
+        "longName": "Kvissentali-Annelinn Ringtee-Rdt. jaam",
+        "probeIds": [
+          "tartu-4",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:86346d334e174d9f954b528cf2bfe891",
+        "shortName": "5",
+        "longName": "Turu - Annelinn - Ihaste - Annelinn - Turu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ffb9f37caa54c0eddad92888a9705d31",
+        "shortName": "228",
+        "longName": "Tartu - Lennujaam - Hobunurme - Teaduspark - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-4",
+          "tartu-5",
+          "tartu-6",
+          "tartu-7",
+          "tartu-9",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ad0ada373a0432d5444c3d3a9fe20271",
+        "shortName": "539",
+        "longName": "Tartu - Ilmatsalu - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:5c5fcc871efc461c257f6cfd45a5f3a6",
+        "shortName": "509",
+        "longName": "Tartu - Ilmatsalu - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:8516c6528db5d744a547729fe69668fc",
+        "shortName": "8",
+        "longName": "Kvissentali - Roopa",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:b4c5c0d01f6e3d5b5d2ba2ef83fd5034",
+        "shortName": "69",
+        "longName": "Lõunakeskuse ekspress (kesklinna)",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:24c4971d9b648771df5bd2c4babd9ab5",
+        "shortName": "12",
+        "longName": "Lõunakeskus - Kasteheina",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:05092b4bdb4130628ca065c53f8a3969",
+        "shortName": "6",
+        "longName": "Lõunakeskus - Roheline park",
+        "probeIds": [
+          "tartu-1",
+          "tartu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:bff9e7d2c05dd3e598d5769d7e86743b",
+        "shortName": "418",
+        "longName": "Tartu - Külitse järve - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-5",
+          "tartu-7",
+          "tartu-9",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c6d8e26e87ec42b8ab735d74e5afdd6c",
+        "shortName": "119",
+        "longName": "Tartu - Vorbuse - Ilmatsalu kool - Haage - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-5",
+          "tartu-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:965ee7404abe849f47c840e08b4ffde4",
+        "shortName": "237",
+        "longName": "Roiu kauplus - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:0e3de04a1df6babfaeff75ebab18bcc3",
+        "shortName": "11",
+        "longName": "Märja - Lõunakeskus - Kasteheina",
+        "probeIds": [
+          "tartu-1",
+          "tartu-5",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:3ef88e812ba19553a78abfe309c76563",
+        "shortName": "2",
+        "longName": "Lõunakeskus - Kannikese - Nõlvaku",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:0604574afd1d57b10572edf48091fa71",
+        "shortName": "505",
+        "longName": "Tartu - Haage - Hobunurme - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-5",
+          "tartu-7",
+          "tartu-9",
+          "tartu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:bdd0e05ee96e8c01fb64750248bea3ac",
+        "shortName": "221",
+        "longName": "(Roiu) - Sillaotsa - Roiu - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:3040defc8095415d9a6a7ac6f8bd8a07",
+        "shortName": "363",
+        "longName": "Männi - Ülenurme keskus - Tõrvandi - Eerika - Tartu",
+        "probeIds": [
+          "tartu-1",
+          "tartu-2",
+          "tartu-3",
+          "tartu-6"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "narva",
+    "probes": [
+      {
+        "id": "narva-1",
+        "lat": 59.37899,
+        "lon": 28.178638,
+        "routeCount": 17
+      },
+      {
+        "id": "narva-2",
+        "lat": 59.363059,
+        "lon": 28.189521,
+        "routeCount": 12
+      },
+      {
+        "id": "narva-3",
+        "lat": 59.406942,
+        "lon": 28.164547,
+        "routeCount": 4
+      },
+      {
+        "id": "narva-4",
+        "lat": 59.416367,
+        "lon": 28.141495,
+        "routeCount": 4
+      },
+      {
+        "id": "narva-5",
+        "lat": 59.394588,
+        "lon": 28.190888,
+        "routeCount": 4
+      },
+      {
+        "id": "narva-6",
+        "lat": 59.429267,
+        "lon": 28.125831,
+        "routeCount": 4
+      },
+      {
+        "id": "narva-7",
+        "lat": 59.439173,
+        "lon": 28.097454,
+        "routeCount": 3
+      },
+      {
+        "id": "narva-8",
+        "lat": 59.426573,
+        "lon": 28.077582,
+        "routeCount": 3
+      },
+      {
+        "id": "narva-9",
+        "lat": 59.385896,
+        "lon": 28.088548,
+        "routeCount": 2
+      },
+      {
+        "id": "narva-10",
+        "lat": 59.431909,
+        "lon": 28.044275,
+        "routeCount": 2
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:350b8355d8d9fa2003ca983539539d3b",
+        "shortName": "3b",
+        "longName": "Augametsa - Lõuna-Kudruküla - Jaama - Paemurru",
+        "probeIds": [
+          "narva-1",
+          "narva-2",
+          "narva-3",
+          "narva-4",
+          "narva-5",
+          "narva-6",
+          "narva-7",
+          "narva-8",
+          "narva-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1e1fd63334db52406f0409b77b5cf00d-3",
+        "shortName": "3k",
+        "longName": "Paemurru - Jaama - Tempo - Siivertsi - Lõuna-Kudruküla",
+        "probeIds": [
+          "narva-1",
+          "narva-2",
+          "narva-3",
+          "narva-4",
+          "narva-5",
+          "narva-6",
+          "narva-7",
+          "narva-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:831b9ca6738ee74c1fb4b809bef33c77-1",
+        "shortName": "4",
+        "longName": "Kutsekooli - Narova - Kutsekooli",
+        "probeIds": [
+          "narva-1",
+          "narva-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:0a8bfc5c747098d38110c5fcc767c0bf",
+        "shortName": "3v",
+        "longName": "Paemurru - Jaam - Tempo - Luige - Jugla",
+        "probeIds": [
+          "narva-1",
+          "narva-2",
+          "narva-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:a02aaaf89d4ee3d3a5a0a6f5b6910469-1",
+        "shortName": "3m",
+        "longName": "Paemurru - Jaama - Tempo - Riigiküla kalmistu - Taevasina",
+        "probeIds": [
+          "narva-1",
+          "narva-2",
+          "narva-3",
+          "narva-4",
+          "narva-5",
+          "narva-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:88096f108693cd0b441eabe8811a3876",
+        "shortName": "5a",
+        "longName": "Betooni - Kutsekooli - Pilve - Betooni",
+        "probeIds": [
+          "narva-1",
+          "narva-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:9d0a200ac9f8a46a5bf5da6fc6bd489d",
+        "shortName": "5",
+        "longName": "Kutsekooli - Kauba - Kutsekooli",
+        "probeIds": [
+          "narva-1",
+          "narva-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:narva00001",
+        "shortName": "8b",
+        "longName": "Sendi - Narova - Koorikooli - Paemurru",
+        "probeIds": [
+          "narva-1",
+          "narva-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:16e58cca214395b5063d8f321c948fc1",
+        "shortName": "2",
+        "longName": "Paemurru - Sepa - Narova - Sepa - Paemurru",
+        "probeIds": [
+          "narva-1",
+          "narva-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:9c20fa132e25507a14cabd12ae542964",
+        "shortName": "6",
+        "longName": "Nahavabriku - Narova - Paemurru - Nahavabriku",
+        "probeIds": [
+          "narva-1",
+          "narva-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:67e62fe885d4800ae4446b481eef3cde",
+        "shortName": "3a",
+        "longName": "Paemurru - Jaama - Tempo - Augametsa",
+        "probeIds": [
+          "narva-1",
+          "narva-2",
+          "narva-3",
+          "narva-4",
+          "narva-5",
+          "narva-6",
+          "narva-7",
+          "narva-8",
+          "narva-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:f953343fbc0614f2379101df7143f6e6",
+        "shortName": "3o",
+        "longName": "Paemurru - Jaama - Tempo - Luige",
+        "probeIds": [
+          "narva-1",
+          "narva-2",
+          "narva-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:d99ef534a297da507f0623484ec56dde",
+        "shortName": "1",
+        "longName": "Paemurru - Kauba - Paemurru",
+        "probeIds": [
+          "narva-1",
+          "narva-2"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "parnu",
+    "probes": [
+      {
+        "id": "parnu-1",
+        "lat": 58.385779,
+        "lon": 24.506174,
+        "routeCount": 33
+      },
+      {
+        "id": "parnu-2",
+        "lat": 58.376383,
+        "lon": 24.529582,
+        "routeCount": 24
+      },
+      {
+        "id": "parnu-3",
+        "lat": 58.39286,
+        "lon": 24.47189,
+        "routeCount": 15
+      },
+      {
+        "id": "parnu-4",
+        "lat": 58.384903,
+        "lon": 24.554755,
+        "routeCount": 12
+      },
+      {
+        "id": "parnu-5",
+        "lat": 58.407758,
+        "lon": 24.493312,
+        "routeCount": 9
+      },
+      {
+        "id": "parnu-6",
+        "lat": 58.361329,
+        "lon": 24.563838,
+        "routeCount": 8
+      },
+      {
+        "id": "parnu-7",
+        "lat": 58.366878,
+        "lon": 24.596253,
+        "routeCount": 7
+      },
+      {
+        "id": "parnu-8",
+        "lat": 58.34658,
+        "lon": 24.57934,
+        "routeCount": 6
+      },
+      {
+        "id": "parnu-9",
+        "lat": 58.341373,
+        "lon": 24.620042,
+        "routeCount": 5
+      },
+      {
+        "id": "parnu-10",
+        "lat": 58.400607,
+        "lon": 24.524476,
+        "routeCount": 5
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:bc7705ab7bf6e10d82a24359af2724e6",
+        "shortName": "46",
+        "longName": "Pärnu - Eametsa - Lepplaane - Jänesselja - Pärnu",
+        "probeIds": [
+          "parnu-1",
+          "parnu-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:30e15ccff07fecffd4be8ecaee4613f3",
+        "shortName": "28",
+        "longName": "Audru kool - Riia mnt. - Sillaküla - Kuigu",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-6",
+          "parnu-7",
+          "parnu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:f35112cca6c9cd49381840200cd3c01e",
+        "shortName": "23",
+        "longName": "Bussijaam - Lennujaam",
+        "probeIds": [
+          "parnu-1",
+          "parnu-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:7bbe31ff029798cc699fd39645ccbadd",
+        "shortName": "23-1",
+        "longName": "Paikuse kool - Kuigu",
+        "probeIds": [
+          "parnu-7",
+          "parnu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:450919433f11f516db491a17c34cd395",
+        "shortName": "1A-II",
+        "longName": "Vabaduse park-Papiniidu-Haigla-Oja-Teater-Papiniidu-Niidupark",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:5c5b870aa371d4eb95d169ddf72f810c",
+        "shortName": "13",
+        "longName": "Tammiste aiand - Haigla - Oja - Vana-Sauga - Kalurihall",
+        "probeIds": [
+          "parnu-3",
+          "parnu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c8be22df7ab1a61aed5aa00f470ec510",
+        "shortName": "20A",
+        "longName": "Kodara - Vana-Savi - Teater",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-5",
+          "parnu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:e76bc2817707c5c7597d376d2e0336ef",
+        "shortName": "6",
+        "longName": "Raja - Mai - Karja - Uus-Sauga - Vana-Sauga",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c52de900690179d5fa60eb29e0a6d114",
+        "shortName": "25",
+        "longName": "Haigla - Mai - Riia mnt. -Käreda - Audru kool",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-4",
+          "parnu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:4668d58b5f06133f17cced7476dc93d3",
+        "shortName": "17",
+        "longName": "Vana-Sauga - Rannapark - Haigla - Savi - K-Kodu",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-3",
+          "parnu-4",
+          "parnu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:parnu00016",
+        "shortName": "14A",
+        "longName": "Merimetsa - Rannapark - Haigla",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:251a5fd7e719664f2e7b0bd2b9c8151d",
+        "shortName": "38",
+        "longName": "Sindi - Paide mnt. - Tallinna mnt.",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-5",
+          "parnu-6",
+          "parnu-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:b432829d51e185b1654fcb65edce586d",
+        "shortName": "12",
+        "longName": "Vana-Sauga - Uus-Sauga - Bussijaam",
+        "probeIds": [
+          "parnu-1",
+          "parnu-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:779cd4edfc9f17013ab41bc982fe4532",
+        "shortName": "40",
+        "longName": "Sindi - Pärnu - Sauga alevik",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-3",
+          "parnu-5",
+          "parnu-6",
+          "parnu-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:000e6300bf184fc3f82e935a37d84a3a",
+        "shortName": "21",
+        "longName": "Raja-Mai-Tammsaare-Tallinna mnt-Sauga a-k - Hüntali",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-4",
+          "parnu-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:77f4c9f0eb3c892198e98f5621ed05be",
+        "shortName": "15",
+        "longName": "Vana-Sauga - Aia - Papiniidu - Raeküla - Reiu mõis",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-3",
+          "parnu-6",
+          "parnu-7",
+          "parnu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:858c78836debb49699a9992570ff2d16",
+        "shortName": "1A-I",
+        "longName": "Merimetsa - Mai - Karja - Oja – Kodara - Kirsi",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-8",
+          "parnu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ff8883fb2797347708de304fe3248171",
+        "shortName": "10",
+        "longName": "Raja - Mai - Karja - Vana-Pärnu",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:7f5cc215f936b5ed3463548dbc209008",
+        "shortName": "14",
+        "longName": "Merimetsa - Papiniidu - Riia mnt - Oja - Haigla",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:9ecad3b427b300f6393ec14ece035529",
+        "shortName": "28A",
+        "longName": "Papiniidu - Kuigu",
+        "probeIds": [
+          "parnu-4",
+          "parnu-6",
+          "parnu-7",
+          "parnu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:356a00d7725dd3e3bd81e8dd724e9d94",
+        "shortName": "16",
+        "longName": "Tammiste lasteaed - Papiniidu - Aia - Vana-Sauga",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:83d73b93091760df634f2a49f9f4bc3f",
+        "shortName": "7B",
+        "longName": "Mere - Tammsaare - Uus-Sauga - Oja - Kaubajaam",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:8dfbf601004b007ad7ca56f84c4ea80a",
+        "shortName": "7",
+        "longName": "Kaubajaam - Haigla - Oja - Tammsaare - Raja",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:parnukaubamajakas-1",
+        "shortName": "Kaubamajakas",
+        "longName": "Pärnu Hotell - Kaubamajakas - Hotell Pärnu",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:edd4b253fad7a126b0519c214e943ec9",
+        "shortName": "8",
+        "longName": "Raja-Kuke-Teater-KEK-Oja-Haigla-Papiniidu-Merimetsa",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-4",
+          "parnu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:62f142d2df48cc903a8d0c05d72e603a",
+        "shortName": "27",
+        "longName": "Tallinna mnt. - Papsaare - Vigri - Audru kool",
+        "probeIds": [
+          "parnu-3",
+          "parnu-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ad7e29ed3021bdc8539953568b4c60eb",
+        "shortName": "19",
+        "longName": "Raja - Mai - Karja - Tallinna mnt - Lõo",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:a38a34591da7785f868fa3cbebd97f1e",
+        "shortName": "1",
+        "longName": "Merimetsa - Papiniidu - Riia mnt - Vana-Pärnu",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:5f11bfa9b89a63c50977fbb4c2a4b1f2",
+        "shortName": "22",
+        "longName": "Vabaduse park - Turg - Mere - Papiniidu - Tammiste lasteaed",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:0246a28097d57709335fe8b56a33a54a",
+        "shortName": "9",
+        "longName": "Vana-Pärnu - Tammsaare - Kuke - Teater - Rääma - Haigla",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1c0842efac19240229fef1dd4d522d02",
+        "shortName": "39",
+        "longName": "Pärnu - Tammiste - Urge - Sindi",
+        "probeIds": [
+          "parnu-1",
+          "parnu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:11bc59693dc8e111530e4bffc10e718b",
+        "shortName": "29",
+        "longName": "Vabaduse park - Turg - Mere - Raeküla - Reiu mõis",
+        "probeIds": [
+          "parnu-1",
+          "parnu-2",
+          "parnu-6",
+          "parnu-7",
+          "parnu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1e81b26cf7cef4fb42312740a77c7af2",
+        "shortName": "4",
+        "longName": "Merimetsa - Papiniidu - Haigla - Lina",
+        "probeIds": [
+          "parnu-4",
+          "parnu-6",
+          "parnu-8",
+          "parnu-10"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "kohtla-jarve",
+    "probes": [
+      {
+        "id": "kohtla-jarve-1",
+        "lat": 59.357201,
+        "lon": 27.413726,
+        "routeCount": 4
+      },
+      {
+        "id": "kohtla-jarve-2",
+        "lat": 59.392739,
+        "lon": 27.256164,
+        "routeCount": 4
+      },
+      {
+        "id": "kohtla-jarve-3",
+        "lat": 59.402056,
+        "lon": 27.295234,
+        "routeCount": 4
+      },
+      {
+        "id": "kohtla-jarve-4",
+        "lat": 59.375602,
+        "lon": 27.37896,
+        "routeCount": 3
+      },
+      {
+        "id": "kohtla-jarve-5",
+        "lat": 59.403725,
+        "lon": 27.3278,
+        "routeCount": 3
+      },
+      {
+        "id": "kohtla-jarve-6",
+        "lat": 59.387553,
+        "lon": 27.345411,
+        "routeCount": 3
+      },
+      {
+        "id": "kohtla-jarve-7",
+        "lat": 59.356772,
+        "lon": 27.240575,
+        "routeCount": 2
+      },
+      {
+        "id": "kohtla-jarve-8",
+        "lat": 59.372639,
+        "lon": 27.253603,
+        "routeCount": 2
+      },
+      {
+        "id": "kohtla-jarve-9",
+        "lat": 59.353707,
+        "lon": 27.189271,
+        "routeCount": 1
+      },
+      {
+        "id": "kohtla-jarve-10",
+        "lat": 59.335028,
+        "lon": 27.284552,
+        "routeCount": 1
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:ed131bf60f130bb2e065da0bd3c34b29",
+        "shortName": "43",
+        "longName": "Jõhvi - Kohtla-Järve - Kohtla-Nõmme",
+        "probeIds": [
+          "kohtla-jarve-1",
+          "kohtla-jarve-2",
+          "kohtla-jarve-3",
+          "kohtla-jarve-4",
+          "kohtla-jarve-5",
+          "kohtla-jarve-6",
+          "kohtla-jarve-7",
+          "kohtla-jarve-8",
+          "kohtla-jarve-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:d8d9cecbf72d00d96055ab3783699118",
+        "shortName": "24",
+        "longName": "Spordikeskus - Ahtme kaubakeskus",
+        "probeIds": [
+          "kohtla-jarve-1",
+          "kohtla-jarve-2",
+          "kohtla-jarve-3",
+          "kohtla-jarve-4",
+          "kohtla-jarve-5",
+          "kohtla-jarve-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ed3eb3bb24fbfb1f5afd14d8a225bde1",
+        "shortName": "15",
+        "longName": "Meierei - Sompa - Kohtla-Järve",
+        "probeIds": [
+          "kohtla-jarve-1",
+          "kohtla-jarve-2",
+          "kohtla-jarve-3",
+          "kohtla-jarve-7",
+          "kohtla-jarve-8",
+          "kohtla-jarve-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:a58197969540fbfb2251b97affe7a9c0",
+        "shortName": "28",
+        "longName": "Vanalinn - Ahtme mnt - Vanalinn",
+        "probeIds": [
+          "kohtla-jarve-1",
+          "kohtla-jarve-2",
+          "kohtla-jarve-3",
+          "kohtla-jarve-4",
+          "kohtla-jarve-5",
+          "kohtla-jarve-6"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "viljandi",
+    "probes": [
+      {
+        "id": "viljandi-1",
+        "lat": 58.366961,
+        "lon": 25.597375,
+        "routeCount": 15
+      },
+      {
+        "id": "viljandi-2",
+        "lat": 58.3573,
+        "lon": 25.583755,
+        "routeCount": 12
+      },
+      {
+        "id": "viljandi-3",
+        "lat": 58.345094,
+        "lon": 25.577714,
+        "routeCount": 12
+      },
+      {
+        "id": "viljandi-4",
+        "lat": 58.373058,
+        "lon": 25.575742,
+        "routeCount": 6
+      },
+      {
+        "id": "viljandi-5",
+        "lat": 58.388979,
+        "lon": 25.59456,
+        "routeCount": 5
+      },
+      {
+        "id": "viljandi-6",
+        "lat": 58.376039,
+        "lon": 25.620935,
+        "routeCount": 4
+      },
+      {
+        "id": "viljandi-7",
+        "lat": 58.344677,
+        "lon": 25.497503,
+        "routeCount": 4
+      },
+      {
+        "id": "viljandi-8",
+        "lat": 58.353891,
+        "lon": 25.552101,
+        "routeCount": 4
+      },
+      {
+        "id": "viljandi-9",
+        "lat": 58.348351,
+        "lon": 25.52435,
+        "routeCount": 4
+      },
+      {
+        "id": "viljandi-10",
+        "lat": 58.335311,
+        "lon": 25.478461,
+        "routeCount": 4
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:bad3e3a22ca647f9b6c5d28decf30420",
+        "shortName": "15A",
+        "longName": "Viljandi - Vana-Võidu - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:64b665f2c98a8154ed864cce39cdbc08",
+        "shortName": "36B",
+        "longName": "Viljandi - Karula - Võivaku - Saarepeedi - Karula - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:73cc5c33307deef3d438cb84a02a890d",
+        "shortName": "36C",
+        "longName": "Viljandi - Karula - Võivaku - Saarepeedi - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:506afdbcb8652d4e689e15aea365b9d2",
+        "shortName": "68B",
+        "longName": "Viljandi - Savikoti - Pärsti - Savikoti - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:90b78e76deaa5962f07ea8a6e036551c",
+        "shortName": "7",
+        "longName": "Männimäe - Paalalinn - Männimäe",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:43985c4aaabfbcd59bcc1ca1f3cd2b89",
+        "shortName": "63",
+        "longName": "Viljandi - Heimtali - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-7",
+          "viljandi-8",
+          "viljandi-9",
+          "viljandi-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:0007a91596694e5a652d89b83fddb4c5",
+        "shortName": "28A",
+        "longName": "Viljandi - Ramsi - Päri - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-5",
+          "viljandi-7",
+          "viljandi-8",
+          "viljandi-9",
+          "viljandi-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:226b298d688e3712a94112098241d121",
+        "shortName": "10",
+        "longName": "Männimäe - Paalalinn - Jämejala - Männimäe",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:3b55c26037101128808b1305c6f3ef5b",
+        "shortName": "27",
+        "longName": "Viljandi - Päri - Matapera - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:8964f9c43d54727ece992abf4e913f01",
+        "shortName": "6",
+        "longName": "Männimäe - Paalalinn - Männimäe",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:56c7bd5f0f05dc983162a0a59cbb09fb",
+        "shortName": "9",
+        "longName": "Kantreküla - Viiratsi - Kantreküla",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:51f1712d6d5c53389cdfffeb475780f4",
+        "shortName": "68A",
+        "longName": "Viljandi - Aindu - Pärsti - Savikoti - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:4a63a3055f6f07e47b21fc89af4c0c18",
+        "shortName": "28B",
+        "longName": "Viljandi - Päri - Ramsi - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-5",
+          "viljandi-7",
+          "viljandi-8",
+          "viljandi-9",
+          "viljandi-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:7de6b9a968c31b8a10005b3a41dd6720",
+        "shortName": "2",
+        "longName": "Männimäe - Peetrimõisa - Viiratsi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:42ad247d95750ccf4e2982e5a2138fd2",
+        "shortName": "21",
+        "longName": "Viljandi - Ramsi - Viljandi",
+        "probeIds": [
+          "viljandi-1",
+          "viljandi-2",
+          "viljandi-3",
+          "viljandi-4",
+          "viljandi-7",
+          "viljandi-8",
+          "viljandi-9",
+          "viljandi-10"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "rakvere",
+    "probes": [
+      {
+        "id": "rakvere-1",
+        "lat": 59.347209,
+        "lon": 26.364765,
+        "routeCount": 10
+      },
+      {
+        "id": "rakvere-2",
+        "lat": 59.326121,
+        "lon": 26.364396,
+        "routeCount": 3
+      },
+      {
+        "id": "rakvere-3",
+        "lat": 59.337926,
+        "lon": 26.386623,
+        "routeCount": 3
+      },
+      {
+        "id": "rakvere-4",
+        "lat": 59.363406,
+        "lon": 26.419441,
+        "routeCount": 2
+      },
+      {
+        "id": "rakvere-5",
+        "lat": 59.354135,
+        "lon": 26.387723,
+        "routeCount": 2
+      },
+      {
+        "id": "rakvere-6",
+        "lat": 59.363534,
+        "lon": 26.337019,
+        "routeCount": 2
+      },
+      {
+        "id": "rakvere-7",
+        "lat": 59.351232,
+        "lon": 26.341543,
+        "routeCount": 2
+      },
+      {
+        "id": "rakvere-8",
+        "lat": 59.331016,
+        "lon": 26.293536,
+        "routeCount": 2
+      },
+      {
+        "id": "rakvere-9",
+        "lat": 59.334378,
+        "lon": 26.327934,
+        "routeCount": 2
+      },
+      {
+        "id": "rakvere-10",
+        "lat": 59.329528,
+        "lon": 26.412268,
+        "routeCount": 2
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:53b3ddadd670d12ddec6b8d68663656a-1",
+        "shortName": "3",
+        "longName": "Tõrma - Keskväljak - Tõrma",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-2"
+        ]
+      },
+      {
+        "routeGtfsId": "1:85ef71b13cb2e28850d4f6078a369d8b",
+        "shortName": "5",
+        "longName": "Rägavere tee - Põhjakeskus",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-3",
+          "rakvere-6",
+          "rakvere-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c6d03d4884b9ed8b357a2728e233944b",
+        "shortName": "1",
+        "longName": "Piira - Näpi - Piira",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-2",
+          "rakvere-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:26b7fed53da2f941b00b7fada564792f",
+        "shortName": "37",
+        "longName": "Lepna - Rakvere",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-8",
+          "rakvere-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1c0dd63b119d1166fdd4e14e6bf8d7f7",
+        "shortName": "26",
+        "longName": "Rakvere - Vinni - Pajusti - Rakvere",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-2",
+          "rakvere-3",
+          "rakvere-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c8fd3f97c19b9596d8719a2e937514f1",
+        "shortName": "43",
+        "longName": "Rakvere - Mädapea",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-8",
+          "rakvere-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:240fd867e2791dac39645d727dbdb426",
+        "shortName": "11",
+        "longName": "Rakvere - Haljala",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-6",
+          "rakvere-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:303d01dbdd5ec9caea1a209ad2af9158",
+        "shortName": "57",
+        "longName": "Rakvere - Sõmeru - Vaeküla - Rakvere",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-3",
+          "rakvere-4",
+          "rakvere-5",
+          "rakvere-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:8b0ca360ae136b918aed7303c84f0ce6",
+        "shortName": "21",
+        "longName": "Rakvere - Sõmeru",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-4",
+          "rakvere-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c0c52460524608f6b2a8719e771b2647",
+        "shortName": "2",
+        "longName": "Piira - Lihakombinaat",
+        "probeIds": [
+          "rakvere-1",
+          "rakvere-2"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "kuressaare",
+    "probes": [
+      {
+        "id": "kuressaare-1",
+        "lat": 58.253628,
+        "lon": 22.486926,
+        "routeCount": 9
+      },
+      {
+        "id": "kuressaare-2",
+        "lat": 58.24182,
+        "lon": 22.492793,
+        "routeCount": 5
+      },
+      {
+        "id": "kuressaare-3",
+        "lat": 58.254016,
+        "lon": 22.509798,
+        "routeCount": 4
+      },
+      {
+        "id": "kuressaare-4",
+        "lat": 58.268321,
+        "lon": 22.465551,
+        "routeCount": 4
+      },
+      {
+        "id": "kuressaare-5",
+        "lat": 58.229378,
+        "lon": 22.50507,
+        "routeCount": 3
+      },
+      {
+        "id": "kuressaare-6",
+        "lat": 58.246411,
+        "lon": 22.464045,
+        "routeCount": 3
+      },
+      {
+        "id": "kuressaare-7",
+        "lat": 58.217172,
+        "lon": 22.503751,
+        "routeCount": 3
+      },
+      {
+        "id": "kuressaare-8",
+        "lat": 58.266506,
+        "lon": 22.506779,
+        "routeCount": 2
+      },
+      {
+        "id": "kuressaare-9",
+        "lat": 58.279102,
+        "lon": 22.501684,
+        "routeCount": 2
+      },
+      {
+        "id": "kuressaare-10",
+        "lat": 58.240611,
+        "lon": 22.566368,
+        "routeCount": 1
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:52a79abdd82adaa8b360c865845ee77e",
+        "shortName": "12-4",
+        "longName": "Kesklinn-Smuuli-Kellamäe-Smuuli-Keskväljak",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1756f07bbcaf79b19a861a207b2c5e4c",
+        "shortName": "12-3",
+        "longName": "Keskväljak-Roomassaare-Lennujaam-Merevärav-Lennujaam-Roomassaare- Kesklinn",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-2",
+          "kuressaare-5",
+          "kuressaare-7"
+        ]
+      },
+      {
+        "routeGtfsId": "1:af7c6f5d4d5faf212b10fd95fd45cc20",
+        "shortName": "4",
+        "longName": "Keskv-TuulteR-Haigla-Kingu-Bauh-Kudjape-Nooruse-Keskv",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-2",
+          "kuressaare-3",
+          "kuressaare-6",
+          "kuressaare-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ee7facb5317e77d62932f2c519f71d32",
+        "shortName": "2",
+        "longName": "talv Kesklinn -Sikassaare-Tooma-Kiviraie-Smuuli-Keskväljak",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-2",
+          "kuressaare-4",
+          "kuressaare-5",
+          "kuressaare-7",
+          "kuressaare-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:49c0f6656d7074d696855a4e548ae49e",
+        "shortName": "3",
+        "longName": "talv Bussijaam-Muratsi-Nooruse-Bussijaam-Kingu-Koja",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-2",
+          "kuressaare-3",
+          "kuressaare-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ee7facb5317e77d62932f2c519f71d32-1",
+        "shortName": "2-suvi",
+        "longName": "Kesklinn -Sikassaare-Tooma-Kiviraie-Smuuli-Keskväljak",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-2",
+          "kuressaare-4",
+          "kuressaare-5",
+          "kuressaare-7",
+          "kuressaare-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:29ae71a9353ecc7bb9bb6a4b3d5b1455",
+        "shortName": "12-1",
+        "longName": "Kesklinn-Tooma-Päevakeskus-Haigla-TuulteRoos-Kesklinn",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-4",
+          "kuressaare-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:b915c7090c2d435e50fe5b5fa7a609fc",
+        "shortName": "1",
+        "longName": "Kesklinn-Haigla-Tuulte R-Keskl-Kudj.-Nooruse-Keskv",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-2",
+          "kuressaare-3",
+          "kuressaare-5",
+          "kuressaare-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:62ab1bbd0fd4f7cd69debc44999ba59a",
+        "shortName": "12-2",
+        "longName": "Kesklinn-Niidu-Kalmistu-Bauhof-Kudjape-Nooruse-Keskväljak",
+        "probeIds": [
+          "kuressaare-1",
+          "kuressaare-3",
+          "kuressaare-8"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "voru",
+    "probes": [
+      {
+        "id": "voru-1",
+        "lat": 57.847569,
+        "lon": 27.001338,
+        "routeCount": 13
+      },
+      {
+        "id": "voru-2",
+        "lat": 57.835483,
+        "lon": 27.009053,
+        "routeCount": 9
+      },
+      {
+        "id": "voru-3",
+        "lat": 57.861284,
+        "lon": 26.998512,
+        "routeCount": 8
+      },
+      {
+        "id": "voru-4",
+        "lat": 57.875983,
+        "lon": 26.99585,
+        "routeCount": 8
+      },
+      {
+        "id": "voru-5",
+        "lat": 57.888766,
+        "lon": 27.003196,
+        "routeCount": 8
+      },
+      {
+        "id": "voru-6",
+        "lat": 57.816233,
+        "lon": 27.028969,
+        "routeCount": 6
+      },
+      {
+        "id": "voru-7",
+        "lat": 57.834316,
+        "lon": 27.032148,
+        "routeCount": 5
+      },
+      {
+        "id": "voru-8",
+        "lat": 57.901509,
+        "lon": 26.992802,
+        "routeCount": 5
+      },
+      {
+        "id": "voru-9",
+        "lat": 57.784692,
+        "lon": 27.035015,
+        "routeCount": 4
+      },
+      {
+        "id": "voru-10",
+        "lat": 57.823226,
+        "lon": 27.002872,
+        "routeCount": 4
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:32ef5dc69e7818296cb2f7debc3ba853",
+        "shortName": "106",
+        "longName": "Kesklinn - KEK - Puiga - KEK - Kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-6",
+          "voru-7",
+          "voru-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:d697c6aaa88110d79956d5f416e46f3e",
+        "shortName": "107",
+        "longName": "Kesklinn - Turu - Puiga - KEK - Kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-6",
+          "voru-7",
+          "voru-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:364a2e509becaf0b166e300d9f81b680",
+        "shortName": "102A",
+        "longName": "Võru kesklinn - Väimela - Võru kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-3",
+          "voru-4",
+          "voru-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:07f7665c8b182a84c453a09176cf1d87",
+        "shortName": "105",
+        "longName": "Seminari väljak - Haigla - Puiga - Väimela - Seminari väljak",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-3",
+          "voru-4",
+          "voru-5",
+          "voru-6",
+          "voru-7",
+          "voru-8",
+          "voru-9",
+          "voru-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:531a341b91484bbfd84da4e60f87a42a",
+        "shortName": "164",
+        "longName": "Võru - Kasaritsa - Uue-Saaluse - Võru",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-6",
+          "voru-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:930f023f5191ec2262d6ff09a82359f0",
+        "shortName": "103",
+        "longName": "Kesklinn - Väimela - Parksepa - Haigla - Kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-3",
+          "voru-4",
+          "voru-5",
+          "voru-8",
+          "voru-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:ddc0721e73775efdb84ed4b9e2c8b1c5",
+        "shortName": "102C",
+        "longName": "Võru kesklinn - Väimela - Võru kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-3",
+          "voru-4",
+          "voru-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:da6cbb70a3a748e800b667a30917d0e7",
+        "shortName": "101A",
+        "longName": "Võru kesklinn - Väimela - Parksepa - Võru kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-3",
+          "voru-4",
+          "voru-5",
+          "voru-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:26393528b431b0b1e18c46a83e6b0c30",
+        "shortName": "102B",
+        "longName": "Võru kesklinn - Väimela - Võru kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-3",
+          "voru-4",
+          "voru-5"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c42180a79637f3d59bffb9ef7aa97715",
+        "shortName": "206",
+        "longName": "Parksepa - Võru - Veskisalu - Autobussijaam",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-3",
+          "voru-4",
+          "voru-5",
+          "voru-6",
+          "voru-7",
+          "voru-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:8087c928343ad326997ad95c36c852c2",
+        "shortName": "104",
+        "longName": "Seminari väljak - Olevi - Haigla - Olevi - Seminari väljak",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:6f49721c01257f437194b8f802c7bc37",
+        "shortName": "108",
+        "longName": "Seminari väljak - KEK - Haigla - KEK - Seminari väljak",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-7",
+          "voru-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1910132c0163c8065a35c42b65da074a",
+        "shortName": "101B",
+        "longName": "Võru kesklinn - Väimela - Parksepa - Võru kesklinn",
+        "probeIds": [
+          "voru-1",
+          "voru-3",
+          "voru-4",
+          "voru-5",
+          "voru-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:69d19130cb6c21dc3480b6d8bb7f531b",
+        "shortName": "207",
+        "longName": "Kesklinn - Kose - Veskisalu",
+        "probeIds": [
+          "voru-1",
+          "voru-2",
+          "voru-6"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "sillamae",
+    "probes": [
+      {
+        "id": "sillamae-1",
+        "lat": 59.397811,
+        "lon": 27.755333,
+        "routeCount": 3
+      },
+      {
+        "id": "sillamae-2",
+        "lat": 59.389636,
+        "lon": 27.791829,
+        "routeCount": 3
+      },
+      {
+        "id": "sillamae-3",
+        "lat": 59.404638,
+        "lon": 27.735312,
+        "routeCount": 3
+      },
+      {
+        "id": "sillamae-4",
+        "lat": 59.379805,
+        "lon": 27.764624,
+        "routeCount": 1
+      },
+      {
+        "id": "sillamae-5",
+        "lat": 59.386441,
+        "lon": 27.731348,
+        "routeCount": 1
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:ea4fce27337a8e46b2843a74cca9e34b",
+        "shortName": "3",
+        "longName": "Tehase - Kannuka - Turg - Vaivara jaam",
+        "probeIds": [
+          "sillamae-1",
+          "sillamae-2",
+          "sillamae-3",
+          "sillamae-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:5c4164429e5e041251a099db16e3960f",
+        "shortName": "1",
+        "longName": "Tehase - Ranna - Kannuka - Turg - Polikliinik - Tehase",
+        "probeIds": [
+          "sillamae-1",
+          "sillamae-2",
+          "sillamae-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:207339071cf4cfb8ed227dda5de8c74f",
+        "shortName": "2",
+        "longName": "Tehase - Polikliinik - Turg - Kannuka - Ranna - Tehase",
+        "probeIds": [
+          "sillamae-1",
+          "sillamae-2",
+          "sillamae-3",
+          "sillamae-5"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "valga",
+    "probes": [
+      {
+        "id": "valga-1",
+        "lat": 57.776858,
+        "lon": 26.03153,
+        "routeCount": 3
+      },
+      {
+        "id": "valga-2",
+        "lat": 57.781199,
+        "lon": 26.053798,
+        "routeCount": 3
+      },
+      {
+        "id": "valga-3",
+        "lat": 57.792215,
+        "lon": 26.037648,
+        "routeCount": 2
+      },
+      {
+        "id": "valga-4",
+        "lat": 57.788021,
+        "lon": 26.093683,
+        "routeCount": 2
+      },
+      {
+        "id": "valga-5",
+        "lat": 57.769036,
+        "lon": 26.069319,
+        "routeCount": 1
+      },
+      {
+        "id": "valga-6",
+        "lat": 57.761047,
+        "lon": 26.096131,
+        "routeCount": 1
+      },
+      {
+        "id": "valga-7",
+        "lat": 57.806316,
+        "lon": 26.048973,
+        "routeCount": 1
+      },
+      {
+        "id": "valga-8",
+        "lat": 57.797339,
+        "lon": 26.064315,
+        "routeCount": 1
+      },
+      {
+        "id": "valga-9",
+        "lat": 57.785991,
+        "lon": 26.1174,
+        "routeCount": 1
+      },
+      {
+        "id": "valga-10",
+        "lat": 57.788126,
+        "lon": 25.992346,
+        "routeCount": 1
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:52568381820c2cf8f91d40048141de12",
+        "shortName": "1",
+        "longName": "Tolli - Tartu - Rohelise - Raekoja - Jaama - Rohelise - Tolli",
+        "probeIds": [
+          "valga-1",
+          "valga-2",
+          "valga-3",
+          "valga-4",
+          "valga-7",
+          "valga-8",
+          "valga-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:b3669260716f7d6a8d67a4aec4887bd9",
+        "shortName": "3",
+        "longName": "Valga - Valka - Valga",
+        "probeIds": [
+          "valga-1",
+          "valga-2",
+          "valga-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:4ec77920f53c37b544246f56b83a991c",
+        "shortName": "2",
+        "longName": "Tolli - Raekoja - Palu - Raekoja - Riisali - Rükkeli",
+        "probeIds": [
+          "valga-1",
+          "valga-2",
+          "valga-3",
+          "valga-4",
+          "valga-5",
+          "valga-6"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "keila",
+    "probes": [
+      {
+        "id": "keila-1",
+        "lat": 59.31329,
+        "lon": 24.403267,
+        "routeCount": 3
+      },
+      {
+        "id": "keila-2",
+        "lat": 59.310165,
+        "lon": 24.430278,
+        "routeCount": 3
+      },
+      {
+        "id": "keila-3",
+        "lat": 59.32506,
+        "lon": 24.37973,
+        "routeCount": 3
+      },
+      {
+        "id": "keila-4",
+        "lat": 59.301026,
+        "lon": 24.41217,
+        "routeCount": 1
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:625671a4856c9444d1b7a551af4b4a50",
+        "shortName": "K12",
+        "longName": "Ülase - Kool - Haigla - Luha - Kirik - Raudteejaam - Rõõmu",
+        "probeIds": [
+          "keila-1",
+          "keila-2",
+          "keila-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:513a6ee243c484c32878d8660bbdc061",
+        "shortName": "K14",
+        "longName": "Rõõmu - Kirik - Luha - Haigla - Kool - Ehitusmarket - Ülase",
+        "probeIds": [
+          "keila-1",
+          "keila-2",
+          "keila-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:9b8a5687c25dd87fd086eee8d34bd2d7",
+        "shortName": "K11",
+        "longName": "Rõõmu - Lõuna-Keila - Kirik - Luha - Kool - Haigla - Ülase",
+        "probeIds": [
+          "keila-1",
+          "keila-2",
+          "keila-3",
+          "keila-4"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "johvi",
+    "probes": [
+      {
+        "id": "johvi-1",
+        "lat": 59.357077,
+        "lon": 27.413577,
+        "routeCount": 6
+      },
+      {
+        "id": "johvi-2",
+        "lat": 59.322997,
+        "lon": 27.427894,
+        "routeCount": 5
+      },
+      {
+        "id": "johvi-3",
+        "lat": 59.363705,
+        "lon": 27.435753,
+        "routeCount": 4
+      },
+      {
+        "id": "johvi-4",
+        "lat": 59.335261,
+        "lon": 27.421803,
+        "routeCount": 4
+      },
+      {
+        "id": "johvi-5",
+        "lat": 59.366259,
+        "lon": 27.395329,
+        "routeCount": 3
+      },
+      {
+        "id": "johvi-6",
+        "lat": 59.312586,
+        "lon": 27.451463,
+        "routeCount": 3
+      },
+      {
+        "id": "johvi-7",
+        "lat": 59.403725,
+        "lon": 27.3278,
+        "routeCount": 2
+      },
+      {
+        "id": "johvi-8",
+        "lat": 59.344809,
+        "lon": 27.404834,
+        "routeCount": 2
+      },
+      {
+        "id": "johvi-9",
+        "lat": 59.375556,
+        "lon": 27.379811,
+        "routeCount": 2
+      },
+      {
+        "id": "johvi-10",
+        "lat": 59.388876,
+        "lon": 27.349003,
+        "routeCount": 2
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:f8d02635555628d57b980d3617dbce61",
+        "shortName": "17",
+        "longName": "Oru - Keskhaigla",
+        "probeIds": [
+          "johvi-1",
+          "johvi-2",
+          "johvi-3",
+          "johvi-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:b3603442781617d614a5ef8f13f77b9c",
+        "shortName": "28a",
+        "longName": "Vanalinn - Vana-Ahtme - Vanalinn",
+        "probeIds": [
+          "johvi-1",
+          "johvi-2",
+          "johvi-3",
+          "johvi-4",
+          "johvi-5",
+          "johvi-6",
+          "johvi-7",
+          "johvi-9",
+          "johvi-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:fadc64a795b5bf06b77fd95ede99040b",
+        "shortName": "5",
+        "longName": "Outokumpu - Iidla keskus",
+        "probeIds": [
+          "johvi-1",
+          "johvi-2",
+          "johvi-4",
+          "johvi-5",
+          "johvi-7",
+          "johvi-9",
+          "johvi-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:31521bb398b38318d8c0e06e8f3aa935",
+        "shortName": "1",
+        "longName": "Bussijaam - Tammiku - Bussijaam",
+        "probeIds": [
+          "johvi-1",
+          "johvi-3",
+          "johvi-5",
+          "johvi-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:8e08d61b714a970030bf29dc10fa4925",
+        "shortName": "21",
+        "longName": "Meierei - Keskhaigla - Vana-Ahtme",
+        "probeIds": [
+          "johvi-1",
+          "johvi-2",
+          "johvi-3",
+          "johvi-4",
+          "johvi-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:e04d08449dd22fb1926816d99c5c2f8a",
+        "shortName": "7",
+        "longName": "Meierei - Vana-Ahtme - Meierei",
+        "probeIds": [
+          "johvi-1",
+          "johvi-2",
+          "johvi-3",
+          "johvi-6",
+          "johvi-8"
+        ]
+      }
+    ]
+  },
+  {
+    "cityId": "haapsalu",
+    "probes": [
+      {
+        "id": "haapsalu-1",
+        "lat": 58.939515,
+        "lon": 23.54116,
+        "routeCount": 7
+      },
+      {
+        "id": "haapsalu-2",
+        "lat": 58.954873,
+        "lon": 23.526133,
+        "routeCount": 6
+      },
+      {
+        "id": "haapsalu-3",
+        "lat": 58.929503,
+        "lon": 23.525282,
+        "routeCount": 4
+      },
+      {
+        "id": "haapsalu-4",
+        "lat": 58.939687,
+        "lon": 23.584148,
+        "routeCount": 4
+      },
+      {
+        "id": "haapsalu-5",
+        "lat": 58.917274,
+        "lon": 23.489862,
+        "routeCount": 3
+      },
+      {
+        "id": "haapsalu-6",
+        "lat": 58.913366,
+        "lon": 23.463049,
+        "routeCount": 3
+      },
+      {
+        "id": "haapsalu-7",
+        "lat": 58.948655,
+        "lon": 23.608248,
+        "routeCount": 3
+      },
+      {
+        "id": "haapsalu-8",
+        "lat": 58.952088,
+        "lon": 23.634763,
+        "routeCount": 3
+      },
+      {
+        "id": "haapsalu-9",
+        "lat": 58.907762,
+        "lon": 23.427755,
+        "routeCount": 2
+      },
+      {
+        "id": "haapsalu-10",
+        "lat": 58.95786,
+        "lon": 23.669086,
+        "routeCount": 2
+      }
+    ],
+    "routes": [
+      {
+        "routeGtfsId": "1:5417a60fa9053c8b228b5eeb0d292994",
+        "shortName": "2A",
+        "longName": "Herjava - Uuemõisa - Holmi",
+        "probeIds": [
+          "haapsalu-1",
+          "haapsalu-2",
+          "haapsalu-4",
+          "haapsalu-7",
+          "haapsalu-8"
+        ]
+      },
+      {
+        "routeGtfsId": "1:bbdcfd5aef9a60fb5fc98718f90c15e5",
+        "shortName": "2",
+        "longName": "Uuemõisa - Holmi",
+        "probeIds": [
+          "haapsalu-1",
+          "haapsalu-2",
+          "haapsalu-4"
+        ]
+      },
+      {
+        "routeGtfsId": "1:1fdf2ebcfdb170ef14ae57f58893ad54",
+        "shortName": "1",
+        "longName": "Haapsalu - Rohuküla",
+        "probeIds": [
+          "haapsalu-1",
+          "haapsalu-2",
+          "haapsalu-3",
+          "haapsalu-5",
+          "haapsalu-6",
+          "haapsalu-9"
+        ]
+      },
+      {
+        "routeGtfsId": "1:bd2349b592f03ec3f0e35b43f5d26619",
+        "shortName": "10",
+        "longName": "Haapsalu - Sepaküla - Ahli - Mägari - Haapsalu",
+        "probeIds": [
+          "haapsalu-1",
+          "haapsalu-3",
+          "haapsalu-5",
+          "haapsalu-6"
+        ]
+      },
+      {
+        "routeGtfsId": "1:90e7ed50c2710d19452d5bf10e872b16",
+        "shortName": "3",
+        "longName": "Lihula maantee - Männiku tee - Kastani - Holmi",
+        "probeIds": [
+          "haapsalu-1",
+          "haapsalu-2",
+          "haapsalu-3"
+        ]
+      },
+      {
+        "routeGtfsId": "1:c80124b61a7915bacacbb4ba235a1d3d",
+        "shortName": "34A",
+        "longName": "Taebla - Herjava - Uuemõisa - Haapsalu",
+        "probeIds": [
+          "haapsalu-1",
+          "haapsalu-2",
+          "haapsalu-4",
+          "haapsalu-7",
+          "haapsalu-8",
+          "haapsalu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:03ab9a4b39321c747f5b5cdbbaa59e3b",
+        "shortName": "34",
+        "longName": "Linnamäe - Herjava - Uuemõisa - Haapsalu",
+        "probeIds": [
+          "haapsalu-1",
+          "haapsalu-2",
+          "haapsalu-4",
+          "haapsalu-7",
+          "haapsalu-8",
+          "haapsalu-10"
+        ]
+      },
+      {
+        "routeGtfsId": "1:d14374f41e2227b09df315c8674a64d6",
+        "shortName": "1A",
+        "longName": "Haapsalu bussijaam - Rohuküla sadam TASULINE NÕUDELIIN",
+        "probeIds": [
+          "haapsalu-3",
+          "haapsalu-5",
+          "haapsalu-6",
+          "haapsalu-9"
+        ]
+      }
+    ]
+  }
+]

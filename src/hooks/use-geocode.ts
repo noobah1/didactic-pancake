@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface GeoResult {
   name: string
@@ -19,6 +20,7 @@ interface GeoResult {
 // otherwise has no way to prefer the relevant one. Omit or pass none-
 // selected/all-selected to search nationwide with no city bias.
 export function useGeocode(stopsOnly = false, cityIds: string[] = []) {
+  const { locale } = useTranslation()
   const [results, setResults] = useState<GeoResult[]>([])
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -28,6 +30,8 @@ export function useGeocode(stopsOnly = false, cityIds: string[] = []) {
   // would redefine `search` (and reset any in-flight debounce) every render.
   const cityIdsRef = useRef(cityIds)
   cityIdsRef.current = cityIds
+  const localeRef = useRef(locale)
+  localeRef.current = locale
 
   const search = useCallback((query: string) => {
     clearTimeout(debounceRef.current)
@@ -45,7 +49,7 @@ export function useGeocode(stopsOnly = false, cityIds: string[] = []) {
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const params = new URLSearchParams({ q: query })
+        const params = new URLSearchParams({ q: query, lang: localeRef.current })
         if (stopsOnly) params.set('type', 'stop')
         if (cityIdsRef.current.length > 0) params.set('cities', cityIdsRef.current.join(','))
         const res = await fetch(`/api/geocode?${params}`)

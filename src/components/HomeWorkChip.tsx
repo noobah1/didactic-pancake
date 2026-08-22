@@ -2,6 +2,7 @@
 
 import { Home, Briefcase, X } from 'lucide-react'
 import { SavedPlace } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface HomeWorkChipProps {
   slot: 'home' | 'work'
@@ -15,7 +16,8 @@ interface HomeWorkChipProps {
 }
 
 export function HomeWorkChip({ slot, place, canSet, onSelect, onSet, onClear }: HomeWorkChipProps) {
-  const label = slot === 'home' ? 'Home' : 'Work'
+  const { t } = useTranslation()
+  const label = slot === 'home' ? t('search.home') : t('search.work')
   const Icon = slot === 'home' ? Home : Briefcase
 
   if (!place) {
@@ -24,7 +26,7 @@ export function HomeWorkChip({ slot, place, canSet, onSelect, onSet, onClear }: 
         type="button"
         onClick={onSet}
         disabled={!canSet}
-        title={canSet ? `Save "To" as ${label}` : `Enter a destination, then tap to save it as ${label}`}
+        title={canSet ? t('search.saveToAs', { label }) : t('search.enterDestinationThenSave', { label })}
         className="flex items-center gap-1 border border-dashed border-gray-300 dark:border-gray-600 rounded-2xl px-3 py-1.5 text-xs text-gray-400 dark:text-gray-500 disabled:opacity-50 enabled:hover:border-blue-300 enabled:hover:text-blue-600 dark:enabled:hover:border-blue-600 dark:enabled:hover:text-blue-400 enabled:cursor-pointer"
       >
         <Icon size={12} />
@@ -47,7 +49,7 @@ export function HomeWorkChip({ slot, place, canSet, onSelect, onSet, onClear }: 
       <button
         type="button"
         onClick={onClear}
-        aria-label={`Clear ${label} shortcut`}
+        aria-label={t('search.clearShortcutAria', { label })}
         className="p-0.5 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
       >
         <X size={12} />

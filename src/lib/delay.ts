@@ -87,6 +87,10 @@ export interface DelayTrip {
   // Optional so callers that never need trip continuity (or don't have a
   // stable trip id handy) aren't forced to supply one.
   gtfsId?: string
+  // GTFS's own "what the destination sign says" for this trip's pattern.
+  // Optional so callers without it fall straight through to the last-stop
+  // matching findBestTrip already did before this existed.
+  headsign?: string
 }
 
 // Haversine distance in meters between two points
@@ -204,30 +208,54 @@ export function findBestTrip<T extends DelayTrip>(
   let directionTrips = activeTrips
   if (destination) {
     const destLower = destination.toLowerCase().trim()
-    const matched = activeTrips.filter((t) => {
-      const lastStop = t.stoptimes[t.stoptimes.length - 1].stop.name.toLowerCase()
-      return lastStop === destLower || lastStop.includes(destLower) || destLower.includes(lastStop)
+
+    // Headsign is GTFS's own purpose-built "what the destination sign says"
+    // field — matching it straight against the live feed's destination text
+    // is the least ambiguous signal available, and doesn't depend on a
+    // trip's actual *last stop name* matching the sign (which can differ,
+    // e.g. sign "Viru keskus" vs GTFS terminus "A. Laikmaa" a block away).
+    // That gap matters beyond just missing a match: the place named on the
+    // sign can also appear as the *origin* stop of the opposite-direction
+    // trip (a loop/out-and-back route serves the same named stop both
+    // ways), so without checking headsign first, the via-stop fallback
+    // below can match a trip running the exact wrong direction — confirmed
+    // live on bus 18, whose "Viru keskus"-signed vehicles were matching the
+    // "Urda"-headsigned trip because "Viru keskus 3" is that trip's own
+    // first stop.
+    const headsignMatched = activeTrips.filter((t) => {
+      if (!t.headsign) return false
+      const hs = t.headsign.toLowerCase().trim()
+      return hs === destLower || hs.includes(destLower) || destLower.includes(hs)
     })
-    if (matched.length > 0) {
-      directionTrips = matched
+
+    if (headsignMatched.length > 0) {
+      directionTrips = headsignMatched
     } else {
-      // The live feed's destination sign sometimes names a general area
-      // (e.g. "Viimsi") rather than the GTFS trip's actual precise terminus
-      // further down the same line (e.g. "Krillimäe", with "Viimsi
-      // vallamaja", "Viimsi kool" etc. as intermediate stops in between) —
-      // no last-stop match exists at all for that direction, ever, on every
-      // single trip. Fall back to checking every stop along the trip: a
-      // destination name that shows up anywhere on a trip's own stop list
-      // is still strong direction evidence, just weaker than an exact
-      // terminus match, so this only kicks in once the terminus check has
-      // already come up completely empty.
-      const viaMatched = activeTrips.filter((t) =>
-        t.stoptimes.some((st) => {
-          const stopName = st.stop.name.toLowerCase()
-          return stopName === destLower || stopName.includes(destLower) || destLower.includes(stopName)
-        }),
-      )
-      if (viaMatched.length > 0) directionTrips = viaMatched
+      const matched = activeTrips.filter((t) => {
+        const lastStop = t.stoptimes[t.stoptimes.length - 1].stop.name.toLowerCase()
+        return lastStop === destLower || lastStop.includes(destLower) || destLower.includes(lastStop)
+      })
+      if (matched.length > 0) {
+        directionTrips = matched
+      } else {
+        // The live feed's destination sign sometimes names a general area
+        // (e.g. "Viimsi") rather than the GTFS trip's actual precise terminus
+        // further down the same line (e.g. "Krillimäe", with "Viimsi
+        // vallamaja", "Viimsi kool" etc. as intermediate stops in between) —
+        // no last-stop match exists at all for that direction, ever, on every
+        // single trip. Fall back to checking every stop along the trip: a
+        // destination name that shows up anywhere on a trip's own stop list
+        // is still strong direction evidence, just weaker than an exact
+        // terminus match, so this only kicks in once headsign and the
+        // terminus check have both already come up completely empty.
+        const viaMatched = activeTrips.filter((t) =>
+          t.stoptimes.some((st) => {
+            const stopName = st.stop.name.toLowerCase()
+            return stopName === destLower || stopName.includes(destLower) || destLower.includes(stopName)
+          }),
+        )
+        if (viaMatched.length > 0) directionTrips = viaMatched
+      }
     }
   }
 

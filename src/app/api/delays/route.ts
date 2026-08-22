@@ -14,6 +14,7 @@ import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
 import { VehiclePosition, RouteTrafficEstimate } from '@/lib/types'
 import { Availability, STALE_MAX_AGE_MS } from '@/lib/feed-status'
 import { computeTrafficEstimates } from '@/lib/traffic/estimate'
+import { computeCityTrafficEstimates } from '@/lib/traffic/city-estimate'
 
 const GPS_CACHE_TTL = 5_000
 const SCHEDULE_CACHE_TTL = 10 * 60_000 // static schedule doesn't change intraday
@@ -139,13 +140,16 @@ export interface DelayedVehicle {
 
 interface DelaysResponse {
   vehicles: DelayedVehicle[]
-  // Road-speed-inferred slowdowns for the ~251 intercity/regional routes
-  // that have no live GPS or real-time feed at all (see
-  // src/lib/traffic/estimate.ts) — a separate, lower-confidence signal from
-  // `vehicles` above, never merged into it. Independent of `availability`,
-  // which describes the GPS/schedule pipeline only: a traffic-estimate
-  // failure (see computeDelays below) degrades to an empty array here
-  // without affecting GPS-confirmed delays at all.
+  // Road-speed-inferred slowdowns for routes with no live GPS or real-time
+  // feed at all — the ~251 intercity/regional ones off Tark Tee's highway
+  // detectors (src/lib/traffic/estimate.ts), plus city bus routes in the
+  // top-15 cities off TomTom probe points
+  // (src/lib/traffic/city-estimate.ts), which is the only delay signal that
+  // reaches a city bus outside Tallinn. A separate, lower-confidence signal
+  // from `vehicles` above, never merged into it. Independent of
+  // `availability`, which describes the GPS/schedule pipeline only: a
+  // traffic-estimate failure (see computeDelays below) degrades to an empty
+  // array here without affecting GPS-confirmed delays at all.
   estimates: RouteTrafficEstimate[]
   timestamp: number
   availability?: Availability
@@ -153,7 +157,11 @@ interface DelaysResponse {
 
 let gpsCache: { data: VehiclePosition[]; timestamp: number } | null = null
 let scheduleCache: { data: GqlRoute[]; timestamp: number } | null = null
-let resultCache: { data: DelaysResponse; timestamp: number } | null = null
+// Keyed by the requesting rider's city selection — see GET, where the key is
+// built. A single slot rather than a map: consecutive requests from one app
+// carry the same selection, and caching every selection ever seen would keep
+// each one's estimates alive long past the probe readings behind them.
+let resultCache: { key: string; data: DelaysResponse; timestamp: number } | null = null
 // Which trip each vehicle was matched to last cycle, so findBestTrip can
 // break same-route ambiguity in favor of continuity (see
 // TRIP_CONTINUITY_BONUS). Rebuilt from scratch each computeDelays() run
@@ -253,25 +261,27 @@ async function fetchTallinnGpsVehicles(): Promise<VehiclePosition[]> {
   return gpsCache.data
 }
 
-async function computeDelays(): Promise<DelaysResponse> {
+async function computeDelays(cityIds: string[] = []): Promise<DelaysResponse> {
   const now = Date.now()
 
-  // These four are independent of each other (two unrelated live-position
-  // feeds, a static schedule query, and the road-speed traffic estimate —
-  // see computeTrafficEstimates) — fetching them one after another stacked
-  // their timeouts (up to 5s + 5s + 8s = 18s worst case) into a single
-  // request's latency for no reason. allSettled (rather than all) so a
-  // failure names which upstream actually died instead of an opaque
-  // rejection — Elron and the traffic estimate already degrade internally
-  // on their own failure (see fetchElronVehicles and computeTrafficEstimates
-  // respectively), but the schedule query and Tallinn's GPS feed are both
-  // load-bearing: a delay is GPS measured against schedule, so losing either
-  // still means no vehicles here, just with a clearer reason logged.
-  const [gpsResult, elronResult, scheduleResult, trafficResult] = await Promise.allSettled([
+  // These five are independent of each other (two unrelated live-position
+  // feeds, a static schedule query, and the two road-speed traffic estimates
+  // — see computeTrafficEstimates and computeCityTrafficEstimates) —
+  // fetching them one after another stacked their timeouts (up to 5s + 5s +
+  // 8s = 18s worst case) into a single request's latency for no reason.
+  // allSettled (rather than all) so a failure names which upstream actually
+  // died instead of an opaque rejection — Elron and the traffic estimates
+  // already degrade internally on their own failure (see fetchElronVehicles,
+  // computeTrafficEstimates and computeCityTrafficEstimates respectively),
+  // but the schedule query and Tallinn's GPS feed are both load-bearing: a
+  // delay is GPS measured against schedule, so losing either still means no
+  // vehicles here, just with a clearer reason logged.
+  const [gpsResult, elronResult, scheduleResult, trafficResult, cityTrafficResult] = await Promise.allSettled([
     fetchTallinnGpsVehicles(),
     fetchElronVehicles(),
     fetchScheduleData(),
     computeTrafficEstimates(),
+    computeCityTrafficEstimates(cityIds),
   ])
   if (gpsResult.status === 'rejected') {
     throw new Error(`Tallinn GPS feed unavailable: ${gpsResult.reason}`)
@@ -283,9 +293,16 @@ async function computeDelays(): Promise<DelaysResponse> {
   const elronVehicles = elronResult.status === 'fulfilled' ? elronResult.value : []
   const routes = scheduleResult.value
   // Never load-bearing — a traffic-estimate failure must not take down
-  // GPS-confirmed delays, which is the entire reason this sits in the same
-  // allSettled rather than being awaited on its own.
-  const estimates = trafficResult.status === 'fulfilled' ? trafficResult.value : []
+  // GPS-confirmed delays, which is the entire reason these sit in the same
+  // allSettled rather than being awaited on their own. The two estimate
+  // sources cover disjoint route sets by construction (highway corridors vs.
+  // city streets — see route-coverage.json and city-probes.json), so they
+  // concatenate rather than needing to be reconciled, and either one failing
+  // leaves the other's estimates intact.
+  const estimates = [
+    ...(trafficResult.status === 'fulfilled' ? trafficResult.value : []),
+    ...(cityTrafficResult.status === 'fulfilled' ? cityTrafficResult.value : []),
+  ]
   const gpsVehicles: (VehiclePosition & { mode: GpsMode })[] = [
     ...tallinnGps.filter(
       (v): v is VehiclePosition & { mode: GpsMode } =>
@@ -485,15 +502,26 @@ async function computeDelays(): Promise<DelaysResponse> {
   return { vehicles: reliableVehicles, estimates, timestamp: now, availability: 'live' }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Which cities the rider currently has selected, as CityDef ids
+  // ("tartu,narva"). Only used to decide which city-street traffic probes are
+  // worth spending a metered request on (see computeCityTrafficEstimates) —
+  // GPS-confirmed delays are nationwide regardless, and the client still does
+  // its own distance-based filtering on what comes back.
+  const citiesParam = new URL(request.url).searchParams.get('cities')
+  const cityIds = citiesParam ? citiesParam.split(',').filter(Boolean) : []
+  // The result cache has to key on that selection, or the first rider's city
+  // choice would decide what every other rider sees for the next 8 seconds.
+  const cacheKey = [...cityIds].sort().join(',')
+
   try {
     const now = Date.now()
-    if (resultCache && now - resultCache.timestamp < RESULT_CACHE_TTL) {
+    if (resultCache && resultCache.key === cacheKey && now - resultCache.timestamp < RESULT_CACHE_TTL) {
       return NextResponse.json(resultCache.data)
     }
 
-    const result = await computeDelays()
-    resultCache = { data: result, timestamp: now }
+    const result = await computeDelays(cityIds)
+    resultCache = { key: cacheKey, data: result, timestamp: now }
     return NextResponse.json(result)
   } catch (error) {
     console.error('Failed to compute delays:', error)

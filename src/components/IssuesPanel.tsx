@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { X, Navigation, ChevronRight, ChevronLeft, ArrowLeft, AlertCircle } from 'lucide-react'
-import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
+import { MODE_COLORS } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC } from '@/lib/delay'
-import { formatMinutes } from '@/lib/format-minutes'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { ServiceAlert, RouteTrafficEstimate } from '@/lib/types'
 import { FeedStatus } from '@/lib/feed-status'
+import { useTranslation } from '@/lib/i18n/context'
+import { formatMinutesLocalized, localeTag } from '@/lib/i18n/format'
 
 interface IssuesPanelProps {
   vehicles: DelayedVehicle[]
@@ -36,6 +37,7 @@ export function IssuesPanel({
   onLocateAlert,
   onClose,
 }: IssuesPanelProps) {
+  const { t, locale, modeLabel } = useTranslation()
   // Clicking a disruption swaps the whole list for a single full-detail view
   // (prev/next to browse) instead of expanding in place — with dozens of
   // Tark Tee disruptions, an inline accordion still left every other row
@@ -67,7 +69,7 @@ export function IssuesPanel({
   return (
     <div className="absolute bottom-24 right-4 z-40 w-80 max-h-[60vh] bg-white/85 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl shadow-lg flex flex-col overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-amber-500 text-white shrink-0">
-        <span className="text-sm font-semibold">Current issues</span>
+        <span className="text-sm font-semibold">{t('issues.currentIssues')}</span>
         <button
           type="button"
           onClick={onClose}
@@ -78,15 +80,15 @@ export function IssuesPanel({
       </div>
       <div className="flex flex-col overflow-y-auto">
         {bothLoading ? (
-          <div className="px-4 py-4 text-sm text-gray-400 dark:text-gray-500 text-center">Loading…</div>
+          <div className="px-4 py-4 text-sm text-gray-400 dark:text-gray-500 text-center">{t('issues.loading')}</div>
         ) : (
           <>
             {delayUnavailable && (
               <div className="flex items-start gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950 border-b border-red-100 dark:border-red-900 text-red-600 dark:text-red-400">
                 <AlertCircle size={14} className="shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <p className="font-medium">Live delay data unavailable</p>
-                  <p className="text-red-500/80 dark:text-red-400/70">Retrying…</p>
+                  <p className="font-medium">{t('issues.delayDataUnavailable')}</p>
+                  <p className="text-red-500/80 dark:text-red-400/70">{t('issues.retrying')}</p>
                 </div>
               </div>
             )}
@@ -94,13 +96,13 @@ export function IssuesPanel({
               <div className="flex items-start gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950 border-b border-red-100 dark:border-red-900 text-red-600 dark:text-red-400">
                 <AlertCircle size={14} className="shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <p className="font-medium">Live alerts unavailable</p>
-                  <p className="text-red-500/80 dark:text-red-400/70">Retrying…</p>
+                  <p className="font-medium">{t('issues.alertDataUnavailable')}</p>
+                  <p className="text-red-500/80 dark:text-red-400/70">{t('issues.retrying')}</p>
                 </div>
               </div>
             )}
             {isEmpty ? (
-              <div className="px-4 py-4 text-sm text-gray-400 dark:text-gray-500 text-center">No issues right now</div>
+              <div className="px-4 py-4 text-sm text-gray-400 dark:text-gray-500 text-center">{t('issues.noIssues')}</div>
             ) : (
               <>
                 {delayedVehicles.length > 0 && (
@@ -116,7 +118,7 @@ export function IssuesPanel({
                       <span
                         className="px-2 py-0.5 rounded text-xs font-bold text-white shrink-0"
                         style={{ backgroundColor: MODE_COLORS[v.mode] }}
-                        title={MODE_LABELS[v.mode]}
+                        title={modeLabel(v.mode)}
                       >
                         {v.line}
                       </span>
@@ -126,7 +128,7 @@ export function IssuesPanel({
                       </span>
                     </div>
                     <span className="text-xs text-amber-600 dark:text-amber-400 font-medium shrink-0">
-                      {formatMinutes(Math.round(v.delaySeconds / 60))}
+                      {formatMinutesLocalized(Math.round(v.delaySeconds / 60), t)}
                     </span>
                   </button>
                 ))}
@@ -135,14 +137,14 @@ export function IssuesPanel({
             {sortedEstimates.length > 0 && (
               <div className="flex flex-col border-t border-gray-100 dark:border-gray-700">
                 <div className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 dark:text-gray-500">
-                  Slow roads — estimated
+                  {t('issues.slowRoads')}
                 </div>
                 <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
                   {sortedEstimates.map((e) => (
                     <div
                       key={e.routeGtfsId}
                       className="flex items-center justify-between gap-2 px-4 py-2.5"
-                      title={`${e.detectorCount} traffic measurement point${e.detectorCount === 1 ? '' : 's'} along this route`}
+                      title={t('issues.trafficPointsTooltip', { n: e.detectorCount, plural: e.detectorCount === 1 ? '' : 's' })}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="px-2 py-0.5 rounded text-xs font-bold text-amber-700 dark:text-amber-300 border border-amber-400 dark:border-amber-600 shrink-0">
@@ -151,11 +153,11 @@ export function IssuesPanel({
                         <span className="text-xs text-gray-600 dark:text-gray-300 truncate">{e.longName}</span>
                       </div>
                       <span className="text-xs text-amber-600 dark:text-amber-400 font-medium shrink-0">
-                        ~{Math.round(e.minSeconds / 60)}
-                        {Math.round(e.maxSeconds / 60) > Math.round(e.minSeconds / 60)
-                          ? `-${Math.round(e.maxSeconds / 60)}`
-                          : ''}
-                        min slower
+                        {t('issues.delaySlower', {
+                          range: Math.round(e.maxSeconds / 60) > Math.round(e.minSeconds / 60)
+                            ? `${Math.round(e.minSeconds / 60)}-${Math.round(e.maxSeconds / 60)}`
+                            : `${Math.round(e.minSeconds / 60)}`,
+                        })}
                       </span>
                     </div>
                   ))}
@@ -182,7 +184,7 @@ export function IssuesPanel({
                       </span>
                       {alert.affectedRoutes.length > 0 && (
                         <span className="text-xs text-gray-400 block truncate">
-                          Lines: {alert.affectedRoutes.join(', ')}
+                          {t('issues.linesLabel', { lines: alert.affectedRoutes.join(', ') })}
                         </span>
                       )}
                     </div>
@@ -199,14 +201,14 @@ export function IssuesPanel({
                     onClick={() => setViewingAlertId(null)}
                     className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                   >
-                    <ArrowLeft size={13} /> All issues
+                    <ArrowLeft size={13} /> {t('issues.allIssues')}
                   </button>
                   {alerts.length > 1 && (
                     <div className="flex items-center gap-2 text-xs text-gray-400">
                       <span>{viewingIndex + 1}/{alerts.length}</span>
                       <button
                         type="button"
-                        aria-label="Previous disruption"
+                        aria-label={t('issues.previousDisruption')}
                         onClick={() => {
                           const prev = alerts[(viewingIndex - 1 + alerts.length) % alerts.length]
                           setViewingAlertId(prev.id)
@@ -218,7 +220,7 @@ export function IssuesPanel({
                       </button>
                       <button
                         type="button"
-                        aria-label="Next disruption"
+                        aria-label={t('issues.nextDisruption')}
                         onClick={() => {
                           const next = alerts[(viewingIndex + 1) % alerts.length]
                           setViewingAlertId(next.id)
@@ -249,12 +251,12 @@ export function IssuesPanel({
                   )}
                   {viewingAlert.affectedRoutes.length > 0 && (
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Lines: {viewingAlert.affectedRoutes.join(', ')}
+                      {t('issues.linesLabel', { lines: viewingAlert.affectedRoutes.join(', ') })}
                     </p>
                   )}
                   {viewingAlert.activePeriodEnd && (
                     <p className="mt-1 text-xs text-gray-400">
-                      Until {new Date(viewingAlert.activePeriodEnd).toLocaleDateString()}
+                      {t('issues.until', { date: new Date(viewingAlert.activePeriodEnd).toLocaleDateString(localeTag(locale)) })}
                     </p>
                   )}
                 </div>

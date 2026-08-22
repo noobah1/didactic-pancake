@@ -1,6 +1,7 @@
 'use client'
 
 import { AlertTriangle } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface IssuesButtonProps {
   active: boolean
@@ -13,6 +14,7 @@ interface IssuesButtonProps {
 }
 
 export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonProps) {
+  const { t } = useTranslation()
   const hasIssues = count > 0
 
   return (
@@ -28,7 +30,7 @@ export function IssuesButton({ active, count, degraded, onClick }: IssuesButtonP
               ? 'bg-white/85 dark:bg-gray-900/80 border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950'
               : 'bg-white/85 dark:bg-gray-900/80 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
-      title={degraded ? 'Live issue data unavailable' : active ? 'Hide issues' : `Show issues (${count})`}
+      title={degraded ? t('issuesButton.unavailable') : active ? t('issuesButton.hide') : t('issuesButton.show', { count })}
     >
       <AlertTriangle
         size={24}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWakeLock } from '@/hooks/use-wake-lock'
+import { useTranslation } from '@/lib/i18n/context'
 
 // How often a new watchPosition fix is actually sent to the server —
 // watchPosition itself can fire far more often than that (every couple of
@@ -25,6 +26,7 @@ const MIN_SEND_INTERVAL_MS = 15_000
 // falls back to inferring a position from the vehicle/timetable — see
 // traveller-position.ts — using whatever this hook's last real fix was.
 export function useLiveShare(shareId: string | null, token: string | null) {
+  const { t } = useTranslation()
   const [sharing, setSharing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const watchIdRef = useRef<number | null>(null)
@@ -75,7 +77,7 @@ export function useLiveShare(shareId: string | null, token: string | null) {
     const { shareId, token } = shareRef.current
     if (!shareId || !token) return
     if (!navigator.geolocation) {
-      setError('Geolocation not supported')
+      setError(t('location.geolocationUnsupported'))
       return
     }
     setError(null)
@@ -95,7 +97,7 @@ export function useLiveShare(shareId: string | null, token: string | null) {
         sendPosition(lat, lng)
       },
       (err) => {
-        setError(err.code === err.PERMISSION_DENIED ? 'Location access denied' : 'Could not get location')
+        setError(err.code === err.PERMISSION_DENIED ? t('location.locationDenied') : t('location.locationUnavailable'))
         setSharing(false)
         sharingRef.current = false
         wakeLock.release()
@@ -106,7 +108,7 @@ export function useLiveShare(shareId: string | null, token: string | null) {
       },
       { enableHighAccuracy: true },
     )
-  }, [sendPosition, wakeLock])
+  }, [sendPosition, wakeLock, t])
 
   // The moment the page hides — screen lock, app switch, tab backgrounded —
   // is exactly when watchPosition is about to stop firing, so this is the

@@ -274,21 +274,69 @@ async function loadTransitStops() {
   return transitStopsRefresh
 }
 
-const MODE_LABELS: { key: 'ferry' | 'train' | 'tram' | 'bus'; label: string }[] = [
-  { key: 'ferry', label: 'Ferry terminal' },
-  { key: 'train', label: 'Train station' },
-  { key: 'tram', label: 'Tram stop' },
-  { key: 'bus', label: 'Bus stop' },
-]
+// Rider-facing labels baked into the display strings this route returns
+// (e.g. "Lille (Bus/Tram) — Tallinn", "Line 5 (Bus)") — kept here rather
+// than pulled from the shared i18n dictionaries since this is a server
+// route with no React context, and the set of labels is tiny and stable.
+// `lang` comes straight from the client's current locale (see
+// useGeocode's `lang` param), defaulting to 'et' to match the app's own
+// default locale.
+type GeocodeLang = 'en' | 'et' | 'ru'
 
-const LINE_MODE_LABELS: { key: 'ferry' | 'train' | 'tram' | 'bus'; label: string }[] = [
-  { key: 'ferry', label: 'Ferry' },
-  { key: 'train', label: 'Train' },
-  { key: 'tram', label: 'Tram' },
-  { key: 'bus', label: 'Bus' },
-]
+const MODE_LABELS_BY_LANG: Record<GeocodeLang, { key: 'ferry' | 'train' | 'tram' | 'bus'; label: string }[]> = {
+  en: [
+    { key: 'ferry', label: 'Ferry terminal' },
+    { key: 'train', label: 'Train station' },
+    { key: 'tram', label: 'Tram stop' },
+    { key: 'bus', label: 'Bus stop' },
+  ],
+  et: [
+    { key: 'ferry', label: 'Parvlaevaterminal' },
+    { key: 'train', label: 'Raudteejaam' },
+    { key: 'tram', label: 'Trammipeatus' },
+    { key: 'bus', label: 'Bussipeatus' },
+  ],
+  ru: [
+    { key: 'ferry', label: 'Паромный терминал' },
+    { key: 'train', label: 'Железнодорожная станция' },
+    { key: 'tram', label: 'Трамвайная остановка' },
+    { key: 'bus', label: 'Автобусная остановка' },
+  ],
+}
 
-async function searchTransitLines(query: string, activeCities: ActiveCity[] = []): Promise<GeoResult[]> {
+const LINE_MODE_LABELS_BY_LANG: Record<GeocodeLang, { key: 'ferry' | 'train' | 'tram' | 'bus'; label: string }[]> = {
+  en: [
+    { key: 'ferry', label: 'Ferry' },
+    { key: 'train', label: 'Train' },
+    { key: 'tram', label: 'Tram' },
+    { key: 'bus', label: 'Bus' },
+  ],
+  et: [
+    { key: 'ferry', label: 'Parvlaev' },
+    { key: 'train', label: 'Rong' },
+    { key: 'tram', label: 'Tramm' },
+    { key: 'bus', label: 'Buss' },
+  ],
+  ru: [
+    { key: 'ferry', label: 'Паром' },
+    { key: 'train', label: 'Поезд' },
+    { key: 'tram', label: 'Трамвай' },
+    { key: 'bus', label: 'Автобус' },
+  ],
+}
+
+const LINE_WORD_BY_LANG: Record<GeocodeLang, string> = {
+  en: 'Line',
+  et: 'Liin',
+  ru: 'Маршрут',
+}
+
+function resolveGeocodeLang(value: string | null): GeocodeLang {
+  return value === 'en' || value === 'ru' ? value : 'et'
+}
+
+async function searchTransitLines(query: string, activeCities: ActiveCity[] = [], lang: GeocodeLang = 'et'): Promise<GeoResult[]> {
+  const LINE_MODE_LABELS = LINE_MODE_LABELS_BY_LANG[lang]
   const cache = await loadTransitStops()
   if (!cache) return []
   const foldedQuery = foldName(query)
@@ -335,7 +383,8 @@ async function searchTransitLines(query: string, activeCities: ActiveCity[] = []
     // happens to be.
     for (const { shortName, stop } of byRoute.values()) {
       const cityLabel = nearestCityName(stop.lat, stop.lon, LINE_SEARCH_CITY_LABEL_RADIUS_M)
-      const displayName = cityLabel ? `Line ${shortName} (${modeLabel}) — ${cityLabel}` : `Line ${shortName} (${modeLabel})`
+      const lineWord = LINE_WORD_BY_LANG[lang]
+      const displayName = cityLabel ? `${lineWord} ${shortName} (${modeLabel}) — ${cityLabel}` : `${lineWord} ${shortName} (${modeLabel})`
       results.push({
         name: displayName,
         lat: stop.lat,
@@ -372,7 +421,8 @@ async function searchTransitLines(query: string, activeCities: ActiveCity[] = []
   return results.slice(0, LINE_SEARCH_MAX_RESULTS).map((r) => ({ name: r.name, lat: r.lat, lng: r.lng, line: r.line, mode: r.mode }))
 }
 
-async function searchTransitStops(query: string, activeCities: ActiveCity[] = []): Promise<GeoResult[]> {
+async function searchTransitStops(query: string, activeCities: ActiveCity[] = [], lang: GeocodeLang = 'et'): Promise<GeoResult[]> {
+  const MODE_LABELS = MODE_LABELS_BY_LANG[lang]
   const cache = await loadTransitStops()
   if (!cache) return []
   const foldedQuery = foldName(query)
@@ -511,6 +561,7 @@ export async function GET(request: Request) {
   // common class of line search unreachable.
   if (!query || query.length < (isStopSearch ? 1 : 2)) return Response.json({ results: [] })
   const activeCities = resolveActiveCities(searchParams)
+  const lang = resolveGeocodeLang(searchParams.get('lang'))
   // The departure-board search wants transit stops *and* lines — an address
   // has no stopId to look departures up by, and this is also the only
   // search surface a bare line code ("5", "T2", "R16") makes sense in (see
@@ -520,8 +571,8 @@ export async function GET(request: Request) {
   // can't stall the response, unlike the general search below.
   if (isStopSearch) {
     const [lineResults, stopResults] = await Promise.all([
-      searchTransitLines(query, activeCities),
-      searchTransitStops(query, activeCities),
+      searchTransitLines(query, activeCities, lang),
+      searchTransitStops(query, activeCities, lang),
     ])
     // score is stopResults-only internal ranking state (see GeoResult) — not
     // meaningful to the client here since nothing else is being merged in
@@ -530,7 +581,7 @@ export async function GET(request: Request) {
     return Response.json({ results })
   }
   const [stopsResults, addressResults] = await Promise.all([
-    searchTransitStops(query, activeCities),
+    searchTransitStops(query, activeCities, lang),
     searchEstonianAddresses(query),
   ])
   // Addresses have no relevance score of their own (the external gazetteer

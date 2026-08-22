@@ -87,6 +87,52 @@ export const DETECTOR_CACHE_TTL = 60_000
 // estimate rather than silently keep it "current" on stale numbers.
 export const MAX_READING_AGE_MS = 20 * 60_000
 
+// TomTom's Traffic Flow Segment Data — current vs. free-flow speed for the
+// road nearest a coordinate. This is the only delay signal that reaches a
+// city bus outside Tallinn: Tallinn's gps.txt is Tallinn-only (verified: all
+// 394 vehicles in one live sample sat inside lat 59.35-59.52, lon
+// 24.59-24.91), no other Estonian city publishes vehicle positions
+// (api.peatus.ee runs the national Digitransit/OTP and reports
+// "realtime": false for every departure, Tallinn's included; Transitous'
+// feeds/ee.json lists exactly one GTFS-RT source for the whole country,
+// Elron's), and Tark Tee's own detectors are state-highway sensors with only
+// 0-3 sites within 5km of any city centre. See src/lib/traffic/tomtom.ts.
+//
+// Unlike every other upstream in this file, the exact request/response shape
+// below has NOT been confirmed against the live service — this shipped
+// without an API key, so the client is written defensively and the whole
+// feature stays off until TOMTOM_API_KEY is set.
+export const TOMTOM_FLOW_URL = 'https://api.tomtom.com/traffic/services/4/flowSegmentData'
+// Zoom decides which road classes TomTom will snap a probe point to: low
+// zoom biases to motorways/major roads, high zoom includes local streets.
+// City bus routes run on exactly the smaller streets a highway-biased zoom
+// would skip, so this sits high rather than at the 10 TomTom's own examples
+// use. Worth re-checking against real responses once a key exists — a probe
+// that snaps to the wrong road class reads as a slowdown that isn't there.
+export const TOMTOM_FLOW_ZOOM = 12
+export const TOMTOM_FLOW_TIMEOUT_MS = 5_000
+// Below this reported confidence, TomTom is largely extrapolating from
+// historical patterns rather than current observations — the same "don't
+// publish a number that's more extrapolation than measurement" bar
+// MIN_COVERED_FRACTION applies at the route level.
+export const TOMTOM_MIN_CONFIDENCE = 0.3
+// How long one probe's reading is reused before it's worth spending another
+// request. TomTom refreshes flow far faster than this; the limit here is the
+// request budget, not the data. Paired with MAX_READING_AGE_MS above: once a
+// reading ages past that (budget exhausted, or the service is down) it stops
+// counting entirely rather than quietly speaking for current conditions.
+export const CITY_FLOW_CACHE_TTL = 10 * 60_000
+// Hard daily ceiling on requests to TomTom, whose free tier is ~2,500/day.
+// Counted per UTC day, in-process — a restart resets it, and two instances
+// each get their own allowance, so leave headroom rather than setting this
+// at exactly the plan limit.
+export const TOMTOM_DAILY_REQUEST_BUDGET = Number(process.env.TOMTOM_DAILY_REQUEST_BUDGET) || 2_000
+// Refreshing all 129 probes at once would spend 5% of the daily budget in a
+// single request cycle, and no rider is looking at fourteen cities at once.
+// Stale probes are refreshed in the caller's own priority order (the cities
+// actually being viewed first), capped here.
+export const MAX_PROBE_REFRESH_PER_CYCLE = 40
+
 export const TALLINN_CENTER = { lat: 59.437, lng: 24.7536 }
 export const DEFAULT_ZOOM = 13
 
