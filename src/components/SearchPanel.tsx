@@ -366,23 +366,22 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <input
               type="datetime-local"
               value={dateTime}
-              onChange={(e) => {
-                const value = e.target.value
-                setDateTime(value)
-                // Regenerate immediately, Google Maps-style, instead of
-                // waiting for a separate "Done" tap -- only once the value
-                // is a complete datetime (the browser fires onChange on
-                // every partial keystroke too).
-                if (value && fromCoords && toCoords) {
-                  handleSearch(fromCoords, toCoords, fromText, toText, value, timeMode === 'arrive')
-                }
-              }}
+              // Just track what's being typed -- the browser fires onChange
+              // on every partial segment (day, then month, then year, ...),
+              // so searching here would re-run mid-edit instead of once the
+              // rider has actually picked a full date and time.
+              onChange={(e) => setDateTime(e.target.value)}
               className="px-2 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-full text-base sm:text-xs shadow-md"
             />
             {dateTime && (
               <button
                 type="button"
-                onClick={() => setPickerVisible(false)}
+                onClick={() => {
+                  setPickerVisible(false)
+                  if (fromCoords && toCoords) {
+                    handleSearch(fromCoords, toCoords, fromText, toText, dateTime, timeMode === 'arrive')
+                  }
+                }}
                 className="px-3 py-3 bg-blue-600 text-white rounded-full text-xs font-medium shadow-md"
               >
                 {t('search.done')}
