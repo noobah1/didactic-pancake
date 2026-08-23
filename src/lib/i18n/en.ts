@@ -84,6 +84,7 @@ const en = {
     delaySuffix: '{duration} delay',
     onTime: 'on time',
     trafficPointsTooltip: '{n} traffic measurement point{plural} along this route — not a GPS-confirmed delay',
+    tripCancelled: 'This trip is cancelled.',
   },
   results: {
     resizePanel: 'Resize journey panel',

@@ -46,6 +46,39 @@ function PlatformBadge({ place }: { place: LegPlace }) {
   )
 }
 
+// OTP-sourced disruption(s) for this specific leg's trip/route — separate
+// from IssuesPanel's city-wide alerts, which never say whether *this* leg is
+// affected. A CANCELED realtimeState is called out even with no matching
+// alert text, since the static timetable alone would never reveal it.
+function LegAlertRow({ leg }: { leg: RouteLeg }) {
+  const { t } = useTranslation()
+  const cancelled = leg.realtimeState === 'canceled'
+  const alerts = leg.alerts || []
+  if (!cancelled && alerts.length === 0) return null
+  const severe = cancelled || alerts.some((a) => a.severity === 'severe')
+
+  return (
+    <div
+      className={`flex items-start gap-1.5 mx-0 mb-1 px-2 py-1 rounded text-xs ${
+        severe
+          ? 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
+          : 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+      }`}
+    >
+      <span className="shrink-0 leading-none mt-0.5">⚠️</span>
+      <span className="leading-snug">
+        {cancelled && <span className="font-semibold">{t('route.tripCancelled')} </span>}
+        {alerts.map((a, i) => (
+          <span key={i}>
+            {a.headerText}
+            {i < alerts.length - 1 ? ' · ' : ''}
+          </span>
+        ))}
+      </span>
+    </div>
+  )
+}
+
 function ExpandableLeg({ leg }: { leg: RouteLeg }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -54,6 +87,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
 
   return (
     <div>
+      <LegAlertRow leg={leg} />
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}

@@ -1,8 +1,28 @@
 {
   "routingDefaults": {
-    "walkSpeed": 1.3
-  },
-  "fares": {
-    "type": "off"
+    "wheelchairAccessibility": {
+      "trip": {
+        "onlyConsiderAccessible": false,
+        "unknownCost": 1200,
+        "inaccessibleCost": 7200
+      },
+      "stop": {
+        "onlyConsiderAccessible": false,
+        "unknownCost": 300,
+        "inaccessibleCost": 7200
+      },
+      "elevator": {
+        "onlyConsiderAccessible": false,
+        "unknownCost": 20,
+        "inaccessibleCost": 3600
+      },
+      "inaccessibleStreetReluctance": 25,
+      "maxSlope": 0.083,
+      "slopeExceededReluctance": 1,
+      "stairsReluctance": 100
+    },
+    "walk": {
+      "speed": 1.3
+    }
   }
 }

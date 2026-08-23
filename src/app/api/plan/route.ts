@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   const dateTime = searchParams.get('dateTime')
   const arriveBy = searchParams.get('arriveBy') === 'true'
   const bannedTrips = searchParams.get('bannedTrips')
+  const wheelchair = searchParams.get('wheelchair') === 'true'
 
   if (!fromPlace || !toPlace) {
     return NextResponse.json({ error: 'fromPlace and toPlace are required' }, { status: 400 })
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
     dateTime: dateTime || undefined,
     arriveBy: arriveBy || undefined,
     bannedTrips: bannedTrips || undefined,
+    wheelchair: wheelchair || undefined,
   })
 
   if (result.error) {

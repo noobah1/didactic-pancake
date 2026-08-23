@@ -3,6 +3,7 @@ import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { getRoadDisruptionAlerts } from '@/lib/tarktee'
 import { ServiceAlert } from '@/lib/types'
 import { Availability, STALE_MAX_AGE_MS } from '@/lib/feed-status'
+import { mapAlertSeverity } from '@/lib/alert-severity'
 
 const ALERTS_QUERY = `
 {
@@ -83,7 +84,7 @@ async function fetchOtpAlerts(): Promise<ServiceAlert[]> {
     id: alert.id || String(Math.random()),
     headerText: alert.alertHeaderText || 'Service alert',
     descriptionText: alert.alertDescriptionText || '',
-    severity: mapSeverity(alert.alertSeverityLevel),
+    severity: mapAlertSeverity(alert.alertSeverityLevel),
     affectedRoutes: (alert.entities || [])
       .filter((e) => e.shortName)
       .map((e) => e.shortName!),
@@ -145,11 +146,4 @@ export async function GET(request: Request) {
   cache = { data: alerts, timestamp: now }
   const availability: Availability = otpResult.ok ? 'live' : 'partial'
   return NextResponse.json({ alerts, timestamp: now, availability })
-}
-
-function mapSeverity(severity?: string): ServiceAlert['severity'] {
-  if (!severity) return 'info'
-  if (severity === 'SEVERE' || severity === 'WARNING') return 'severe'
-  if (severity === 'INFO') return 'info'
-  return 'warning'
 }

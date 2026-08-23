@@ -69,6 +69,24 @@ export interface RouteLeg {
   // RouteTrafficEstimate.routeGtfsId without that collision risk.
   routeGtfsId?: string
   tripId?: string
+  // Whether this specific vehicle is wheelchair accessible, straight from
+  // the feed's own GTFS wheelchair_accessible. Three-state on purpose:
+  // undefined is "the operator didn't say", which is the majority of
+  // Estonian trips (61%) and must never be shown as a no. Only set for
+  // transit legs.
+  wheelchairAccessible?: boolean
+  // Disruptions scoped to this leg's own trip/route (diversions,
+  // cancellations, stop closures) — distinct from the city-wide alerts
+  // IssuesPanel shows, which never say whether *this* leg is affected.
+  // Text comes straight from the feed, same as ServiceAlert.headerText/
+  // descriptionText, and is rendered as-is (not translated). Absent means
+  // OTP reported nothing for this leg, not that nothing was checked.
+  alerts?: LegAlert[]
+  // OTP's own realtime verdict for this leg. 'canceled' means the specific
+  // trip is no longer running — the one state worth calling out on its own,
+  // since the static timetable alone would never reveal it. The others are
+  // kept for completeness but not currently rendered differently.
+  realtimeState?: 'scheduled' | 'updated' | 'canceled' | 'added' | 'modified'
   intermediateStops?: LegPlace[]
   legGeometry?: { points: string } // encoded polyline
 }
@@ -88,6 +106,16 @@ export interface LegPlace {
   // tracks at the same station.
   platform?: string
   platformChanged?: boolean
+}
+
+// A single leg-scoped disruption — see RouteLeg.alerts. Deliberately a
+// smaller shape than ServiceAlert (no id/affectedRoutes/lat/lng): it's
+// already scoped to one leg by construction, so there's nothing to match
+// it against.
+export interface LegAlert {
+  headerText: string
+  descriptionText: string
+  severity: 'info' | 'warning' | 'severe'
 }
 
 export interface ServiceAlert {

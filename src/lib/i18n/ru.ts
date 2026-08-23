@@ -85,6 +85,7 @@ const ru: Dictionary = {
     delaySuffix: 'Опоздание {duration}',
     onTime: 'по расписанию',
     trafficPointsTooltip: 'Точек измерения трафика на маршруте: {n} — не подтверждено по GPS',
+    tripCancelled: 'Эта поездка отменена.',
   },
   results: {
     resizePanel: 'Изменить размер панели маршрута',

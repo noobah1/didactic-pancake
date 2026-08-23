@@ -85,6 +85,7 @@ const et: Dictionary = {
     delaySuffix: '{duration} hilinemine',
     onTime: 'õigel ajal',
     trafficPointsTooltip: 'Liiklusmõõtepunkte sellel marsruudil: {n} — pole GPS-iga kinnitatud hilinemine',
+    tripCancelled: 'See sõit on ära jäetud.',
   },
   results: {
     resizePanel: 'Muuda teekonnapaneeli suurust',

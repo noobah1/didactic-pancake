@@ -1,6 +1,7 @@
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
-import { TransportMode, RouteResult, RouteLeg, LegPlace } from '@/lib/types'
+import { TransportMode, RouteResult, RouteLeg, LegPlace, LegAlert } from '@/lib/types'
 import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
+import { mapAlertSeverity } from '@/lib/alert-severity'
 
 // Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
 // TROLLEYBUS route_type in the data), so trip planning requests BUS for it too.
@@ -23,7 +24,7 @@ const MODE_TO_OTP: Record<TransportMode, string> = {
 // "Valga", not "Tartu") — this is what lines up with Elron's own "sihtjaam"
 // field, see elron-platform.ts.
 const PLAN_QUERY = `
-query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean, $banned: InputBanned, $searchWindow: Long) {
+query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportMode!], $numItineraries: Int!, $date: String, $time: String, $arriveBy: Boolean, $banned: InputBanned, $searchWindow: Long, $wheelchair: Boolean) {
   plan(
     from: $from,
     to: $to,
@@ -33,7 +34,8 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
     time: $time,
     arriveBy: $arriveBy,
     banned: $banned,
-    searchWindow: $searchWindow
+    searchWindow: $searchWindow,
+    wheelchair: $wheelchair
   ) {
     itineraries {
       duration
@@ -61,7 +63,13 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
         }
         duration
         route { gtfsId shortName }
-        trip { gtfsId }
+        trip { gtfsId wheelchairAccessible }
+        realtimeState
+        alerts {
+          alertHeaderText
+          alertDescriptionText
+          alertSeverityLevel
+        }
         legGeometry { points }
         intermediatePlaces {
           name
@@ -91,6 +99,12 @@ interface GqlPlace {
   arrival?: GqlTime | null
 }
 
+interface GqlAlert {
+  alertHeaderText?: string | null
+  alertDescriptionText?: string | null
+  alertSeverityLevel?: string | null
+}
+
 interface GqlLeg {
   mode: string
   headsign?: string | null
@@ -100,7 +114,9 @@ interface GqlLeg {
   to: GqlPlace
   duration: number
   route?: { gtfsId: string; shortName: string } | null
-  trip?: { gtfsId: string } | null
+  trip?: { gtfsId: string; wheelchairAccessible?: string | null } | null
+  realtimeState?: string | null
+  alerts?: GqlAlert[] | null
   legGeometry?: { points: string } | null
   intermediatePlaces?: GqlPlace[] | null
 }
@@ -118,6 +134,13 @@ export interface PlanOptions {
   dateTime?: string
   arriveBy?: boolean
   bannedTrips?: string
+  // Plans a step-free journey. Estonia publishes almost no stop
+  // accessibility (4 of 36,279 stops carry it) but good vehicle
+  // accessibility (38% of trips), so this can't mean "only provably
+  // accessible" — OTP is configured to penalize unknowns rather than ban
+  // them (see otp/router-config.json), and each leg reports what is
+  // actually known via RouteLeg.wheelchairAccessible.
+  wheelchair?: boolean
 }
 
 export interface PlanResult {
@@ -163,6 +186,10 @@ export async function planTrip(
 
   if (options.arriveBy) {
     variables.arriveBy = true
+  }
+
+  if (options.wheelchair) {
+    variables.wheelchair = true
   }
 
   // "Get alternatives" on a delay warning bans the specific trip(s) running
@@ -333,11 +360,45 @@ function mapItineraries(itineraries: GqlItinerary[]): RouteResult[] {
         route: leg.route?.shortName || undefined,
         routeGtfsId: leg.route?.gtfsId || undefined,
         tripId: leg.trip?.gtfsId || undefined,
+        wheelchairAccessible: mapWheelchair(leg.trip?.wheelchairAccessible),
+        alerts: mapLegAlerts(leg.alerts),
+        realtimeState: mapRealtimeState(leg.realtimeState),
         intermediateStops: leg.intermediatePlaces?.map(mapPlace) || undefined,
         legGeometry: leg.legGeometry || undefined,
       }),
     ),
   }))
+}
+
+// GTFS wheelchair_accessible is a three-state field, and the third state is
+// the common one here (61% of Estonian trips) — collapsing "no information"
+// into "not accessible" would state something the feed never said, the same
+// distinction the delay board draws between a measured and an estimated
+// delay. Undefined means unknown; the caller must not render it as a no.
+function mapWheelchair(value: string | null | undefined): boolean | undefined {
+  if (value === 'POSSIBLE') return true
+  if (value === 'NOT_POSSIBLE') return false
+  return undefined
+}
+
+function mapLegAlerts(alerts: GqlAlert[] | null | undefined): LegAlert[] | undefined {
+  if (!alerts?.length) return undefined
+  return alerts.map((a) => ({
+    headerText: a.alertHeaderText || '',
+    descriptionText: a.alertDescriptionText || '',
+    severity: mapAlertSeverity(a.alertSeverityLevel),
+  }))
+}
+
+function mapRealtimeState(value: string | null | undefined): RouteLeg['realtimeState'] {
+  switch (value) {
+    case 'SCHEDULED': return 'scheduled'
+    case 'UPDATED': return 'updated'
+    case 'CANCELED': return 'canceled'
+    case 'ADDED': return 'added'
+    case 'MODIFIED': return 'modified'
+    default: return undefined
+  }
 }
 
 function otpModeToLocal(otpMode: string): TransportMode {
