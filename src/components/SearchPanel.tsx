@@ -52,11 +52,18 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const { recents, logSearch, removeRecent } = useRecentSearches()
   const { places: homeWork, setPlace: setHomeWork, clearPlace: clearHomeWork } = useHomeWork()
 
-  const handleSearch = (from = fromCoords, to = toCoords, fromName = fromText, toName = toText) => {
+  const handleSearch = (
+    from = fromCoords,
+    to = toCoords,
+    fromName = fromText,
+    toName = toText,
+    dt = dateTime,
+    arriveBy = timeMode === 'arrive',
+  ) => {
     if (!from || !to) return
     const fromPlace = `${from.lat},${from.lng}`
     const toPlace = `${to.lat},${to.lng}`
-    onSearch?.(fromPlace, toPlace, modes, dateTime || undefined, timeMode === 'arrive' ? true : undefined)
+    onSearch?.(fromPlace, toPlace, modes, dt || undefined, arriveBy ? true : undefined)
     // Favorites already get their own always-visible chip — logging one as
     // a recent too would just show the same trip twice in the quick-pick row.
     if (!findFavorite(from.lat, from.lng, to.lat, to.lng)) {
@@ -359,7 +366,17 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <input
               type="datetime-local"
               value={dateTime}
-              onChange={(e) => setDateTime(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value
+                setDateTime(value)
+                // Regenerate immediately, Google Maps-style, instead of
+                // waiting for a separate "Done" tap -- only once the value
+                // is a complete datetime (the browser fires onChange on
+                // every partial keystroke too).
+                if (value && fromCoords && toCoords) {
+                  handleSearch(fromCoords, toCoords, fromText, toText, value, timeMode === 'arrive')
+                }
+              }}
               className="px-2 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-full text-base sm:text-xs shadow-md"
             />
             {dateTime && (
@@ -381,10 +398,15 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
                 setPickerVisible(true)
               } else if (timeMode === 'depart') {
                 setTimeMode('arrive')
-                if (!dateTime) setPickerVisible(true)
+                if (!dateTime) {
+                  setPickerVisible(true)
+                } else if (fromCoords && toCoords) {
+                  handleSearch(fromCoords, toCoords, fromText, toText, dateTime, true)
+                }
               } else {
                 setTimeMode('now')
                 setDateTime('')
+                if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, '', false)
               }
             }}
             className={`px-4 py-3 rounded-full text-sm shadow-md border ${timeMode !== 'now' && dateTime ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-medium' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
