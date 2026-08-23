@@ -65,6 +65,10 @@ function HomeContent() {
   const [activeModes] = useState<TransportMode[]>(
     modesFromUrl ? (modesFromUrl.split(',') as TransportMode[]) : [...ALL_MODES],
   )
+  // Lifted here rather than kept local to SearchPanel so the "Get
+  // alternatives" re-search below (which calls the plan hook directly) can
+  // still honor it.
+  const [wheelchair, setWheelchair] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
   const [selectedVehicleDelayed, setSelectedVehicleDelayed] = useState(false)
   // The trip the delay board itself already matched this vehicle to, if
@@ -256,9 +260,9 @@ function HomeContent() {
     router.replace(`?${params.toString()}`, { scroll: false })
   }
 
-  const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => {
+  const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean, wc?: boolean) => {
     setStopBoard(null)
-    search(fromPlace, toPlace, modes, dateTime, arriveBy)
+    search(fromPlace, toPlace, modes, dateTime, arriveBy, undefined, wc)
     setLastSearchPlaces({ fromPlace, toPlace })
   }
 
@@ -625,7 +629,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
       >
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} />
         </div>
         {stopBoard && (
           <div className="pointer-events-auto mt-8 sm:mt-0">
@@ -673,6 +677,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
                     undefined,
                     undefined,
                     bannedTrips,
+                    wheelchair,
                   )
                 }
               }}

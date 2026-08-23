@@ -53,6 +53,8 @@ const ru: Dictionary = {
     enterDestinationThenSave: 'Введите пункт назначения, затем нажмите, чтобы сохранить его как «{label}»',
     clearShortcutAria: 'Удалить ярлык «{label}»',
     removeRecentAria: 'Удалить недавний поиск {from} — {to}',
+    wheelchairOn: 'Маршрут для колясок включён',
+    wheelchairOff: 'Маршрут для колясок выключен',
   },
   location: {
     useMyLocation: 'Использовать моё текущее местоположение',
@@ -86,6 +88,8 @@ const ru: Dictionary = {
     onTime: 'по расписанию',
     trafficPointsTooltip: 'Точек измерения трафика на маршруте: {n} — не подтверждено по GPS',
     tripCancelled: 'Эта поездка отменена.',
+    wheelchairAccessible: 'Доступно для колясок',
+    wheelchairNotAccessible: 'Недоступно для колясок',
   },
   results: {
     resizePanel: 'Изменить размер панели маршрута',

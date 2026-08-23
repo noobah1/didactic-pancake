@@ -52,6 +52,8 @@ const en = {
     enterDestinationThenSave: 'Enter a destination, then tap to save it as {label}',
     clearShortcutAria: 'Clear {label} shortcut',
     removeRecentAria: 'Remove recent search {from} to {to}',
+    wheelchairOn: 'Wheelchair-accessible routing on',
+    wheelchairOff: 'Wheelchair-accessible routing off',
   },
   location: {
     useMyLocation: 'Use my current location',
@@ -85,6 +87,8 @@ const en = {
     onTime: 'on time',
     trafficPointsTooltip: '{n} traffic measurement point{plural} along this route — not a GPS-confirmed delay',
     tripCancelled: 'This trip is cancelled.',
+    wheelchairAccessible: 'Wheelchair accessible',
+    wheelchairNotAccessible: 'Not wheelchair accessible',
   },
   results: {
     resizePanel: 'Resize journey panel',

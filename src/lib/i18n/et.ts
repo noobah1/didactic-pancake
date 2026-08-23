@@ -53,6 +53,8 @@ const et: Dictionary = {
     enterDestinationThenSave: 'Sisesta sihtkoht ja puuduta, et salvestada see kui {label}',
     clearShortcutAria: 'Eemalda otsetee {label}',
     removeRecentAria: 'Eemalda hiljutine otsing {from} kuni {to}',
+    wheelchairOn: 'Ratastooliga ligipääsetav marsruut sees',
+    wheelchairOff: 'Ratastooliga ligipääsetav marsruut väljas',
   },
   location: {
     useMyLocation: 'Kasuta minu praegust asukohta',
@@ -86,6 +88,8 @@ const et: Dictionary = {
     onTime: 'õigel ajal',
     trafficPointsTooltip: 'Liiklusmõõtepunkte sellel marsruudil: {n} — pole GPS-iga kinnitatud hilinemine',
     tripCancelled: 'See sõit on ära jäetud.',
+    wheelchairAccessible: 'Ratastooliga ligipääsetav',
+    wheelchairNotAccessible: 'Ratastooliga ligipääsmatu',
   },
   results: {
     resizePanel: 'Muuda teekonnapaneeli suurust',

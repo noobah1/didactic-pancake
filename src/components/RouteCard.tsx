@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Footprints, X } from 'lucide-react'
+import { Footprints, X, Accessibility } from 'lucide-react'
 import { RouteResult, RouteLeg, LegPlace, TransportMode, RouteTrafficEstimate } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
@@ -79,6 +79,29 @@ function LegAlertRow({ leg }: { leg: RouteLeg }) {
   )
 }
 
+// leg.wheelchairAccessible is three-state (see RouteLeg's own comment):
+// undefined means the operator simply didn't report it, the majority case
+// for Estonian trips, and must never read as a "no" — so this renders
+// nothing at all for undefined rather than an "unknown" badge, the same
+// silent-when-absent choice PlatformBadge above makes.
+function WheelchairBadge({ leg }: { leg: RouteLeg }) {
+  const { t } = useTranslation()
+  if (leg.wheelchairAccessible === undefined) return null
+  return (
+    <span
+      title={leg.wheelchairAccessible ? t('route.wheelchairAccessible') : t('route.wheelchairNotAccessible')}
+      aria-label={leg.wheelchairAccessible ? t('route.wheelchairAccessible') : t('route.wheelchairNotAccessible')}
+      className={`shrink-0 flex items-center justify-center w-4 h-4 rounded-full ${
+        leg.wheelchairAccessible
+          ? 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/60'
+          : 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/60'
+      }`}
+    >
+      <Accessibility size={11} strokeWidth={2.5} />
+    </span>
+  )
+}
+
 function ExpandableLeg({ leg }: { leg: RouteLeg }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -103,6 +126,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
           <span className="text-xs text-gray-500 dark:text-gray-400">{formatTime(leg.startTime)}</span>
           <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name} &rarr; {leg.to.name}</span>
           <PlatformBadge place={leg.from} />
+          <WheelchairBadge leg={leg} />
         </div>
         <div className="flex items-center gap-1">
           <span className="text-xs text-gray-400 dark:text-gray-500">{t('common.minShort', { n: Math.round(leg.duration / 60) })}</span>

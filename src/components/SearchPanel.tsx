@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Star } from 'lucide-react'
+import { Star, Accessibility } from 'lucide-react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { FavoriteChip } from './FavoriteChip'
@@ -17,13 +17,19 @@ import { useTranslation } from '@/lib/i18n/context'
 import { localeTag } from '@/lib/i18n/format'
 
 interface SearchPanelProps {
-  onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => void
+  onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean, wheelchair?: boolean) => void
   onClear?: () => void
   modes?: TransportMode[]
   activeCities?: CityDef[]
   onCityToggle?: (city: CityDef) => void
   onCountyToggle?: (countyCities: CityDef[]) => void
   onSetAllCities?: (cities: CityDef[]) => void
+  // Lifted to page.tsx (like activeCities) rather than kept local, so a
+  // "Get alternatives" re-search — which calls the plan hook directly,
+  // bypassing this panel — can still honor the rider's own accessibility
+  // choice instead of silently dropping it.
+  wheelchair?: boolean
+  onWheelchairToggle?: () => void
   onViewStopBoard?: (name: string, lat: number, lng: number, stopId: string) => void
   // Called when the rider picks a line result from the same search box
   // (see LocationInput's stopsOnly mode, which now also returns lines —
@@ -34,7 +40,7 @@ interface SearchPanelProps {
   onSelectLine?: (mode: string, line: string, lat: number, lng: number) => boolean | Promise<boolean>
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, onViewStopBoard, onSelectLine }: SearchPanelProps) {
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, wheelchair = false, onWheelchairToggle, onViewStopBoard, onSelectLine }: SearchPanelProps) {
   const { t, locale } = useTranslation()
   const [panelMode, setPanelMode] = useState<'plan' | 'board'>('plan')
   const [fromText, setFromText] = useState('')
@@ -59,11 +65,12 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     toName = toText,
     dt = dateTime,
     arriveBy = timeMode === 'arrive',
+    wc = wheelchair,
   ) => {
     if (!from || !to) return
     const fromPlace = `${from.lat},${from.lng}`
     const toPlace = `${to.lat},${to.lng}`
-    onSearch?.(fromPlace, toPlace, modes, dt || undefined, arriveBy ? true : undefined)
+    onSearch?.(fromPlace, toPlace, modes, dt || undefined, arriveBy ? true : undefined, wc || undefined)
     // Favorites already get their own always-visible chip — logging one as
     // a recent too would just show the same trip twice in the quick-pick row.
     if (!findFavorite(from.lat, from.lng, to.lat, to.lng)) {
@@ -417,6 +424,26 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             {timeMode === 'arrive' && (dateTime
               ? t('search.arriveTime', { time: new Date(dateTime).toLocaleString(localeTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) })
               : t('search.arriveAt'))}
+          </button>
+        )}
+        {onWheelchairToggle && (
+          <button
+            type="button"
+            onClick={() => {
+              onWheelchairToggle()
+              // OTP's own accessibility cost model already penalizes
+              // unknown/inaccessible legs rather than banning them (see
+              // otp/router-config.json), so toggling this can change which
+              // itinerary comes back first even without touching from/to —
+              // same "act immediately" pattern as the time-mode button.
+              if (fromCoords && toCoords) handleSearch(fromCoords, toCoords, fromText, toText, dateTime, timeMode === 'arrive', !wheelchair)
+            }}
+            title={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
+            aria-label={wheelchair ? t('search.wheelchairOn') : t('search.wheelchairOff')}
+            aria-pressed={wheelchair}
+            className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center shadow-md border ${wheelchair ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+          >
+            <Accessibility size={20} />
           </button>
         )}
         {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (

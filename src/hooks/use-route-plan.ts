@@ -91,6 +91,7 @@ export function useRoutePlan() {
       dateTime?: string,
       arriveBy?: boolean,
       bannedTrips?: string[],
+      wheelchair?: boolean,
     ) => {
       setLoading(true)
       setError(null)
@@ -104,6 +105,7 @@ export function useRoutePlan() {
           ...(dateTime ? { dateTime } : {}),
           ...(arriveBy ? { arriveBy: 'true' } : {}),
           ...(bannedTrips?.length ? { bannedTrips: bannedTrips.join(',') } : {}),
+          ...(wheelchair ? { wheelchair: 'true' } : {}),
         })
 
         const res = await fetch(`/api/plan?${params}`)
