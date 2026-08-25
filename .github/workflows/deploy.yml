@@ -4,6 +4,22 @@ on:
   push:
     branches: [main]
 
+# Two pushes landing close together used to start two deploys that ran almost
+# entirely on top of each other (confirmed: 09:02:31 and 09:03:01 on
+# 2026-08-25, ~6min each). Both built the image in place on the deploy box and
+# then raced to recreate the app container — one won, the other died on
+# "container name already in use", and while both builds ran, the single-core
+# server had nothing left for the otp container, so every OTP-backed endpoint
+# (journey planning, live delays, stop search) failed for the duration.
+#
+# Queue them instead. cancel-in-progress stays false deliberately: cancelling
+# a deploy mid-recreate is what strands a "<hash>_app-<service>-<n>" container
+# in the first place (see the cleanup in scripts/deploy.sh), so a superseded
+# deploy is left to finish rather than killed.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
