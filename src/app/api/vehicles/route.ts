@@ -13,12 +13,26 @@ import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
 import { VehiclePosition, TransportMode } from '@/lib/types'
 
 let gpsCache: { data: VehiclePosition[]; timestamp: number } | null = null
-let scheduledCache: { data: ScheduledResult; timestamp: number } | null = null
 const GPS_CACHE_TTL = 5_000 // 5 seconds
 const SCHEDULED_CACHE_TTL = 30_000 // 30 seconds
 
-const SCHEDULED_QUERY = `
-query ActiveTrips($date: String!) {
+// The schedule query used to ask for rail+ferry+bus+tram in one go, and every
+// request that found the cache cold paid for the whole thing. Measured against
+// a healthy OTP: 46.7MB / 2.5s for all four modes, versus 0.9MB / 0.05s for
+// rail+ferry alone — bus and tram are ~98% of the payload, because every one
+// of their patterns carries full geometry plus every trip of the whole service
+// day.
+//
+// Splitting them matters because the expensive half is usually thrown away
+// unread. Scheduled bus/tram positions are estimates for places with no live
+// GPS; inside Tallinn they're dropped in favour of the real GPS feed (see
+// isTallinnArea in GET), and then filterByCities drops whatever is left
+// outside the rider's selected cities. So for the default Tallinn-only view,
+// all 46MB of it is fetched, interpolated, and discarded. Now it's only
+// fetched when some selected city can actually display it — see
+// needsSurfaceSchedule in GET.
+const RAIL_FERRY_QUERY = `
+query ActiveRailFerry($date: String!) {
   rail: routes(transportModes: [RAIL]) {
     shortName
     mode
@@ -52,6 +66,11 @@ query ActiveTrips($date: String!) {
       }
     }
   }
+}
+`
+
+const BUS_TRAM_QUERY = `
+query ActiveBusTram($date: String!) {
   bus: routes(transportModes: [BUS]) {
     shortName
     mode
@@ -318,28 +337,94 @@ async function fetchTallinnGpsVehicles(): Promise<VehiclePosition[]> {
 
 const EMPTY_SCHEDULED: ScheduledResult = { vehicles: [], railTrips: new Map() }
 
-async function fetchScheduledVehicles(): Promise<ScheduledResult> {
-  const now = Date.now()
-  if (scheduledCache && now - scheduledCache.timestamp < SCHEDULED_CACHE_TTL) {
-    return scheduledCache.data
-  }
+interface ScheduledSlot {
+  cache: { data: ScheduledResult; timestamp: number } | null
+  // Concurrent requests share one query instead of each firing its own copy.
+  inFlight: Promise<ScheduledResult> | null
+  failedAt: number
+}
 
+const railFerrySlot: ScheduledSlot = { cache: null, inFlight: null, failedAt: 0 }
+const busTramSlot: ScheduledSlot = { cache: null, inFlight: null, failedAt: 0 }
+
+// A failed attempt used to leave the cache untouched — neither its data nor
+// its timestamp — so the very next request re-ran the query immediately. With
+// every connected client polling this endpoint every 7s
+// (POLL_INTERVALS.vehiclePositions), that turned into a self-sustaining
+// overload: once OTP was slow enough that the query couldn't finish inside
+// OTP_FETCH_TIMEOUT_MS it could never populate the cache, so every poll from
+// every client re-fired the single most expensive query in the codebase, which
+// kept OTP too saturated to answer anything else. Journey planning, live
+// delays and stop search all went down with it and stayed down, because
+// nothing in the loop ever backed off. Confirmed live: /api/vehicles returned
+// in 8.1-8.25s on every single call, never once faster.
+const SCHEDULED_RETRY_AFTER_FAILURE = 60_000
+
+async function fetchScheduled(query: string): Promise<ScheduledResult> {
   const date = getServiceDate()
   const nowSec = getServiceSeconds()
 
   const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: SCHEDULED_QUERY, variables: { date } }),
+    body: JSON.stringify({ query, variables: { date } }),
     cache: 'no-store',
     signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
   })
 
-  if (!response.ok) return scheduledCache?.data || EMPTY_SCHEDULED
-
+  if (!response.ok) throw new Error(`OTP returned ${response.status}`)
   const data = await response.json()
-  if (data.errors?.length) return scheduledCache?.data || EMPTY_SCHEDULED
+  if (data.errors?.length) throw new Error(`OTP reported query errors`)
+  return parseScheduled(data, nowSec)
+}
 
+// Serves the cache while it's fresh, joins whatever query is already running
+// if one is, and otherwise starts one — but never starts one within
+// SCHEDULED_RETRY_AFTER_FAILURE of the last failure. On failure the last
+// known-good data is served rather than nothing, so a wobble in OTP degrades
+// to slightly stale markers instead of an empty map.
+async function loadScheduled(slot: ScheduledSlot, query: string, label: string): Promise<ScheduledResult> {
+  const now = Date.now()
+  if (slot.cache && now - slot.cache.timestamp < SCHEDULED_CACHE_TTL) return slot.cache.data
+  if (slot.inFlight) return slot.inFlight
+  if (now - slot.failedAt < SCHEDULED_RETRY_AFTER_FAILURE) return slot.cache?.data ?? EMPTY_SCHEDULED
+
+  slot.inFlight = fetchScheduled(query)
+    .then((data) => {
+      slot.cache = { data, timestamp: Date.now() }
+      slot.failedAt = 0
+      return data
+    })
+    .catch((error) => {
+      slot.failedAt = Date.now()
+      console.error(`Scheduled ${label} query failed:`, error)
+      return slot.cache?.data ?? EMPTY_SCHEDULED
+    })
+    .finally(() => {
+      slot.inFlight = null
+    })
+
+  return slot.inFlight
+}
+
+// `needsSurface` gates the bus/tram half — see the comment on
+// RAIL_FERRY_QUERY for why it's worth skipping. railTrips only ever comes from
+// the rail half, so the merge takes it from there unconditionally.
+async function fetchScheduledVehicles(needsSurface: boolean): Promise<ScheduledResult> {
+  const [railFerry, busTram] = await Promise.all([
+    loadScheduled(railFerrySlot, RAIL_FERRY_QUERY, 'rail/ferry'),
+    needsSurface
+      ? loadScheduled(busTramSlot, BUS_TRAM_QUERY, 'bus/tram')
+      : Promise.resolve(EMPTY_SCHEDULED),
+  ])
+  if (busTram.vehicles.length === 0) return railFerry
+  return {
+    vehicles: [...railFerry.vehicles, ...busTram.vehicles],
+    railTrips: railFerry.railTrips,
+  }
+}
+
+function parseScheduled(data: { data?: Record<string, GqlRoute[] | undefined> }, nowSec: number): ScheduledResult {
   // Elron's schedule sits in the graph twice, under two feeds (see
   // ELRON_AGENCY_GTFS_ID) — without scoping to one, every train is drawn
   // twice, two markers stacked on the same coordinate. Fall back to the
@@ -399,9 +484,7 @@ async function fetchScheduledVehicles(): Promise<ScheduledResult> {
     }
   }
 
-  const result: ScheduledResult = { vehicles, railTrips }
-  scheduledCache = { data: result, timestamp: now }
-  return result
+  return { vehicles, railTrips }
 }
 
 // Elron's feed carries no bearing (confirmed absent on every entity), so read
@@ -482,6 +565,20 @@ export async function GET(request: Request) {
     (c) => Math.abs(c.lat - 59.437) < 0.1 && Math.abs(c.lng - 24.754) < 0.1,
   )
 
+  // Whether a scheduled bus/tram could actually survive to be displayed, and
+  // so whether the expensive half of the schedule query is worth running at
+  // all (see RAIL_FERRY_QUERY). Inside the Tallinn GPS area those estimates
+  // are dropped in favour of the live feed, and filterByCities then drops
+  // everything outside the selected cities — so with only Tallinn selected,
+  // which is the default view, not one of them can reach the response. No
+  // cities selected means no city filter at all, so they show nationwide.
+  const needsSurfaceSchedule =
+    cityCoords.length === 0 ||
+    cityCoords.some(
+      (c) =>
+        !(Math.abs(c.lat - 59.437) < CITY_RADIUS_DEG && Math.abs(c.lng - 24.754) < CITY_RADIUS_DEG),
+    )
+
   try {
     const now = Date.now()
 
@@ -495,7 +592,7 @@ export async function GET(request: Request) {
       // fall back to their scheduled estimate if it fails.
       fetchElronVehicles().catch(() => []),
       // Non-critical: continue with GPS-only vehicles if this fails.
-      fetchScheduledVehicles().catch(() => EMPTY_SCHEDULED),
+      fetchScheduledVehicles(needsSurfaceSchedule).catch(() => EMPTY_SCHEDULED),
     ])
 
     const liveTrains = buildLiveTrains(elron, scheduled.railTrips)
