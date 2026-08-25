@@ -1,0 +1,9 @@
+[Unit]
+Description=Sync otp/graph.obj from the otp-graph GitHub Release
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/app
+ExecStart=/opt/app/otp/sync-graph.sh

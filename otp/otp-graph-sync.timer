@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily check for a fresh OTP graph
+
+[Timer]
+# Daily rather than pinned to the weekly build's 03:00 UTC Sunday schedule
+# (see .github/workflows/build-otp-graph.yml) so a manual workflow_dispatch
+# rebuild, on any day, still reaches the server within 24h with no separate
+# handling — sync-graph.sh itself is what makes a same-graph run a no-op.
+OnCalendar=*-*-* 05:00:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

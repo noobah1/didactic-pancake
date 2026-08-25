@@ -77,6 +77,40 @@ bash otp/download-data.sh
 docker compose restart otp
 ```
 
+### Keeping the OTP Graph Fresh
+
+`.github/workflows/build-otp-graph.yml` rebuilds the graph weekly (or on
+`workflow_dispatch`) and publishes it to the `otp-graph` GitHub Release — but
+CI has no access to the server, so nothing pulls that new graph down on its
+own unless this is set up. Without it, the server's `otp/graph.obj` only ever
+changes when someone manually repeats the steps below — which is exactly how
+it silently went ~10 days stale before this was added, quietly breaking any
+route whose schedule changed in that window (right route, right geometry,
+just zero trips for "today" until someone happened to reload the graph).
+
+One-time setup on the server:
+
+```bash
+chmod +x otp/sync-graph.sh
+cp otp/otp-graph-sync.service otp/otp-graph-sync.timer /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now otp-graph-sync.timer
+```
+
+Runs daily (`otp-graph-sync.timer`) rather than pinned to the build's own
+weekly schedule, so a manual/off-schedule rebuild still reaches the server
+within a day with no extra handling. Each run is a no-op unless the
+published graph is actually newer than what's loaded (tracked in
+`otp/.graph-synced-at`); when it does update, it restarts the `otp`
+container, waits for its healthcheck, and automatically rolls back to the
+previous graph if the new one doesn't come up healthy. Check on it with:
+
+```bash
+systemctl status otp-graph-sync.timer   # scheduled?
+systemctl list-timers otp-graph-sync.timer  # next run
+journalctl -u otp-graph-sync.service -n 50  # recent sync attempts
+```
+
 ### If OTP Breaks on the Server
 
 ```bash
