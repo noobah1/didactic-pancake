@@ -2,7 +2,11 @@ name: Build OTP graph
 
 on:
   schedule:
-    - cron: '0 3 * * 0' # 03:00 UTC every Sunday
+    - cron: '0 3 * * *' # 03:00 UTC daily — checks the upstream feed every day
+                         # (see "Check upstream GTFS feed" below) but only
+                         # actually rebuilds/publishes/restarts anything on a
+                         # day the feed's own ETag actually changed, so this
+                         # doesn't turn into a daily no-op rebuild+redeploy.
   workflow_dispatch: {}
 
 permissions:
@@ -14,13 +18,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # A scheduled run only needs to rebuild when the upstream feed actually
+      # changed — otherwise this would mean a full rebuild AND a ~200MB
+      # download+restart on the (small, single-core) deploy server every
+      # single day for no reason (see otp/sync-graph.sh, which downloads
+      # whatever this workflow publishes). workflow_dispatch always forces a
+      # rebuild regardless — that's the manual "I know something changed,
+      # rebuild now" escape hatch, same as before this check existed.
+      - name: Check upstream GTFS feed
+        id: check
+        run: |
+          etag=$(curl -sI https://eu-gtfs.remix.com/estonia_unified_gtfs.zip | grep -i '^etag:' | tr -d '\r' | cut -d' ' -f2-)
+          echo "Upstream ETag: $etag"
+          previous=$(cat otp/.gtfs-etag 2>/dev/null || echo "")
+          echo "Previously built: $previous"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -z "$previous" ] || [ "$etag" != "$previous" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "etag=$etag" >> "$GITHUB_OUTPUT"
+
       - name: Download fresh GTFS/OSM data
+        if: steps.check.outputs.changed == 'true'
         run: |
           curl -L -o otp/data/estonia_unified_gtfs.zip https://eu-gtfs.remix.com/estonia_unified_gtfs.zip
           curl -L -o otp/data/tslaevad.zip https://eu-gtfs.remix.com/tslaevad.zip
           curl -L -o otp/data/estonia-latest.osm.pbf https://download.geofabrik.de/europe/estonia-latest.osm.pbf
 
       - name: Build OTP graph
+        if: steps.check.outputs.changed == 'true'
         run: |
           rm -f otp/graph.obj
           docker run --rm \
@@ -33,20 +60,23 @@ jobs:
       # git — a committed binary keeps every old version forever in LFS storage and
       # blows the free 1GB quota after a few refreshes. Release assets don't.
       - name: Publish graph to the otp-graph release
+        if: steps.check.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view otp-graph --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
             gh release create otp-graph --repo "$GITHUB_REPOSITORY" \
               --title "OTP graph (auto-updated)" \
-              --notes "Rebuilt weekly by .github/workflows/build-otp-graph.yml. Latest asset is always graph.obj."
+              --notes "Rebuilt from the upstream GTFS feed by .github/workflows/build-otp-graph.yml whenever it changes (checked daily). Latest asset is always graph.obj."
           gh release upload otp-graph otp/graph.obj --repo "$GITHUB_REPOSITORY" --clobber
 
       - name: Commit refreshed reference feed
+        if: steps.check.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add otp/data/tslaevad.zip
+          echo "${{ steps.check.outputs.etag }}" > otp/.gtfs-etag
+          git add otp/data/tslaevad.zip otp/.gtfs-etag
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: refresh ferry GTFS feed [skip ci]"
+          git commit -m "chore: refresh ferry GTFS feed + GTFS ETag marker [skip ci]"
           git push
