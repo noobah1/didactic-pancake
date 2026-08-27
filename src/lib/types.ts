@@ -12,6 +12,23 @@ export interface VehiclePosition {
   // real-time signal exists for this vehicle at all — most non-Tallinn-agency
   // routes), as opposed to a real GPS fix. Absent/false means real GPS.
   estimated?: boolean
+  // true when this position was corrected using rider evidence rather than
+  // being a pure timetable guess — see RiderReport and schedule-offset.ts.
+  // Only ever set alongside `estimated: true`: rider evidence replaces a
+  // schedule guess, it never overrides or gets confused with real agency
+  // GPS. Absent means no rider evidence, never false — same discipline as
+  // `estimated` above.
+  riderReported?: true
+  // Which of the two rider-evidence tiers riderReported is standing for —
+  // only meaningful when riderReported is true:
+  //  - 'observed': a report from on board this trip is still fresh (within
+  //    REPORT_MAX_AGE_MS) — this position is that report's own consensus.
+  //  - 'inferred': the freshest report has expired, but the schedule offset
+  //    it measured (schedule-offset.ts) hasn't fully decayed yet, so the
+  //    marker is still a schedule position shifted by that offset rather
+  //    than a snap back to "on time." Weaker evidence than 'observed', but
+  //    still better than assuming punctuality with nothing to back it.
+  riderConfidence?: 'observed' | 'inferred'
 }
 
 // A journey sharer's own live position, attached to a share (see
@@ -303,4 +320,24 @@ export interface RouteTrafficEstimate extends TrafficEstimate {
   // GPS-delayed vehicles.
   lat: number
   lng: number
+}
+
+// A vehicle's position as reconstructed from one or more riders currently on
+// board it (see src/lib/rider-reports.ts and /api/rider-report) — the only
+// live signal that reaches a bus outside Tallinn and Elron at all, per
+// README's "no Estonian city other than Tallinn publishes live vehicle
+// positions." Deliberately its own type with its own `evidence` discriminant,
+// same discipline as TrafficEstimate.evidence: this is one or more
+// unverified phones, weaker evidence than an agency's own GPS feed
+// (DelayedVehicle) and must never be mistaken for it by field-shape alone.
+// The lat/lng here is always a point snapped onto the trip's route shape —
+// never a reporter's raw GPS fix — see rider-reports.ts for why.
+export interface RiderReport {
+  tripId: string
+  lat: number
+  lng: number
+  heading?: number
+  evidence: 'rider-reported'
+  reportedAt: number // epoch ms of the freshest contributing report
+  reporterCount: number
 }

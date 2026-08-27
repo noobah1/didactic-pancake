@@ -47,3 +47,19 @@ self.addEventListener('fetch', (event) => {
     )
   }
 })
+
+// Riding mode's get-off alarm (use-riding-mode.ts's alertAlighting) shows a
+// local notification with no push subscription behind it — this just
+// focuses (or opens) the app when the rider taps it, same as any ordinary
+// notification would.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client) return client.focus()
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('/')
+    }),
+  )
+})

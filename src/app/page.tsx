@@ -16,7 +16,9 @@ import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
-import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition } from '@/lib/types'
+import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
+import { RidingPanel } from '@/components/RidingPanel'
+import { useRidingMode } from '@/hooks/use-riding-mode'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
 import { resolveTravellerPosition } from '@/lib/traveller-position'
@@ -69,6 +71,10 @@ function HomeContent() {
   // alternatives" re-search below (which calls the plan hook directly) can
   // still honor it.
   const [wheelchair, setWheelchair] = useState(false)
+  // Set when a marker click can't produce a route shape at all (see
+  // MapView's onRouteShapeError) — otherwise that click just silently does
+  // nothing, indistinguishable from the tap not registering.
+  const [routeShapeError, setRouteShapeError] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
   const [selectedVehicleDelayed, setSelectedVehicleDelayed] = useState(false)
   // The trip the delay board itself already matched this vehicle to, if
@@ -558,6 +564,16 @@ function HomeContent() {
 
 const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.data?.vehicles)
 
+  // "I'm on this" — see use-riding-mode.ts. Only one session at a time,
+  // always against a leg of the currently selected route (RouteCard's own
+  // toggle only ever renders while its route is selected), so switching or
+  // closing the selected route is exactly when riding should stop too.
+  const [ridingLeg, setRidingLeg] = useState<RouteLeg | null>(null)
+  useEffect(() => {
+    setRidingLeg(null)
+  }, [selectedRouteId])
+  const { progress: ridingProgress, error: ridingError } = useRidingMode(ridingLeg, () => setRidingLeg(null))
+
   // Sync extraMapVehicle (and the selectedVehicle it was set alongside, in
   // handleSelectLine's nationwide branch) to each fresh position reported by
   // extraVehicleData — see that hook's own comment for why this is needed.
@@ -568,6 +584,15 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
     setExtraMapVehicle(fresh)
     setSelectedVehicle((prev) => (prev?.id === fresh.id ? fresh : prev))
   }, [extraVehicleData.data, extraMapVehicle])
+
+  // Self-dismissing, like the share-link error toast in RouteResults —
+  // this is a one-off notice about a single click, not a state the rider
+  // needs to keep looking at.
+  useEffect(() => {
+    if (!routeShapeError) return
+    const timer = setTimeout(() => setRouteShapeError(false), 4000)
+    return () => clearTimeout(timer)
+  }, [routeShapeError])
 
   // vehicleData is scoped to activeCities, so a vehicle handleSelectLine
   // found via its nationwide fallback (see extraMapVehicle's own comment)
@@ -606,6 +631,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           focusStop={stopBoard}
           focusLine={focusLine}
           onVehicleClick={handleVehicleClick}
+          onRouteShapeError={() => setRouteShapeError(true)}
         />
       </ErrorBoundary>
 
@@ -631,6 +657,28 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         <div className="pointer-events-auto">
           <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} />
         </div>
+        {/* Vehicle markers on the map are otherwise silent about their own
+            data source going down — a rider watching a frozen or empty map
+            has no way to tell "no vehicles right now" from "tracking is
+            broken." Mirrors the same live/stale/unavailable language the
+            issues button and nearby panel already use elsewhere. */}
+        {vehicleData.status === 'unavailable' && (
+          <div className="pointer-events-auto mt-2 flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-700 dark:text-red-300">
+            <span className="text-red-500">⚠️</span>
+            {t('page.vehicleTrackingUnavailable')}
+          </div>
+        )}
+        {vehicleData.status === 'stale' && (
+          <div className="pointer-events-auto mt-2 flex items-center gap-1.5 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-300">
+            <span className="text-amber-500">⚠️</span>
+            {t('page.vehicleTrackingStale')}
+          </div>
+        )}
+        {ridingLeg && (
+          <div className="pointer-events-auto mt-2">
+            <RidingPanel leg={ridingLeg} progress={ridingProgress} error={ridingError} onStop={() => setRidingLeg(null)} />
+          </div>
+        )}
         {stopBoard && (
           <div className="pointer-events-auto mt-8 sm:mt-0">
             <ErrorBoundary
@@ -693,6 +741,8 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
               onClose={handleClear}
               delayVehicles={delayData.data?.vehicles}
               trafficEstimates={delayData.data?.estimates}
+              ridingTripId={ridingLeg?.tripId ?? null}
+              onToggleRiding={(leg) => setRidingLeg((cur) => (cur?.tripId === leg.tripId ? null : leg))}
             />
           </ErrorBoundary>
         </div>
@@ -708,6 +758,18 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
             setShowIssues(true)
             dismissToast()
           }}
+        />
+      )}
+
+      {/* Route-shape toast - a marker click that couldn't load any route
+          data would otherwise look like the tap just didn't register.
+          Deferred behind the delay toast (same corner) rather than dropped
+          outright, since a route-shape failure isn't time-sensitive. */}
+      {routeShapeError && !toast && (
+        <DelayToast
+          key="route-shape-toast"
+          text={t('page.routeShapeUnavailable')}
+          onDismiss={() => setRouteShapeError(false)}
         />
       )}
 

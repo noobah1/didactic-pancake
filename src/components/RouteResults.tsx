@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Check, MapPin, Share2, X } from 'lucide-react'
-import { RouteResult, RouteTrafficEstimate } from '@/lib/types'
+import { RouteResult, RouteTrafficEstimate, RouteLeg } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { RouteCard } from './RouteCard'
 import { SheetHandle } from './SheetHandle'
@@ -28,9 +28,11 @@ interface RouteResultsProps {
   onClose?: () => void
   delayVehicles?: DelayedVehicle[]
   trafficEstimates?: RouteTrafficEstimate[]
+  ridingTripId?: string | null
+  onToggleRiding?: (leg: RouteLeg) => void
 }
 
-export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, trafficEstimates }: RouteResultsProps) {
+export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, trafficEstimates, ridingTripId, onToggleRiding }: RouteResultsProps) {
   const { t } = useTranslation()
   const [sortBy, setSortBy] = useState<SortMode>('duration')
   const [shareState, setShareState] = useState<ShareState>('idle')
@@ -295,6 +297,8 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           onSelect={() => onSelect(route.id === selectedId ? null : route.id)}
           delayVehicles={delayVehicles}
           trafficEstimates={trafficEstimates}
+          ridingTripId={ridingTripId}
+          onToggleRiding={onToggleRiding}
         />
       ))}
       </div>

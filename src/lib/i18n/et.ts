@@ -23,6 +23,9 @@ const et: Dictionary = {
     shareExpired: 'See jagatud teekond on aegunud või seda ei leitud.',
     logoAlt: 'Logo',
     routePlanningUnavailable: 'Marsruudiplaneerimise teenus pole saadaval',
+    vehicleTrackingUnavailable: 'Sõidukite jälgimine ei tööta — proovime uuesti',
+    vehicleTrackingStale: 'Näidatakse viimaseid teadaolevaid sõidukite asukohti',
+    routeShapeUnavailable: 'Marsruudi teekonda ei õnnestunud laadida',
   },
   language: {
     label: 'Keel',
@@ -90,6 +93,15 @@ const et: Dictionary = {
     tripCancelled: 'See sõit on ära jäetud.',
     wheelchairAccessible: 'Ratastooliga ligipääsetav',
     wheelchairNotAccessible: 'Ratastooliga ligipääsmatu',
+  },
+  riding: {
+    imOnThis: 'Sõidan sellega',
+    stopRiding: 'Peata',
+    nextStop: 'Järgmine: {name}',
+    stopsToGo: 'Jäänud peatusi: {n}',
+    arriving: 'Saabumas',
+    alarmTitle: 'Aeg väljuda',
+    alarmBody: 'Teie peatus {name} on lähedal',
   },
   results: {
     resizePanel: 'Muuda teekonnapaneeli suurust',
@@ -198,6 +210,8 @@ const et: Dictionary = {
   mapPopup: {
     yourVehicle: 'Sinu {mode}',
     estimatedNotLive: 'Hinnatud sõiduplaani põhjal — ei jälgita reaalajas',
+    riderReported: 'Teatatud pardal olevate reisijate poolt — operaator pole kinnitanud',
+    riderInferred: 'Asukoht kohandatud hiljutise reisijateate põhjal — enam mitte reaalajas',
     liveGpsNoSchedule: 'Reaalajas GPS — sõiduplaan pole saadaval',
     arr: 'Sab',
     dep: 'Väl',

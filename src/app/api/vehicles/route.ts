@@ -11,6 +11,9 @@ import { fetchElronVehicles } from '@/lib/elron'
 import { decodePolyline } from '@/lib/decode-polyline'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
 import { VehiclePosition, TransportMode } from '@/lib/types'
+import { findNearestPointIndex, calcHeading, interpolateAlongShape } from '@/lib/shape-geometry'
+import { consensusFor, reportedTripIds } from '@/lib/rider-reports'
+import { measureOffsetSec, decayOffsetSec, OFFSET_NOISE_FLOOR_SEC, OFFSET_MAX_AGE_SEC } from '@/lib/schedule-offset'
 
 let gpsCache: { data: VehiclePosition[]; timestamp: number } | null = null
 const GPS_CACHE_TTL = 5_000 // 5 seconds
@@ -146,92 +149,6 @@ interface ScheduledResult {
   // a badly delayed train is outside its own scheduled window, which is
   // exactly when its live position matters most.
   railTrips: Map<string, RailTripInfo>
-}
-
-function distSq(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const dlat = lat2 - lat1
-  const dlon = lon2 - lon1
-  return dlat * dlat + dlon * dlon
-}
-
-function findNearestPointIndex(
-  shapeLats: number[],
-  shapeLons: number[],
-  lat: number,
-  lon: number,
-  searchStart = 0,
-): number {
-  let bestIdx = searchStart
-  let bestDist = Infinity
-  for (let i = searchStart; i < shapeLats.length; i++) {
-    const d = distSq(shapeLats[i], shapeLons[i], lat, lon)
-    if (d < bestDist) {
-      bestDist = d
-      bestIdx = i
-    }
-  }
-  return bestIdx
-}
-
-function calcHeading(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const dLng = ((lon2 - lon1) * Math.PI) / 180
-  const rLat1 = (lat1 * Math.PI) / 180
-  const rLat2 = (lat2 * Math.PI) / 180
-  const y = Math.sin(dLng) * Math.cos(rLat2)
-  const x = Math.cos(rLat1) * Math.sin(rLat2) - Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLng)
-  return Math.round(((Math.atan2(y, x) * 180) / Math.PI + 360) % 360)
-}
-
-function interpolateAlongShape(
-  shapeLats: number[],
-  shapeLons: number[],
-  fromIdx: number,
-  toIdx: number,
-  fraction: number,
-): { lat: number; lng: number; heading: number } {
-  if (fromIdx === toIdx) {
-    return { lat: shapeLats[fromIdx], lng: shapeLons[fromIdx], heading: 0 }
-  }
-
-  const start = Math.min(fromIdx, toIdx)
-  const end = Math.max(fromIdx, toIdx)
-  const forward = fromIdx <= toIdx
-
-  // Calculate cumulative distances along the shape segment
-  const distances = [0]
-  for (let i = start + 1; i <= end; i++) {
-    const dlat = shapeLats[i] - shapeLats[i - 1]
-    const dlon = shapeLons[i] - shapeLons[i - 1]
-    distances.push(distances[distances.length - 1] + Math.sqrt(dlat * dlat + dlon * dlon))
-  }
-  const totalDist = distances[distances.length - 1]
-  if (totalDist === 0) {
-    return { lat: shapeLats[start], lng: shapeLons[start], heading: 0 }
-  }
-
-  const adjustedFraction = forward ? fraction : 1 - fraction
-  const targetDist = adjustedFraction * totalDist
-
-  for (let i = 0; i < distances.length - 1; i++) {
-    if (targetDist >= distances[i] && targetDist <= distances[i + 1]) {
-      const segFrac =
-        distances[i + 1] === distances[i]
-          ? 0
-          : (targetDist - distances[i]) / (distances[i + 1] - distances[i])
-      const si = start + i
-      const lat = shapeLats[si] + (shapeLats[si + 1] - shapeLats[si]) * segFrac
-      const lng = shapeLons[si] + (shapeLons[si + 1] - shapeLons[si]) * segFrac
-      const heading = calcHeading(shapeLats[si], shapeLons[si], shapeLats[si + 1], shapeLons[si + 1])
-      return { lat, lng, heading }
-    }
-  }
-
-  // Fallback: last point
-  return {
-    lat: shapeLats[end],
-    lng: shapeLons[end],
-    heading: 0,
-  }
 }
 
 function interpolatePosition(
@@ -424,6 +341,153 @@ async function fetchScheduledVehicles(needsSurface: boolean): Promise<ScheduledR
   }
 }
 
+// A single trip's stoptimes + shape, fetched on demand the first time a
+// rider report needs to measure a schedule offset for it (see
+// schedule-offset.ts) — deliberately NOT sourced from the bulk
+// RAIL_FERRY_QUERY/BUS_TRAM_QUERY responses above, which discard this
+// per-trip detail as soon as a position is computed. Keeping it around for
+// every trip in those queries would reintroduce the exact 46MB-payload
+// cost RAIL_FERRY_QUERY's own comment describes; a targeted single-trip
+// query only ever runs for the handful of trips someone is actually
+// riding.
+const TRIP_SCHEDULE_QUERY = `
+query TripSchedule($id: String!, $date: String!) {
+  trip(id: $id) {
+    pattern { patternGeometry { points } }
+    stoptimesForDate(serviceDate: $date) {
+      scheduledDeparture
+      scheduledArrival
+      stop { name lat lon }
+    }
+  }
+}
+`
+
+interface TripSchedule {
+  stoptimes: GqlStoptime[]
+  shapeCoords: [number, number][] | null
+}
+
+interface TripScheduleEntry {
+  schedule: TripSchedule
+  fetchedAtMs: number
+}
+
+// Static for the whole service day once fetched, so this is cached far
+// longer than anything above — refetching on every 7s vehicle poll (see
+// POLL_INTERVALS.vehiclePositions) would turn a handful of ridden trips
+// into a steady stream of avoidable OTP queries for data that never
+// changes within a day.
+const TRIP_SCHEDULE_CACHE_TTL = 6 * 60 * 60_000
+const tripScheduleCache = new Map<string, TripScheduleEntry>()
+
+async function fetchTripSchedule(tripId: string, serviceDate: string): Promise<TripSchedule | null> {
+  const cached = tripScheduleCache.get(tripId)
+  if (cached && Date.now() - cached.fetchedAtMs < TRIP_SCHEDULE_CACHE_TTL) return cached.schedule
+
+  const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: TRIP_SCHEDULE_QUERY, variables: { id: tripId, date: serviceDate } }),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(OTP_FETCH_TIMEOUT_MS),
+  })
+  if (!response.ok) throw new Error(`OTP returned ${response.status}`)
+  const data = await response.json()
+  const trip = data?.data?.trip
+  const stoptimes: GqlStoptime[] | undefined = trip?.stoptimesForDate
+  if (!trip || !stoptimes || stoptimes.length < 2) return null
+
+  const shapeCoords = trip.pattern?.patternGeometry?.points
+    ? decodePolyline(trip.pattern.patternGeometry.points)
+    : null
+
+  const schedule: TripSchedule = { stoptimes, shapeCoords }
+  tripScheduleCache.set(tripId, { schedule, fetchedAtMs: Date.now() })
+  return schedule
+}
+
+interface OffsetEntry {
+  offsetSec: number
+  observedAtMs: number
+}
+
+// How far behind/ahead of schedule each actively-corrected trip currently
+// is — see schedule-offset.ts. Kept separate from tripScheduleCache above
+// (this one is small and short-lived in effect; that one is bigger and
+// long-lived) so decaying an offset never requires re-fetching the
+// schedule it was measured against.
+const offsetCache = new Map<string, OffsetEntry>()
+
+// Measures a fresh schedule offset for every trip currently carrying a live
+// rider report, fetching that trip's schedule first if this is the first
+// report seen for it. Best-effort: a trip whose schedule can't be fetched
+// or resolved just keeps whatever offset (if any) is already cached from
+// an earlier request.
+async function refreshRiderOffsets(nowMs: number, nowSec: number, serviceDate: string): Promise<void> {
+  const ids = reportedTripIds(nowMs)
+  if (ids.length === 0) return
+
+  await Promise.all(
+    ids.map(async (tripId) => {
+      const consensus = consensusFor(tripId, nowMs)
+      if (!consensus) return
+      const schedule = await fetchTripSchedule(tripId, serviceDate).catch(() => null)
+      if (!schedule) return
+      // consensus.reportedAt is epoch ms; convert to the same service-day
+      // seconds clock the schedule itself is in, offset by how stale the
+      // report already is (usually seconds, capped by REPORT_MAX_AGE_MS).
+      const observedAtSec = nowSec - (nowMs - consensus.reportedAt) / 1000
+      const offsetSec = measureOffsetSec(
+        schedule.stoptimes,
+        schedule.shapeCoords,
+        consensus.lat,
+        consensus.lng,
+        observedAtSec,
+      )
+      if (offsetSec === null) return
+      offsetCache.set(tripId, { offsetSec, observedAtMs: nowMs })
+    }),
+  )
+}
+
+// Repositions any estimated vehicle whose trip has a cached rider-derived
+// offset, decaying that offset by how long ago it was measured (see
+// decayOffsetSec) rather than snapping back to a pure schedule position the
+// instant the rider report itself expires. Never touches a vehicle with a
+// real GPS/live fix (`!v.estimated`): rider evidence corrects a schedule
+// guess, it never second-guesses agency GPS.
+function applyRiderOffsets(vehicles: VehiclePosition[], nowMs: number, nowSec: number): VehiclePosition[] {
+  return vehicles.map((v) => {
+    if (!v.estimated) return v
+    const offset = offsetCache.get(v.id)
+    if (!offset) return v
+
+    const ageSec = (nowMs - offset.observedAtMs) / 1000
+    if (ageSec > OFFSET_MAX_AGE_SEC) {
+      offsetCache.delete(v.id)
+      return v
+    }
+
+    const decayed = decayOffsetSec(offset.offsetSec, ageSec)
+    if (Math.abs(decayed) < OFFSET_NOISE_FLOOR_SEC) return v
+
+    const scheduleEntry = tripScheduleCache.get(v.id)
+    if (!scheduleEntry) return v
+    const corrected = interpolatePosition(scheduleEntry.schedule.stoptimes, nowSec - decayed, scheduleEntry.schedule.shapeCoords)
+    if (!corrected) return v
+
+    return {
+      ...v,
+      lat: corrected.lat,
+      lng: corrected.lng,
+      heading: corrected.heading,
+      riderReported: true,
+      riderConfidence: consensusFor(v.id, nowMs) ? 'observed' as const : 'inferred' as const,
+    }
+  })
+}
+
 function parseScheduled(data: { data?: Record<string, GqlRoute[] | undefined> }, nowSec: number): ScheduledResult {
   // Elron's schedule sits in the graph twice, under two feeds (see
   // ELRON_AGENCY_GTFS_ID) — without scoping to one, every train is drawn
@@ -581,11 +645,13 @@ export async function GET(request: Request) {
 
   try {
     const now = Date.now()
+    const nowSec = getServiceSeconds()
+    const serviceDate = getServiceDate()
 
-    // Tallinn's live GPS feed, Elron's live train feed, and the nationwide
-    // OTP schedule query are all independent of each other — fetching them one
-    // after another stacked every timeout (up to 5s + 5s + 8s = 18s worst
-    // case) into a single request.
+    // Tallinn's live GPS feed, Elron's live train feed, the nationwide OTP
+    // schedule query, and refreshing any rider-reported trips' schedule
+    // offsets are all independent of each other — fetching them one after
+    // another stacked every timeout into a single request.
     const [gpsVehicles, elron, scheduled] = await Promise.all([
       includesTallinn ? fetchTallinnGpsVehicles() : Promise.resolve<VehiclePosition[]>([]),
       // Non-critical, and an unofficial third-party mirror at that: trains
@@ -593,6 +659,10 @@ export async function GET(request: Request) {
       fetchElronVehicles().catch(() => []),
       // Non-critical: continue with GPS-only vehicles if this fails.
       fetchScheduledVehicles(needsSurfaceSchedule).catch(() => EMPTY_SCHEDULED),
+      // Non-critical: on failure, applyRiderOffsets below just keeps
+      // whichever offsets (if any) are already cached from an earlier
+      // request instead of blocking the whole response on it.
+      refreshRiderOffsets(now, nowSec, serviceDate).catch(() => undefined),
     ])
 
     const liveTrains = buildLiveTrains(elron, scheduled.railTrips)
@@ -622,6 +692,18 @@ export async function GET(request: Request) {
       ]
     }
 
+    // Overlay crowdsourced evidence (rider-reports.ts + schedule-offset.ts)
+    // onto whichever vehicles above are pure schedule guesses — never onto
+    // one already backed by agency GPS (gpsVehicles/liveTrains never carry
+    // `estimated: true`). This is the only live signal that reaches a bus
+    // outside Tallinn and Elron at all — see README's "no Estonian city
+    // other than Tallinn" limit — which is exactly the set of vehicles left
+    // as `estimated: true` here. Unlike overlaying a report's raw position
+    // directly, this repositions along the schedule by a measured offset
+    // that decays gracefully rather than snapping back to "on time" the
+    // instant the freshest report expires (see applyRiderOffsets).
+    vehicles = applyRiderOffsets(vehicles, now, nowSec)
+
     // Filter by city locations (trains/ferries bypass — they're intercity)
     if (cityCoords.length > 0) {
       const intercity = vehicles.filter((v) => v.mode === 'train' || v.mode === 'ferry')
@@ -633,14 +715,14 @@ export async function GET(request: Request) {
       vehicles = vehicles.filter((v) => modes.includes(v.mode))
     }
 
-    return NextResponse.json({ vehicles, timestamp: now })
+    return NextResponse.json({ vehicles, timestamp: now, availability: 'live' })
   } catch (error) {
     console.error('Failed to fetch vehicle positions:', error)
     if (gpsCache && includesTallinn) {
       return NextResponse.json({
         vehicles: gpsCache.data,
         timestamp: gpsCache.timestamp,
-        stale: true,
+        availability: 'stale',
       })
     }
     return NextResponse.json({ error: 'Failed to fetch vehicle positions' }, { status: 502 })

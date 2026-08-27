@@ -23,6 +23,9 @@ const ru: Dictionary = {
     shareExpired: 'Эта общая поездка устарела или не найдена.',
     logoAlt: 'Логотип',
     routePlanningUnavailable: 'Сервис планирования маршрутов недоступен',
+    vehicleTrackingUnavailable: 'Отслеживание транспорта недоступно — повторная попытка',
+    vehicleTrackingStale: 'Показаны последние известные позиции транспорта',
+    routeShapeUnavailable: 'Не удалось загрузить маршрут',
   },
   language: {
     label: 'Язык',
@@ -90,6 +93,15 @@ const ru: Dictionary = {
     tripCancelled: 'Эта поездка отменена.',
     wheelchairAccessible: 'Доступно для колясок',
     wheelchairNotAccessible: 'Недоступно для колясок',
+  },
+  riding: {
+    imOnThis: 'Я еду здесь',
+    stopRiding: 'Остановить',
+    nextStop: 'Следующая: {name}',
+    stopsToGo: 'Осталось остановок: {n}',
+    arriving: 'Подъезжаем',
+    alarmTitle: 'Пора выходить',
+    alarmBody: 'Ваша остановка {name} уже рядом',
   },
   results: {
     resizePanel: 'Изменить размер панели маршрута',
@@ -198,6 +210,8 @@ const ru: Dictionary = {
   mapPopup: {
     yourVehicle: 'Ваш {mode}',
     estimatedNotLive: 'Оценка по расписанию — не отслеживается в реальном времени',
+    riderReported: 'Сообщено пассажирами в салоне — не подтверждено оператором',
+    riderInferred: 'Позиция скорректирована по недавнему сообщению пассажира — уже не в реальном времени',
     liveGpsNoSchedule: 'GPS в реальном времени — расписание недоступно',
     arr: 'Приб',
     dep: 'Отпр',

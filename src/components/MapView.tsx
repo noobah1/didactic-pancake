@@ -19,6 +19,29 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+// A vehicle marker's evidence tier, in one place so the pill, its arrow, and
+// its tooltip/popup can never drift apart into inconsistent readings of the
+// same VehiclePosition. Four states, most to least trusted:
+//  - agency GPS (both flags absent): solid ring, full opacity, no caveat.
+//  - rider-reported, observed (types.ts's own discipline: only ever set
+//    alongside `estimated`): dotted ring — deliberately not solid (that
+//    would read as agency-confirmed) and not the same dashed style as a
+//    pure schedule guess (this is real evidence from someone on board
+//    right now, just unverified).
+//  - rider-reported, inferred: the report itself has expired but the
+//    schedule-offset.ts correction it produced hasn't fully decayed yet —
+//    a dash-dot ring between "observed" and "pure guess," since it's
+//    evidence-derived but no longer current.
+//  - schedule-interpolated only: dashed ring, the most muted — a pure guess.
+function vehicleEvidenceStyle(vehicle: VehiclePosition): { opacity: string; borderStyle: string; caveatKey: string | null } {
+  if (vehicle.riderReported && vehicle.riderConfidence === 'inferred') {
+    return { opacity: '0.7', borderStyle: 'dashed', caveatKey: 'mapPopup.riderInferred' }
+  }
+  if (vehicle.riderReported) return { opacity: '0.8', borderStyle: 'dotted', caveatKey: 'mapPopup.riderReported' }
+  if (vehicle.estimated) return { opacity: '0.55', borderStyle: 'dashed', caveatKey: 'mapPopup.estimatedNotLive' }
+  return { opacity: '1', borderStyle: 'solid', caveatKey: null }
+}
+
 // One row per resolveTravellerPosition tier — a real GPS fix gets a solid
 // ring at full opacity; anything inferred (vehicle/schedule) gets a dashed
 // ring and reduced opacity so it reads as a guess, never as a measurement;
@@ -196,9 +219,14 @@ interface MapViewProps {
   // view still needs to see the map go there.
   focusLine?: { lat: number; lng: number } | null
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
+  // Fired when a marker click can't produce a route shape at all (both
+  // trip-stops and the route-shape fallback come up empty, or either throws)
+  // — without this, the click just silently does nothing, which reads as
+  // the tap failing to register rather than as a fetch failure.
+  onRouteShapeError?: () => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehicles, travellerPosition, selectedVehicle, highlightDelay, incidents, cities, focusAlert, focusStop, focusLine, onVehicleClick, onRouteShapeError }: MapViewProps) {
   const { t, locale, modeLabel } = useTranslation()
   // Popups/titles are built inside map event closures set up once at mount
   // (see the click/marker-creation effects below), not re-created on every
@@ -251,6 +279,10 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
     highlightDelayRef.current = highlightDelay
   })
   const onVehicleClickRef = useRef(onVehicleClick)
+  const onRouteShapeErrorRef = useRef(onRouteShapeError)
+  useEffect(() => {
+    onRouteShapeErrorRef.current = onRouteShapeError
+  })
   const vehiclesRef = useRef(vehicles)
   useEffect(() => {
     vehiclesRef.current = vehicles
@@ -323,9 +355,18 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           const shapeRes = await fetch(
             `/api/route-shape?line=${encodeURIComponent(vehicle.line)}&mode=${encodeURIComponent(vehicle.mode)}`,
           )
-          if (!shapeRes.ok) return
+          if (!shapeRes.ok) {
+            // Both sources came up empty — without this, clicking the marker
+            // just does nothing, which reads as the click itself failing to
+            // register rather than "the route couldn't be loaded."
+            onRouteShapeErrorRef.current?.()
+            return
+          }
           const shapeData: { patterns: RouteShapePattern[] } = await shapeRes.json()
-          if (!shapeData.patterns?.length) return
+          if (!shapeData.patterns?.length) {
+            onRouteShapeErrorRef.current?.()
+            return
+          }
 
           // If route changed while we were fetching, abort
           if (activeRouteRef.current !== routeKey) return
@@ -496,6 +537,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
 
       } catch (err) {
         console.error('showRouteShape failed:', err)
+        onRouteShapeErrorRef.current?.()
       }
     },
     [clearRouteShape, onVehicleClick],
@@ -896,17 +938,18 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           const el = existing.getElement()
           if (el.textContent !== vehicle.line) el.textContent = vehicle.line
           el.style.backgroundColor = MODE_COLORS[vehicle.mode]
-          el.style.opacity = vehicle.estimated ? '0.55' : '1'
-          el.style.borderStyle = vehicle.estimated ? 'dashed' : 'solid'
+          const evidence = vehicleEvidenceStyle(vehicle)
+          el.style.opacity = evidence.opacity
+          el.style.borderStyle = evidence.borderStyle
           el.style.borderColor = markerOutlineColor
-          el.title = vehicle.estimated
-            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current('mapPopup.estimatedNotLive')})`
+          el.title = evidence.caveatKey
+            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current(evidence.caveatKey)})`
             : `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination}`
 
           const arrowEntry = arrowMarkersRef.current.get(vehicle.id)
           if (arrowEntry) {
             arrowEntry.getElement().style.borderBottomColor = MODE_COLORS[vehicle.mode]
-            arrowEntry.getElement().style.opacity = vehicle.estimated ? '0.55' : '1'
+            arrowEntry.getElement().style.opacity = evidence.opacity
             const pillWidth = Math.max(18, vehicle.line.length * 7 + 8)
             const offsetDist = Math.max(pillWidth / 2, 11) + 4
             const rad = (vehicle.heading * Math.PI) / 180
@@ -922,8 +965,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.padding = '0 4px'
           el.style.borderRadius = '9px'
           el.style.backgroundColor = MODE_COLORS[vehicle.mode]
-          el.style.border = vehicle.estimated ? `2px dashed ${markerOutlineColor}` : `2px solid ${markerOutlineColor}`
-          el.style.opacity = vehicle.estimated ? '0.55' : '1'
+          const evidence = vehicleEvidenceStyle(vehicle)
+          el.style.border = `2px ${evidence.borderStyle} ${markerOutlineColor}`
+          el.style.opacity = evidence.opacity
           el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
           el.style.cursor = 'pointer'
           el.style.display = 'flex'
@@ -936,8 +980,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.lineHeight = '1'
           el.style.whiteSpace = 'nowrap'
           el.textContent = vehicle.line
-          el.title = vehicle.estimated
-            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current('mapPopup.estimatedNotLive')})`
+          el.title = evidence.caveatKey
+            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current(evidence.caveatKey)})`
             : `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination}`
 
           el.addEventListener('click', (e) => {
@@ -954,8 +998,8 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
             .setPopup(
               new maplibregl.Popup({ offset: 10 }).setHTML(
                 `<strong>${escapeHtml(vehicle.line)}</strong><br/>${escapeHtml(vehicle.destination)}${
-                  vehicle.estimated
-                    ? `<br/><span style="color:#9CA3AF;font-size:11px">${tRef.current('mapPopup.estimatedNotLive')}</span>`
+                  evidence.caveatKey
+                    ? `<br/><span style="color:#9CA3AF;font-size:11px">${tRef.current(evidence.caveatKey)}</span>`
                     : ''
                 }`,
               ),
@@ -968,7 +1012,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           const arrowEl = document.createElement('div')
           arrowEl.style.width = '0'
           arrowEl.style.height = '0'
-          arrowEl.style.opacity = vehicle.estimated ? '0.55' : '1'
+          arrowEl.style.opacity = evidence.opacity
           arrowEl.style.borderLeft = '3px solid transparent'
           arrowEl.style.borderRight = '3px solid transparent'
           arrowEl.style.borderBottom = `6px solid ${MODE_COLORS[vehicle.mode]}`

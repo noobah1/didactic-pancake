@@ -2,11 +2,12 @@ import { useCallback } from 'react'
 import { usePolling } from './use-polling'
 import { VehiclePosition, TransportMode } from '@/lib/types'
 import { POLL_INTERVALS, CityDef } from '@/lib/constants'
+import { Availability, resolveFeedStatus } from '@/lib/feed-status'
 
 interface VehicleResponse {
   vehicles: VehiclePosition[]
   timestamp: number
-  stale?: boolean
+  availability?: Availability
 }
 
 export function useVehicles(modes: TransportMode[], cities: CityDef[] = [], enabled: boolean = true) {
@@ -24,5 +25,6 @@ export function useVehicles(modes: TransportMode[], cities: CityDef[] = [], enab
     return res.json()
   }, [modesKey, citiesParam])
 
-  return usePolling(fetcher, POLL_INTERVALS.vehiclePositions, enabled)
+  const { data, error, lastUpdated } = usePolling(fetcher, POLL_INTERVALS.vehiclePositions, enabled)
+  return { data, error, lastUpdated, status: resolveFeedStatus(data, error) }
 }

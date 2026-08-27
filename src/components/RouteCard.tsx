@@ -20,6 +20,12 @@ interface RouteCardProps {
   onSelect: () => void
   delayVehicles?: DelayedVehicle[]
   trafficEstimates?: RouteTrafficEstimate[]
+  // The tripId of the leg currently being ridden (see use-riding-mode.ts),
+  // if any — there's only ever one riding session app-wide, so this is
+  // compared against each leg's own tripId to show "Stop" instead of "I'm on
+  // this" on the right one, even across different RouteCards.
+  ridingTripId?: string | null
+  onToggleRiding?: (leg: RouteLeg) => void
 }
 
 function formatTime(iso: string): string {
@@ -102,7 +108,15 @@ function WheelchairBadge({ leg }: { leg: RouteLeg }) {
   )
 }
 
-function ExpandableLeg({ leg }: { leg: RouteLeg }) {
+function ExpandableLeg({
+  leg,
+  riding,
+  onToggleRiding,
+}: {
+  leg: RouteLeg
+  riding: boolean
+  onToggleRiding?: (leg: RouteLeg) => void
+}) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const color = MODE_COLORS[leg.mode as keyof typeof MODE_COLORS] || '#6B7280'
@@ -111,12 +125,18 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
   return (
     <div>
       <LegAlertRow leg={leg} />
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
-        className="w-full flex items-center justify-between py-1.5 text-left"
+      {/* A `div` with role="button", not a real <button> — it needs to
+          contain the "I'm on this" button below (same nested-interactive
+          pattern RouteCard's own outer card already uses for its X button),
+          which an actual <button> can't validly nest. */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpanded(!expanded) }}
+        className="w-full flex items-center justify-between py-1.5 text-left cursor-pointer"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <span
             className="px-1.5 py-0.5 rounded text-xs font-bold text-white"
             style={{ backgroundColor: color }}
@@ -124,11 +144,24 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
             {leg.route || leg.mode}
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400">{formatTime(leg.startTime)}</span>
-          <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name} &rarr; {leg.to.name}</span>
+          <span className="text-xs text-gray-600 dark:text-gray-300 truncate">{leg.from.name} &rarr; {leg.to.name}</span>
           <PlatformBadge place={leg.from} />
           <WheelchairBadge leg={leg} />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
+          {onToggleRiding && leg.tripId && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleRiding(leg) }}
+              className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                riding
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              {riding ? t('riding.stopRiding') : t('riding.imOnThis')}
+            </button>
+          )}
           <span className="text-xs text-gray-400 dark:text-gray-500">{t('common.minShort', { n: Math.round(leg.duration / 60) })}</span>
           {stops.length > 0 && (
             <svg
@@ -139,7 +172,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
             </svg>
           )}
         </div>
-      </button>
+      </div>
       {expanded && stops.length > 0 && (
         <div className="ml-1 pl-2 border-l-2 mb-1" style={{ borderColor: color }}>
           <div className="flex items-center gap-2 py-0.5">
@@ -167,7 +200,7 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
   )
 }
 
-export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEstimates }: RouteCardProps) {
+export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEstimates, ridingTripId, onToggleRiding }: RouteCardProps) {
   const { t, modeLabel } = useTranslation()
   const transitLegs = route.legs.filter((l) => l.mode !== 'walk')
   const walkMinutes = Math.round(
@@ -314,7 +347,11 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
                   <span>{t('route.walkMin', { n: Math.round(leg.duration / 60) })}</span>
                 </div>
               ) : (
-                <ExpandableLeg leg={leg} />
+                <ExpandableLeg
+                  leg={leg}
+                  riding={!!leg.tripId && leg.tripId === ridingTripId}
+                  onToggleRiding={onToggleRiding}
+                />
               )}
             </div>
           ))}

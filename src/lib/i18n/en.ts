@@ -22,6 +22,9 @@ const en = {
     shareExpired: 'This shared journey has expired or could not be found.',
     logoAlt: 'Logo',
     routePlanningUnavailable: 'Route planning service unavailable',
+    vehicleTrackingUnavailable: 'Live vehicle tracking is down — retrying',
+    vehicleTrackingStale: 'Showing last known vehicle positions',
+    routeShapeUnavailable: "Couldn't load this route's path",
   },
   language: {
     label: 'Language',
@@ -89,6 +92,15 @@ const en = {
     tripCancelled: 'This trip is cancelled.',
     wheelchairAccessible: 'Wheelchair accessible',
     wheelchairNotAccessible: 'Not wheelchair accessible',
+  },
+  riding: {
+    imOnThis: "I'm on this",
+    stopRiding: 'Stop',
+    nextStop: 'Next: {name}',
+    stopsToGo: '{n} stop{plural} to go',
+    arriving: 'Arriving',
+    alarmTitle: 'Get off now',
+    alarmBody: 'Your stop, {name}, is coming up',
   },
   results: {
     resizePanel: 'Resize journey panel',
@@ -197,6 +209,8 @@ const en = {
   mapPopup: {
     yourVehicle: 'Your {mode}',
     estimatedNotLive: 'Estimated from schedule — not live tracked',
+    riderReported: 'Reported by riders on board — not confirmed by the operator',
+    riderInferred: 'Position adjusted from a recent rider report — no longer live',
     liveGpsNoSchedule: 'Live GPS — schedule not available',
     arr: 'Arr',
     dep: 'Dep',
