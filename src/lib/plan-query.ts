@@ -2,6 +2,7 @@ import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { TransportMode, RouteResult, RouteLeg, LegPlace, LegAlert } from '@/lib/types'
 import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
 import { mapAlertSeverity } from '@/lib/alert-severity'
+import { attachLegFares } from '@/lib/fares/attach'
 
 // Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
 // TROLLEYBUS route_type in the data), so trip planning requests BUS for it too.
@@ -287,6 +288,7 @@ async function fetchItineraries(
 async function buildRoutes(itineraries: GqlItinerary[]): Promise<RouteResult[]> {
   const routes = mapItineraries(itineraries)
   await enrichTrainPlatforms(itineraries, routes)
+  attachLegFares(routes)
   return routes
 }
 

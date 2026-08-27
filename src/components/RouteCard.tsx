@@ -1,13 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Footprints, X, Accessibility } from 'lucide-react'
-import { RouteResult, RouteLeg, LegPlace, TransportMode, RouteTrafficEstimate } from '@/lib/types'
+import { RouteResult, RouteLeg, LegPlace, TransportMode, RouteTrafficEstimate, ItineraryFare } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useTranslation } from '@/lib/i18n/context'
-import { formatMinutesLocalized } from '@/lib/i18n/format'
+import { formatMinutesLocalized, formatEuroLocalized } from '@/lib/i18n/format'
+import { Locale } from '@/lib/i18n/types'
+import { useRiderProfile } from '@/hooks/use-rider-profile'
+import { priceItinerary } from '@/lib/fares/price'
 
 // Modes with a live position feed behind them: Tallinn's own for the road
 // modes, Elron's for trains (see src/lib/elron.ts). Ferry has none, so a
@@ -108,6 +111,73 @@ function WheelchairBadge({ leg }: { leg: RouteLeg }) {
   )
 }
 
+// Header price chip. 'tariff' is a plain confirmed-looking label since every
+// leg has a published fixed price; 'floor'/'operator' get the outlined
+// treatment (same "estimated, not confirmed" visual language as the traffic
+// chip below, but neutral rather than amber — this is a pricing-confidence
+// axis, not a delay one) since the number is only a lower bound or absent
+// entirely. 'unknown' renders nothing rather than a fabricated number.
+function FareChip({ fare, locale, t }: { fare: ItineraryFare; locale: Locale; t: (path: string, vars?: Record<string, string | number>) => string }) {
+  if (fare.evidence === 'unknown') return null
+  if (fare.evidence === 'operator') {
+    return <span className="text-xs text-gray-500 dark:text-gray-400 font-medium border border-gray-300 dark:border-gray-600 rounded px-1">{t('fare.atOperator')}</span>
+  }
+  if (fare.totalCents === undefined) return null
+  if (fare.evidence === 'floor') {
+    return (
+      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium border border-gray-300 dark:border-gray-600 rounded px-1">
+        {t('fare.from', { price: formatEuroLocalized(fare.totalCents, locale) })}
+      </span>
+    )
+  }
+  return (
+    <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+      {fare.totalCents === 0 ? t('fare.free') : formatEuroLocalized(fare.totalCents, locale)}
+    </span>
+  )
+}
+
+// Expanded-view breakdown, one row per ticket the rider actually buys after
+// transfer combining (see priceItinerary) — never one row per leg, since two
+// legs on the same authority within its transfer window share a ticket.
+function FareBreakdown({ fare, locale, t }: { fare: ItineraryFare; locale: Locale; t: (path: string, vars?: Record<string, string | number>) => string }) {
+  if (fare.tickets.length === 0) return null
+  return (
+    <div className="mt-1 pt-1.5 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-1">
+      {fare.tickets.map((ticket, i) => (
+        <div key={i} className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <span>{t('fare.ticketFor', { authority: ticket.authority })}</span>
+          <span className="flex items-center gap-2">
+            <span className="font-medium text-gray-700 dark:text-gray-200">
+              {ticket.evidence === 'operator' || ticket.evidence === 'unknown'
+                ? t('fare.atOperator')
+                : ticket.evidence === 'floor'
+                  ? t('fare.from', { price: formatEuroLocalized(ticket.cents ?? 0, locale) })
+                  : ticket.cents === 0
+                    ? t('fare.free')
+                    : formatEuroLocalized(ticket.cents ?? 0, locale)}
+            </span>
+            {ticket.fareUrl && (
+              <a
+                href={ticket.fareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {t('fare.buyAt', { site: new URL(ticket.fareUrl).hostname })}
+              </a>
+            )}
+          </span>
+        </div>
+      ))}
+      <div className="text-[11px] text-gray-400 dark:text-gray-500">
+        {t('fare.estimateDisclaimer')} {fare.pricesAsOf && t('fare.pricesAsOf', { date: fare.pricesAsOf })}
+      </div>
+    </div>
+  )
+}
+
 function ExpandableLeg({
   leg,
   riding,
@@ -201,7 +271,9 @@ function ExpandableLeg({
 }
 
 export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEstimates, ridingTripId, onToggleRiding }: RouteCardProps) {
-  const { t, modeLabel } = useTranslation()
+  const { t, modeLabel, locale } = useTranslation()
+  const { profile } = useRiderProfile()
+  const fare = useMemo(() => priceItinerary(route, profile), [route, profile])
   const transitLegs = route.legs.filter((l) => l.mode !== 'walk')
   const walkMinutes = Math.round(
     route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0) / 60,
@@ -294,6 +366,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          <FareChip fare={fare} locale={locale} t={t} />
           <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{formatMinutesLocalized(totalMinutes, t)}</span>
           {selected && (
             <button
@@ -355,6 +428,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
               )}
             </div>
           ))}
+          <FareBreakdown fare={fare} locale={locale} t={t} />
         </div>
       )}
     </div>

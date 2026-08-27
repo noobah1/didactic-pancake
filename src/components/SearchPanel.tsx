@@ -8,6 +8,7 @@ import { FavoriteChip } from './FavoriteChip'
 import { RecentChip } from './RecentChip'
 import { HomeWorkChip } from './HomeWorkChip'
 import { LanguageSelector } from './LanguageSelector'
+import { RiderProfileSelector } from './RiderProfileSelector'
 import { TransportMode } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useFavorites } from '@/hooks/use-favorites'
@@ -446,6 +447,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
             <Accessibility size={20} />
           </button>
         )}
+        <RiderProfileSelector />
         {activeCities && onCityToggle && onCountyToggle && onSetAllCities && (
           <CitySelector activeCities={activeCities} onToggle={onCityToggle} onToggleCounty={onCountyToggle} onSetAll={onSetAllCities} />
         )}

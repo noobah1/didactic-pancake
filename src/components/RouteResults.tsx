@@ -9,8 +9,10 @@ import { SheetHandle } from './SheetHandle'
 import { useLiveShare } from '@/hooks/use-live-share'
 import { useResizableSheet } from '@/hooks/use-resizable-sheet'
 import { useTranslation } from '@/lib/i18n/context'
+import { useRiderProfile } from '@/hooks/use-rider-profile'
+import { priceItinerary } from '@/lib/fares/price'
 
-type SortMode = 'duration' | 'departure'
+type SortMode = 'duration' | 'departure' | 'price'
 type ShareState = 'idle' | 'sharing' | 'error'
 
 // How far the sheet can be dragged, in vh — small enough to always leave
@@ -34,6 +36,7 @@ interface RouteResultsProps {
 
 export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, trafficEstimates, ridingTripId, onToggleRiding }: RouteResultsProps) {
   const { t } = useTranslation()
+  const { profile } = useRiderProfile()
   const [sortBy, setSortBy] = useState<SortMode>('duration')
   const [shareState, setShareState] = useState<ShareState>('idle')
   const [shareLink, setShareLink] = useState<string | null>(null)
@@ -149,11 +152,23 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
 
   if (routes.length === 0) return null
 
-  const sorted = [...routes].sort((a, b) =>
-    sortBy === 'duration'
-      ? a.duration - b.duration
-      : new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-  )
+  // Priced once per render against the rider's current profile — cheap
+  // enough (a handful of itineraries) that this doesn't need memoizing, and
+  // keeps the sort and each RouteCard's own chip using the exact same number.
+  const priceOf = (route: RouteResult) => priceItinerary(route, profile).totalCents
+
+  const sorted = [...routes].sort((a, b) => {
+    if (sortBy === 'duration') return a.duration - b.duration
+    if (sortBy === 'departure') return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    // 'price' — an itinerary with no quotable total (evidence 'operator' or
+    // 'unknown') sorts last, never first as if it were free.
+    const priceA = priceOf(a)
+    const priceB = priceOf(b)
+    if (priceA === undefined && priceB === undefined) return a.duration - b.duration
+    if (priceA === undefined) return 1
+    if (priceB === undefined) return -1
+    return priceA - priceB
+  })
   // Once a journey is picked, show just that one instead of the whole list
   // buried underneath it.
   const visible = selectedId ? sorted.filter((route) => route.id === selectedId) : sorted
@@ -213,6 +228,13 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
               className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'departure' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
             >
               {t('results.departure')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortBy('price')}
+              className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'price' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+            >
+              {t('results.cheapest')}
             </button>
             {onClose && (
               <button

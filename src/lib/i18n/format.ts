@@ -17,3 +17,10 @@ export function formatMinutesLocalized(totalMinutes: number, t: (path: string, v
   const minutes = totalMinutes % 60
   return minutes === 0 ? t('route.durationHours', { h: hours }) : t('route.durationHoursMin', { h: hours, m: minutes })
 }
+
+// Fare amounts are stored as integer cents throughout src/lib/fares (never
+// floats — see its own comments), so formatting is the one place that
+// divides by 100, right before the value becomes display text.
+export function formatEuroLocalized(cents: number, locale: Locale): string {
+  return new Intl.NumberFormat(localeTag(locale), { style: 'currency', currency: 'EUR' }).format(cents / 100)
+}

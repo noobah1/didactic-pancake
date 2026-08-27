@@ -106,6 +106,55 @@ export interface RouteLeg {
   realtimeState?: 'scheduled' | 'updated' | 'canceled' | 'added' | 'modified'
   intermediateStops?: LegPlace[]
   legGeometry?: { points: string } // encoded polyline
+  // Profile-independent fare facts for this leg, resolved server-side from
+  // the generated GTFS fare index (see src/lib/fares/). Deliberately carries
+  // no money: what a leg costs depends on who is riding (a Tallinn resident
+  // rides free, an under-20 rides county lines free), so the price is
+  // computed client-side from this plus the rider's own profile — see
+  // src/lib/fares/price.ts. Absent means the leg's route mapped to no known
+  // fare authority; never treat that as free. Only set for transit legs.
+  fare?: LegFare
+}
+
+// See RouteLeg.fare's comment for why this carries no money.
+export interface LegFare {
+  authority: string
+  // The operator's own ticket page for this specific leg (GTFS
+  // agency_fare_url), used ahead of the tariff's generic fallback URL when
+  // present — REM alone spans a dozen unrelated commercial operators, each
+  // with its own site.
+  fareUrl?: string
+}
+
+// How confidently an itinerary's price can be stated — same "never let a
+// weaker signal masquerade as a stronger one" rule as TrafficEstimate.evidence
+// (see its own comment). 'tariff': every transit leg has a published fixed
+// price. 'floor': at least one leg (Elron) is demand-priced, so the total is
+// only a lower bound. 'operator': at least one leg (a commercial REM coach)
+// has no quotable price at all. 'unknown': at least one leg's authority has
+// no tariff row yet. A weaker tier anywhere in the itinerary downgrades the
+// whole total — a partial sum presented as a total would be a lie.
+export type FareEvidence = 'tariff' | 'floor' | 'operator' | 'unknown'
+
+export interface FareTicket {
+  authority: string
+  // Absent when evidence is 'operator' or 'unknown' — no number to show.
+  cents?: number
+  evidence: FareEvidence
+  fareUrl?: string
+}
+
+export interface ItineraryFare {
+  // Absent whenever evidence is 'operator' or 'unknown' — see FareEvidence.
+  totalCents?: number
+  evidence: FareEvidence
+  // One entry per ticket the rider actually buys, after transfer combining:
+  // two legs under the same authority within its own transfer window are one
+  // ticket, not two.
+  tickets: FareTicket[]
+  // The oldest `updatedOn` across the tariffs used, so the UI can say
+  // "prices as of {date}" — absent only when there were no priced tickets.
+  pricesAsOf?: string
 }
 
 export interface LegPlace {
