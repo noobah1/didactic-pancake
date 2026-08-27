@@ -79,6 +79,17 @@ if [ "$healthy" = true ]; then
   log "otp healthy on new graph — sync complete"
   echo "$updated_at" > "$STATE_FILE"
   rm -f "$backup"
+
+  # The app keeps its own in-memory copy of every stop/line name
+  # (transitStopsCache in src/app/api/geocode/route.ts), refreshed on its own
+  # schedule (up to 6h, further if a refresh attempt happens to land while
+  # otp is mid-restart) rather than in step with otp's own graph. Restarting
+  # otp alone left a new or renamed line unsearchable — present in the fresh
+  # graph, invisible in the departures-tab search — until that cache next
+  # happened to refresh. Restarting the app here forces it to pick up the
+  # new graph immediately instead of on its own delayed schedule.
+  log "restarting app to refresh its in-memory route/stop cache"
+  docker compose restart didacticpancake
 else
   log "otp did not become healthy on the new graph after 3 minutes — rolling back"
   mv "$backup" "$GRAPH_PATH"
