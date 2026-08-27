@@ -133,6 +133,23 @@ export const TOMTOM_DAILY_REQUEST_BUDGET = Number(process.env.TOMTOM_DAILY_REQUE
 // actually being viewed first), capped here.
 export const MAX_PROBE_REFRESH_PER_CYCLE = 40
 
+// Tark Tee's authenticated DATEX II gate (tarktee.mnt.ee/#/et/datex) — unlike
+// the unauthenticated ArcGIS endpoint above (detectors/closures), this is the
+// only source in the app for SRTI safety-hazard events: slippery/icy road,
+// animals/debris/fallen trees on the road, unprotected accident areas,
+// reduced visibility, unmanaged road blockages, and exceptional weather
+// (heavy snow/wind/freezing rain). Confirmed live with a real key: auth is a
+// X-DATEX-API-KEY request header, JSON is the default response format for
+// these feeds. See src/lib/traffic/datex-srti.ts. Whole feature is off
+// unless DATEX_API_KEY is set (same convention as TOMTOM_API_KEY above).
+export const DATEX_BASE_URL = 'https://tarktee.transpordiamet.ee/api/v1/datex/srti'
+// SRTI events are derived from road weather station thresholds and Estonia's
+// 112 accident feed, not sub-minute sensor churn — polling faster than this
+// only hammers Transpordiamet's infra for data that hasn't changed, same
+// spirit as tarktee.ts's DISRUPTIONS_CACHE_TTL (which this matches exactly,
+// since both ultimately describe the same kind of "current road hazard").
+export const DATEX_SRTI_CACHE_TTL = 5 * 60_000
+
 export const TALLINN_CENTER = { lat: 59.437, lng: 24.7536 }
 export const DEFAULT_ZOOM = 13
 

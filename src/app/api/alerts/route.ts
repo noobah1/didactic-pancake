@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { getRoadDisruptionAlerts } from '@/lib/tarktee'
+import { getDatexHazardAlerts } from '@/lib/traffic/datex-srti'
 import { ServiceAlert } from '@/lib/types'
 import { Availability, STALE_MAX_AGE_MS } from '@/lib/feed-status'
 import { mapAlertSeverity } from '@/lib/alert-severity'
@@ -114,8 +115,10 @@ export async function GET(request: Request) {
   // alerts intact. Tark Tee already protected OTP this way (its own
   // .catch below predates this change); the reverse wasn't true — an OTP
   // outage used to throw and discard already-working road disruptions
-  // along with it.
-  const [otpResult, roadDisruptionAlerts] = await Promise.all([
+  // along with it. datexHazardAlerts joins the same way: it's a no-op
+  // (empty array, no fetch) whenever DATEX_API_KEY isn't set, and its own
+  // failure shouldn't cost the ArcGIS-sourced disruptions their result.
+  const [otpResult, roadDisruptionAlerts, datexHazardAlerts] = await Promise.all([
     fetchOtpAlerts()
       .then((alerts) => ({ ok: true as const, alerts }))
       .catch((error) => {
@@ -123,9 +126,10 @@ export async function GET(request: Request) {
         return { ok: false as const, alerts: [] as ServiceAlert[] }
       }),
     getRoadDisruptionAlerts().catch(() => [] as ServiceAlert[]),
+    getDatexHazardAlerts().catch(() => [] as ServiceAlert[]),
   ])
 
-  if (!otpResult.ok && roadDisruptionAlerts.length === 0) {
+  if (!otpResult.ok && roadDisruptionAlerts.length === 0 && datexHazardAlerts.length === 0) {
     // Nothing usable came back from either source this cycle — fall back to
     // a labeled cache/unavailable response instead of caching and
     // presenting an empty result as current (see STALE_MAX_AGE_MS: an old
@@ -142,7 +146,7 @@ export async function GET(request: Request) {
     )
   }
 
-  const alerts: ServiceAlert[] = [...otpResult.alerts, ...roadDisruptionAlerts]
+  const alerts: ServiceAlert[] = [...otpResult.alerts, ...roadDisruptionAlerts, ...datexHazardAlerts]
   cache = { data: alerts, timestamp: now }
   const availability: Availability = otpResult.ok ? 'live' : 'partial'
   return NextResponse.json({ alerts, timestamp: now, availability })

@@ -16,6 +16,10 @@ services:
       # outside Tallinn (see README). Unset simply leaves that feature off.
       TOMTOM_API_KEY: ${TOMTOM_API_KEY:-}
       TOMTOM_DAILY_REQUEST_BUDGET: ${TOMTOM_DAILY_REQUEST_BUDGET:-}
+      # Optional: enables Tark Tee DATEX II safety-hazard alerts (slippery
+      # roads, animals on road, reduced visibility, etc). Unset leaves that
+      # feature off. Registration: https://tarktee.mnt.ee/#/et/datex
+      DATEX_API_KEY: ${DATEX_API_KEY:-}
     volumes:
       - ./share-data:/share-data
       - ./traffic-data:/traffic-data

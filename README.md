@@ -134,6 +134,7 @@ Set in `.env.local` for local development, and in the shell/`.env` Docker Compos
 | `OTP_BASE_URL` | no | OpenTripPlanner endpoint. Defaults to `http://localhost:8080`; compose sets `http://otp:8080`. |
 | `TOMTOM_API_KEY` | for city delays | Enables road-speed delay estimates for city bus routes outside Tallinn — see below. Without it that feature is simply off; nothing else changes. |
 | `TOMTOM_DAILY_REQUEST_BUDGET` | no | Hard ceiling on TomTom requests per UTC day. Defaults to 2000, under TomTom's ~2500/day free tier. |
+| `DATEX_API_KEY` | for road hazard alerts | Enables Tark Tee's authenticated DATEX II SRTI feeds — slippery/icy road, animals/debris on the road, unprotected accident areas, reduced visibility, road blockages, and exceptional weather, surfaced as service alerts on affected regional bus/ferry routes. Registration: https://tarktee.mnt.ee/#/et/datex. Without it that feature is simply off; the free closures/detectors below are unaffected. |
 | `TRAFFIC_DATA_DIR` / `SHARE_DATA_DIR` | no | Where the SQLite/JSON stores live. Compose sets both to bind-mounted volumes. Defaults to `./traffic-data` and `./share-data`, except `TRAFFIC_DATA_DIR` on Windows — see below. |
 
 > **Never point `TRAFFIC_DATA_DIR` at a cloud-synced folder** (OneDrive,

@@ -246,7 +246,7 @@ function minDistanceToShape(points: [number, number][], shape: [number, number][
   return best
 }
 
-interface RouteChunk {
+export interface RouteChunk {
   line: string
   agencyName: string
   points: [number, number][]
@@ -280,10 +280,41 @@ function chunkRouteShapes(shapes: RouteShape[]): RouteChunk[] {
   return chunks
 }
 
+// Shared with src/lib/traffic/datex-srti.ts, the other producer of
+// point-located road hazards that need matching against the same candidate
+// route shapes — avoids two copies of the bbox-prefilter/chunk-distance
+// logic above. Chunking is cheap (pure in-memory work over already-cached
+// shapes); fetchCandidateRouteShapes does the real caching.
+export async function getMatchableRouteChunks(): Promise<RouteChunk[]> {
+  const routeShapes = await fetchCandidateRouteShapes()
+  return chunkRouteShapes(routeShapes)
+}
+
+// Which routes (as "line (agency)" strings, keyed by line+agency since the
+// same number can be two unrelated routes from different operators — see
+// RouteShape.agencyName) pass within MATCH_RADIUS_M of every point in
+// `points`. Used both for a disruption's full polyline-ish point list here
+// and a single-point SRTI hazard in datex-srti.ts.
+export function findAffectedRoutes(points: [number, number][], routeChunks: RouteChunk[]): string[] {
+  const pBbox = bbox(points)
+  const affectedRouteKeys = new Set<string>()
+  const affectedRoutes: string[] = []
+  for (const chunk of routeChunks) {
+    const key = `${chunk.line}|${chunk.agencyName}`
+    if (affectedRouteKeys.has(key)) continue // already confirmed for this disruption
+    if (!bboxesOverlap(pBbox, chunk.bbox)) continue
+    if (minDistanceToShape(points, chunk.points) < MATCH_RADIUS_M) {
+      affectedRouteKeys.add(key)
+      affectedRoutes.push(`${chunk.line} (${chunk.agencyName})`)
+    }
+  }
+  return affectedRoutes
+}
+
 export async function getRoadDisruptionAlerts(): Promise<ServiceAlert[]> {
-  const [allDisruptions, routeShapes] = await Promise.all([
+  const [allDisruptions, routeChunks] = await Promise.all([
     fetchActiveDisruptions(),
-    fetchCandidateRouteShapes(),
+    getMatchableRouteChunks(),
   ])
   // Tark Tee runs hundreds of minor restrictions (speed limits, single-lane
   // work zones) at any given moment nationwide — real, but far more volume
@@ -291,26 +322,11 @@ export async function getRoadDisruptionAlerts(): Promise<ServiceAlert[]> {
   // active accidents are the ones that actually disrupt a trip; keep only
   // those (confirmed live: this cuts ~266 active records down to ~24).
   const disruptions = allDisruptions.filter((d) => d.severity === 'severe')
-  if (disruptions.length === 0 || routeShapes.length === 0) return []
-
-  const routeChunks = chunkRouteShapes(routeShapes)
+  if (disruptions.length === 0 || routeChunks.length === 0) return []
 
   const alerts: ServiceAlert[] = []
   for (const d of disruptions) {
-    const dBbox = bbox(d.points)
-    // Keyed by line+agency, not line alone — the same number can be two
-    // unrelated routes from different operators (see RouteShape.agencyName).
-    const affectedRouteKeys = new Set<string>()
-    const affectedRoutes: string[] = []
-    for (const chunk of routeChunks) {
-      const key = `${chunk.line}|${chunk.agencyName}`
-      if (affectedRouteKeys.has(key)) continue // already confirmed for this disruption
-      if (!bboxesOverlap(dBbox, chunk.bbox)) continue
-      if (minDistanceToShape(d.points, chunk.points) < MATCH_RADIUS_M) {
-        affectedRouteKeys.add(key)
-        affectedRoutes.push(`${chunk.line} (${chunk.agencyName})`)
-      }
-    }
+    const affectedRoutes = findAffectedRoutes(d.points, routeChunks)
     if (affectedRoutes.length === 0) continue // nothing a rider would care about
 
     // Midpoint of the affected stretch — good enough for "roughly where is
@@ -322,7 +338,7 @@ export async function getRoadDisruptionAlerts(): Promise<ServiceAlert[]> {
       headerText: `${d.roadName}: ${d.cause}`,
       descriptionText: d.description,
       severity: d.severity,
-      affectedRoutes: [...affectedRoutes],
+      affectedRoutes,
       activePeriodStart: d.dateFrom ? new Date(d.dateFrom).toISOString() : undefined,
       activePeriodEnd: d.dateTo ? new Date(d.dateTo).toISOString() : undefined,
       lat: mid[1],
