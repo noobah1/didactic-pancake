@@ -92,6 +92,7 @@ const en = {
     tripCancelled: 'This trip is cancelled.',
     wheelchairAccessible: 'Wheelchair accessible',
     wheelchairNotAccessible: 'Not wheelchair accessible',
+    viewStops: 'View stops',
   },
   riding: {
     imOnThis: "I'm on this",

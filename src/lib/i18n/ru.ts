@@ -93,6 +93,7 @@ const ru: Dictionary = {
     tripCancelled: 'Эта поездка отменена.',
     wheelchairAccessible: 'Доступно для колясок',
     wheelchairNotAccessible: 'Недоступно для колясок',
+    viewStops: 'Показать остановки',
   },
   riding: {
     imOnThis: 'Я еду здесь',

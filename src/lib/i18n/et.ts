@@ -93,6 +93,7 @@ const et: Dictionary = {
     tripCancelled: 'See sõit on ära jäetud.',
     wheelchairAccessible: 'Ratastooliga ligipääsetav',
     wheelchairNotAccessible: 'Ratastooliga ligipääsmatu',
+    viewStops: 'Vaata peatusi',
   },
   riding: {
     imOnThis: 'Sõidan sellega',

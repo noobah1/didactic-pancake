@@ -178,6 +178,36 @@ function FareBreakdown({ fare, locale, t }: { fare: ItineraryFare; locale: Local
   )
 }
 
+// Shared between ExpandableLeg's own toggle and RouteCard's summary-chip
+// toggle (see the transitLegs.map below) — same intermediate-stops list,
+// two different places a rider can ask to see it from.
+function LegStopsList({ leg, color }: { leg: RouteLeg; color: string }) {
+  const stops = leg.intermediateStops || []
+  return (
+    <div className="ml-1 pl-2 border-l-2 mb-1" style={{ borderColor: color }}>
+      <div className="flex items-center gap-2 py-0.5">
+        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+        <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.startTime)}</span>
+        <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name}</span>
+        <PlatformBadge place={leg.from} />
+      </div>
+      {stops.map((stop, i) => (
+        <div key={i} className="flex items-center gap-2 py-0.5">
+          <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-500" />
+          <span className="text-xs text-gray-400 dark:text-gray-500">{stop.departure ? formatTime(stop.departure) : ''}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{stop.name}</span>
+        </div>
+      ))}
+      <div className="flex items-center gap-2 py-0.5">
+        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+        <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.endTime)}</span>
+        <span className="text-xs text-gray-600 dark:text-gray-300">{leg.to.name}</span>
+        <PlatformBadge place={leg.to} />
+      </div>
+    </div>
+  )
+}
+
 function ExpandableLeg({
   leg,
   riding,
@@ -198,12 +228,15 @@ function ExpandableLeg({
       {/* A `div` with role="button", not a real <button> — it needs to
           contain the "I'm on this" button below (same nested-interactive
           pattern RouteCard's own outer card already uses for its X button),
-          which an actual <button> can't validly nest. */}
+          which an actual <button> can't validly nest. stopPropagation is
+          required here — this row lives inside RouteCard's own outer
+          role="button" div (onSelect), so without it toggling one leg's
+          stop list also toggled the whole route off. */}
       <div
         role="button"
         tabIndex={0}
-        onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpanded(!expanded) }}
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setExpanded(!expanded) } }}
         className="w-full flex items-center justify-between py-1.5 text-left cursor-pointer"
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -243,29 +276,7 @@ function ExpandableLeg({
           )}
         </div>
       </div>
-      {expanded && stops.length > 0 && (
-        <div className="ml-1 pl-2 border-l-2 mb-1" style={{ borderColor: color }}>
-          <div className="flex items-center gap-2 py-0.5">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.startTime)}</span>
-            <span className="text-xs text-gray-600 dark:text-gray-300">{leg.from.name}</span>
-            <PlatformBadge place={leg.from} />
-          </div>
-          {stops.map((stop, i) => (
-            <div key={i} className="flex items-center gap-2 py-0.5">
-              <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-500" />
-              <span className="text-xs text-gray-400 dark:text-gray-500">{stop.departure ? formatTime(stop.departure) : ''}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{stop.name}</span>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 py-0.5">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{formatTime(leg.endTime)}</span>
-            <span className="text-xs text-gray-600 dark:text-gray-300">{leg.to.name}</span>
-            <PlatformBadge place={leg.to} />
-          </div>
-        </div>
-      )}
+      {expanded && stops.length > 0 && <LegStopsList leg={leg} color={color} />}
     </div>
   )
 }
@@ -275,6 +286,11 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
   const { profile } = useRiderProfile()
   const fare = useMemo(() => priceItinerary(route, profile), [route, profile])
   const transitLegs = route.legs.filter((l) => l.mode !== 'walk')
+  // Which transit-leg chip's stop list is showing, if any — independent of
+  // `selected`, so a rider can tap a bus/tram badge to see the stops it
+  // passes through without first having to pick this itinerary. Index into
+  // transitLegs, not route.legs, since that's what's rendered below.
+  const [expandedChipIndex, setExpandedChipIndex] = useState<number | null>(null)
   const walkMinutes = Math.round(
     route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0) / 60,
   )
@@ -341,18 +357,48 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
             </span>
           ) : (
             <>
-              {transitLegs.map((leg, i) => (
-                <span key={i} className="flex items-center gap-1">
-                  {i > 0 && <span className="text-gray-400 dark:text-gray-500 text-xs">&rarr;</span>}
+              {transitLegs.map((leg, i) => {
+                const hasStops = (leg.intermediateStops?.length ?? 0) > 0
+                const badge = (
                   <span
                     className="px-2 py-0.5 rounded text-xs font-bold text-white"
                     style={{ backgroundColor: MODE_COLORS[leg.mode === 'walk' ? 'bus' : leg.mode] }}
-                    title={modeLabel(leg.mode === 'walk' ? 'bus' : leg.mode)}
                   >
                     {leg.route || leg.mode}
                   </span>
-                </span>
-              ))}
+                )
+                return (
+                  <span key={i} className="flex items-center gap-1">
+                    {i > 0 && <span className="text-gray-400 dark:text-gray-500 text-xs">&rarr;</span>}
+                    {hasStops ? (
+                      // Badge + chevron together are the tap target (not just
+                      // the badge alone) — bigger hit area, and the chevron
+                      // is the same "tap to see stops" affordance
+                      // ExpandableLeg's own row uses further down.
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExpandedChipIndex(expandedChipIndex === i ? null : i)
+                        }}
+                        title={t('route.viewStops')}
+                        aria-expanded={expandedChipIndex === i}
+                        className="flex items-center gap-0.5 cursor-pointer"
+                      >
+                        {badge}
+                        <svg
+                          className={`w-3 h-3 text-gray-400 dark:text-gray-500 ${expandedChipIndex === i ? 'rotate-180' : ''}`}
+                          fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <span title={modeLabel(leg.mode === 'walk' ? 'bus' : leg.mode)}>{badge}</span>
+                    )}
+                  </span>
+                )
+              })}
               {walkMinutes > 0 && (
                 <span
                   className="flex items-center gap-0.5 text-xs text-gray-400 dark:text-gray-500 shrink-0"
@@ -381,6 +427,14 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
           )}
         </div>
       </div>
+      {expandedChipIndex !== null && transitLegs[expandedChipIndex] && (
+        <div className="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+          <LegStopsList
+            leg={transitLegs[expandedChipIndex]}
+            color={MODE_COLORS[transitLegs[expandedChipIndex].mode === 'walk' ? 'bus' : transitLegs[expandedChipIndex].mode]}
+          />
+        </div>
+      )}
       <div className="flex items-center justify-between mt-1">
         <span className="text-xs text-gray-500 dark:text-gray-400">{startTime} &rarr; {endTime}</span>
         {transitLegs.length > 0 && (
