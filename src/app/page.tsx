@@ -618,6 +618,11 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
     return [...(vehicleData.data?.vehicles || []), extraMapVehicle]
   }, [vehicleData.data?.vehicles, extraMapVehicle])
 
+  // Applied after extraMapVehicle is merged in -- a line filter matching that
+  // vehicle should still keep it visible, same as any other vehicle on the
+  // map.
+  const filteredMapVehicles = useMemo(() => applyLineFilter(mapVehicles, lineFilter), [mapVehicles, lineFilter])
+
   return (
     <main className="h-dvh relative overflow-hidden">
       {/* Fullscreen map base layer */}
@@ -629,7 +634,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         }
       >
         <MapView
-          vehicles={mapVehicles}
+          vehicles={filteredMapVehicles}
           activeModes={activeModes}
           selectedRoute={selectedRoute}
           journeyVehicles={journeyVehicles}
@@ -823,6 +828,21 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
         </ErrorBoundary>
       )}
 
+      {/* Line-filter panel - above the filter button; mutually exclusive
+          with the issues/nearby panels so at most one ever occupies this
+          corner. */}
+      {showFilter && (
+        <FilterPanel
+          vehicles={vehicleData.data?.vehicles}
+          value={lineFilter}
+          onChange={(next) => {
+            setLineFilter(next)
+            setArmedLine(next)
+          }}
+          onClose={() => setShowFilter(false)}
+        />
+      )}
+
       {/* Bottom-right FAB row. This makes <main> the nearest positioned
           ancestor for any absolute badge inside these buttons — see the
           `relative` added to IssuesButton's own <button>. z-45 (above the
@@ -830,11 +850,23 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           when the bottom sheet's full-width card is tall enough to reach
           this corner, instead of getting buried under it. */}
       <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
+        <FilterButton
+          active={!!lineFilter}
+          armedLine={armedLine?.line ?? null}
+          onToggle={() => setLineFilter((cur) => (cur ? null : armedLine))}
+          onOpenPanel={() => {
+            setShowFilter((prev) => !prev)
+            setShowNearby(false)
+            setShowIssues(false)
+          }}
+        />
+
         <NearbyButton
           active={showNearby}
           onClick={() => {
             setShowNearby((prev) => !prev)
             setShowIssues(false)
+            setShowFilter(false)
           }}
         />
 
@@ -845,6 +877,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           onClick={() => {
             setShowIssues((prev) => !prev)
             setShowNearby(false)
+            setShowFilter(false)
           }}
         />
       </div>
