@@ -12,6 +12,9 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: build-otp-graph
+
 jobs:
   build-graph:
     runs-on: ubuntu-latest
@@ -79,4 +82,19 @@ jobs:
           git add otp/data/tslaevad.zip otp/.gtfs-etag
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: refresh ferry GTFS feed + GTFS ETag marker [skip ci]"
-          git push
+
+          # main can move between checkout and push (other commits landing
+          # meanwhile), which makes a plain `git push` get rejected as
+          # non-fast-forward. Rebase onto the latest main and retry a few
+          # times before giving up.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt), rebasing onto latest main and retrying..."
+            git fetch origin main
+            git rebase origin/main
+            sleep $((attempt * 3))
+          done
+          echo "::error::Failed to push after multiple attempts"
+          exit 1
