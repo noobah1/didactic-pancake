@@ -175,7 +175,13 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
 
   return (
     <div
-      className={`flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg ${sheetHeightVh === null ? (selectedId ? 'max-h-[50vh] sm:max-h-[24rem]' : 'max-h-[40vh] sm:max-h-80') : 'sm:max-h-[24rem]'}`}
+      // Unselected: kept compact (40vh) so the map stays visible behind a
+      // multi-route list. Selected: capped near MAX_SHEET_VH rather than a
+      // small fixed height, so the card grows to fit its actual content
+      // (expanded legs, intermediate stops, fare breakdown) and only
+      // scrolls once a genuinely long journey exceeds that — instead of
+      // clipping short journeys at the same height as long ones.
+      className={`flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-lg ${sheetHeightVh === null ? (selectedId ? 'max-h-[85vh] sm:max-h-[70vh]' : 'max-h-[40vh] sm:max-h-80') : ''}`}
       style={sheetHeightVh !== null ? { maxHeight: `${sheetHeightVh}vh` } : undefined}
     >
       <SheetHandle heightVh={sheetHeightVh ?? defaultSheetVh} minVh={MIN_SHEET_VH} maxVh={MAX_SHEET_VH} onResize={resizeSheet} label={t('results.resizePanel')} />
