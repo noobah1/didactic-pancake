@@ -848,39 +848,43 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           `relative` added to IssuesButton's own <button>. z-45 (above the
           z-40 route-results sheet) so these stay reachable on mobile even
           when the bottom sheet's full-width card is tall enough to reach
-          this corner, instead of getting buried under it. */}
-      <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
-        <FilterButton
-          active={!!lineFilter}
-          armedLine={armedLine?.line ?? null}
-          onToggle={() => setLineFilter((cur) => (cur ? null : armedLine))}
-          onOpenPanel={() => {
-            setShowFilter((prev) => !prev)
-            setShowNearby(false)
-            setShowIssues(false)
-          }}
-        />
+          this corner, instead of getting buried under it. Hidden once a
+          route is selected: the expanded route card occupies this corner
+          on mobile, and the three FABs on top of it made it unreachable. */}
+      {!selectedRoute && (
+        <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
+          <FilterButton
+            active={!!lineFilter}
+            armedLine={armedLine?.line ?? null}
+            onToggle={() => setLineFilter((cur) => (cur ? null : armedLine))}
+            onOpenPanel={() => {
+              setShowFilter((prev) => !prev)
+              setShowNearby(false)
+              setShowIssues(false)
+            }}
+          />
 
-        <NearbyButton
-          active={showNearby}
-          onClick={() => {
-            setShowNearby((prev) => !prev)
-            setShowIssues(false)
-            setShowFilter(false)
-          }}
-        />
+          <NearbyButton
+            active={showNearby}
+            onClick={() => {
+              setShowNearby((prev) => !prev)
+              setShowIssues(false)
+              setShowFilter(false)
+            }}
+          />
 
-        <IssuesButton
-          active={showIssues}
-          count={delayedVehicleCount + activeAlerts.length}
-          degraded={delayData.status === 'unavailable' || alertData.status === 'unavailable'}
-          onClick={() => {
-            setShowIssues((prev) => !prev)
-            setShowNearby(false)
-            setShowFilter(false)
-          }}
-        />
-      </div>
+          <IssuesButton
+            active={showIssues}
+            count={delayedVehicleCount + activeAlerts.length}
+            degraded={delayData.status === 'unavailable' || alertData.status === 'unavailable'}
+            onClick={() => {
+              setShowIssues((prev) => !prev)
+              setShowNearby(false)
+              setShowFilter(false)
+            }}
+          />
+        </div>
+      )}
 
       {/* Logo - bottom center */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
