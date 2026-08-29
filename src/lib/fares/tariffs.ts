@@ -144,20 +144,25 @@ export const TARIFFS: Record<string, Tariff> = {
     priceCents: { child: 150, youth: 150, adult: 150, senior: 150 },
   },
 
-  // Elron moved to demand-based pricing — this can only ever be a floor
-  // (the lowest published e-channel zone-1 fare), never an exact quote.
-  // Rendered as "from €X" with evidence 'floor'. Family/child concessions
-  // likely exist but weren't confirmed, so the same floor is used for every
-  // category rather than guessing a discount.
-  // Source: https://www.err.ee/1610100334/elroni-piletihinnad-tousid-1-augustist-tallinnas-sees-ja-lahiumbroses
+  // Elron's actual per-leg fare depends on distance/zone and is further
+  // demand-priced online, so a single number can only ever be a floor (the
+  // cheapest possible fare — one zone-1 hop) never an exact quote for a
+  // specific route like Tallinn-Tartu, which itself runs €9.40-13.50
+  // depending on ticket type. Rendered as "from €X" with evidence 'floor'.
+  // Elron does publish a real discount ("sooduspilet") category — under-19,
+  // student, and pensioner all qualify per elron.ee/piletiinfo/piletid — so
+  // child/youth/senior use the soodus floor and only adult pays tava.
+  // Source: https://elron.ee/sites/default/files/2026-08/Elron_hinnakiri_A2_est_%C3%BChe%20korra.pdf
+  // and https://elron.ee/sites/default/files/2026-08/Elron_hinnakiri_A2_%C3%BChekorra_soodus.pdf
+  // (both "kehtivad alates 1. augustist 2026", I tsoon row).
   Elron: {
     authority: 'Elron',
     kind: 'demand',
     updatedOn: '2026-08-27',
-    source: 'https://www.err.ee/1610100334/elroni-piletihinnad-tousid-1-augustist-tallinnas-sees-ja-lahiumbroses',
+    source: 'https://elron.ee/piletiinfo/piletid',
     fareUrl: 'https://elron.ee/piletiinfo/piletid',
     transferWindowSeconds: 0,
-    floorPriceCents: { child: 200, youth: 200, adult: 200, senior: 200 },
+    floorPriceCents: { child: 150, youth: 150, adult: 220, senior: 150 },
   },
 
   // Commercial long-distance coach lines (Lux Express, GoBus intercity,

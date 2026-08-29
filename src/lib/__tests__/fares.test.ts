@@ -93,7 +93,12 @@ describe('priceItinerary', () => {
   it('prices an Elron leg as a floor, never an exact total', () => {
     const fare = priceItinerary(route([transitLeg('Elron', 0)]), adult)
     expect(fare.evidence).toBe('floor')
-    expect(fare.totalCents).toBe(200)
+    expect(fare.totalCents).toBe(220)
+  })
+
+  it('floors an Elron leg lower for the discounted rider categories than for adult', () => {
+    expect(priceItinerary(route([transitLeg('Elron', 0)]), youth).totalCents).toBe(150)
+    expect(priceItinerary(route([transitLeg('Elron', 0)]), senior).totalCents).toBe(150)
   })
 
   it('shows no total when the itinerary includes a commercial REM leg', () => {
