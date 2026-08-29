@@ -4,24 +4,16 @@ import { useEffect } from 'react'
 import { X, RefreshCw } from 'lucide-react'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useNearbyStops } from '@/hooks/use-nearby-stops'
-import { MODE_COLORS } from '@/lib/constants'
-import { minutesUntil } from '@/lib/stop-time'
 import { useTranslation } from '@/lib/i18n/context'
+import { NearbyStopList, formatWalkDistance } from './NearbyStopList'
 
 interface NearbyPanelProps {
   onSelectStop: (name: string, lat: number, lng: number, stopId: string) => void
   onClose: () => void
 }
 
-function formatWalkDistance(meters: number, locale: 'en' | 'et' | 'ru'): string {
-  const unitM = locale === 'ru' ? 'м' : 'm'
-  const unitKm = locale === 'ru' ? 'км' : 'km'
-  if (meters < 1000) return `${Math.round(meters)} ${unitM}`
-  return `${(meters / 1000).toFixed(1)} ${unitKm}`
-}
-
 export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
-  const { t, locale, modeLabel } = useTranslation()
+  const { t, locale } = useTranslation()
   const { position, error: geoError, loading: geoLoading, request } = useGeolocation()
   const { data, error, lastUpdated } = useNearbyStops(position)
 
@@ -105,49 +97,7 @@ export function NearbyPanel({ onSelectStop, onClose }: NearbyPanelProps) {
         )}
 
         {data && data.stops.length > 0 && (
-          <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700 px-2 pb-2">
-            {data.stops.map((stop) => (
-              <div key={stop.stopId} className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => onSelectStop(stop.name, stop.lat, stop.lng, stop.stopId)}
-                  className="w-full flex items-center justify-between gap-2 px-1.5 py-1.5 rounded-lg text-left hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {stop.name}
-                  </span>
-                  <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                    {formatWalkDistance(stop.distanceMeters, locale)}
-                  </span>
-                </button>
-                <div className="flex flex-col pb-1.5">
-                  {stop.departures.slice(0, 3).map((dep, i) => {
-                    const mins = minutesUntil(dep.departureEpochSec)
-                    return (
-                      <div
-                        key={`${dep.tripId}-${dep.departureEpochSec}-${i}`}
-                        className="flex items-center gap-2 px-1.5 py-0.5"
-                      >
-                        <span
-                          className="shrink-0 min-w-[1.75rem] px-1.5 py-0.5 rounded text-white text-xs font-bold text-center"
-                          style={{ backgroundColor: MODE_COLORS[dep.mode] }}
-                          title={modeLabel(dep.mode)}
-                        >
-                          {dep.line}
-                        </span>
-                        <span className="flex-1 min-w-0 truncate text-xs text-gray-600 dark:text-gray-300">
-                          {dep.headsign}
-                        </span>
-                        <span className="shrink-0 text-xs font-medium text-gray-900 dark:text-gray-100">
-                          {mins <= 0 ? t('common.now') : t('common.minShort', { n: mins })}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
+          <NearbyStopList data={data} onSelectStop={onSelectStop} />
         )}
       </div>
 

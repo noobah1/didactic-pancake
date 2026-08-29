@@ -10,7 +10,6 @@ export const GPS_FEED_URL = 'https://transport.tallinn.ee/gps.txt'
 // error and no retry, regardless of their own connection speed.
 export const OTP_FETCH_TIMEOUT_MS = 8_000
 export const GPS_FEED_TIMEOUT_MS = 5_000
-export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org'
 // Elron's own real-time trains, converted to GTFS-RT by the Transitous
 // project (crowdsourcing.transitous.org) — not published by Elron itself, so
 // treat it as lower-reliability than Tallinn's own feed above: it can change
@@ -292,6 +291,21 @@ export const STOP_SEARCH_MAX_RESULTS = 10
 // whenever the gazetteer actually returns any.
 export const ADDRESS_SEARCH_RESERVED_RESULTS = 4
 
+// Same reservation idea as ADDRESS_SEARCH_RESERVED_RESULTS, for OSM places
+// (restaurants, gyms, shops — see src/lib/places-db.ts) merged into the same
+// combined list. Kept smaller than the address reservation: an address
+// search only ever runs when there's a real gazetteer hit worth protecting
+// space for, while a place query can return many loosely-relevant category
+// matches (e.g. every supermarket nationwide for "pood") that shouldn't be
+// able to crowd out addresses just by being numerous.
+export const PLACE_SEARCH_RESERVED_RESULTS = 3
+
+// Same reservation idea again, for the Departures tab's own accommodation
+// search (see /api/geocode's isStopSearch branch) — a tourist searching
+// their hotel by name shouldn't have it crowded out by a query that also
+// matches many stops nationwide.
+export const ACCOMMODATION_SEARCH_RESERVED_RESULTS = 3
+
 // Line-number search (mixed into the same Departures-tab search as stops
 // above) — kept much smaller than STOP_SEARCH_MAX_RESULTS since a line query
 // is almost always a short, specific code ("5", "T2", "R16") with very few
@@ -338,3 +352,15 @@ export const MODE_LABELS: Record<TransportMode, string> = {
 }
 
 export const ALL_MODES: TransportMode[] = ['bus', 'tram', 'train', 'ferry', 'trolleybus', 'nightbus']
+
+// How far a disruption/delayed/searched-for vehicle can be from a selected
+// city (or a line search's own anchor stop) and still count as belonging to
+// it — wide enough to cover a city's own fanned-out regional routes, tight
+// enough that another city never bleeds in (any two of the top-15 cities are
+// 30km+ apart, most far more). Without this, selecting Tartu still showed
+// Tallinn's own delays/disruptions mixed in with Tartu's, right alongside
+// every other city's — impossible to actually read; and picking a line
+// number Tallinn also happens to run (e.g. "2") could match Tallinn's own bus
+// out of the nationwide delay board instead of Tartu's, since a plain
+// nearest-candidate search has nothing else to rule it out.
+export const CITY_RELEVANCE_RADIUS_M = 30_000

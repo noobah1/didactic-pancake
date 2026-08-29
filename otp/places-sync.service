@@ -1,0 +1,7 @@
+[Unit]
+Description=Sync traffic-data/places.db from the places-db GitHub Release
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/app
+ExecStart=/opt/app/otp/sync-places.sh

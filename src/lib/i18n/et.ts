@@ -185,6 +185,17 @@ const et: Dictionary = {
     hide: 'Peida lähedalasuvad peatused',
     show: 'Lähedalasuvad peatused',
   },
+  filterButton: {
+    show: 'Näita ainult liini {line}',
+    hide: 'Näita kõiki sõidukeid',
+    open: 'Filtreeri kaarti',
+  },
+  filter: {
+    title: 'Filtreeri kaarti',
+    showAll: 'Näita kõiki sõidukeid',
+    noLines: 'Hetkel ei sõida ükski liin',
+    close: 'Sulge filter',
+  },
   delayBanner: {
     alternatives: 'Alternatiivid',
   },
@@ -222,16 +233,11 @@ const et: Dictionary = {
     updatedAgo: 'Uuendatud {ago}',
     affected: 'Mõjutatud: {routes}',
   },
-  geocode: {
-    line: 'Liin',
-    ferryTerminal: 'Parvlaevaterminal',
-    trainStation: 'Raudteejaam',
-    tramStop: 'Trammipeatus',
-    busStop: 'Bussipeatus',
-    ferry: 'Parvlaev',
-    train: 'Rong',
-    tram: 'Tramm',
-    bus: 'Buss',
+  places: {
+    openUntil: 'Avatud kuni {time}',
+    closesIn: 'Suletakse {n} min pärast',
+    closedOpensAt: 'Suletud · avaneb {time}',
+    closed: 'Suletud',
   },
   fare: {
     free: 'Tasuta',

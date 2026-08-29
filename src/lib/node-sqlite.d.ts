@@ -20,6 +20,10 @@ declare module 'node:sqlite' {
 
   export interface DatabaseSyncOptions {
     open?: boolean
+    // Added for src/lib/places-db.ts, which only ever reads a file an
+    // external process (otp/sync-places.sh) owns and atomically replaces —
+    // opening read-only means a bug here can never corrupt or lock that file.
+    readOnly?: boolean
   }
 
   export class DatabaseSync {

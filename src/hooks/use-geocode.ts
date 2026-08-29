@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useTranslation } from '@/lib/i18n/context'
 
-interface GeoResult {
+export interface GeoResult {
   name: string
   lat: number
   lng: number
@@ -11,6 +11,15 @@ interface GeoResult {
   // not "open a departure board".
   line?: string
   mode?: 'train' | 'ferry' | 'bus' | 'tram'
+  // Only present for an OSM place match (restaurant, gym, shop, ...) —
+  // mutually exclusive with stopId and line. See /api/geocode's own
+  // GeoResult for what each field means; placeDetail is already localized
+  // server-side ("Supermarket · Tartu mnt 12"), openingHours is the raw
+  // OSM spec, evaluated client-side (src/lib/opening-hours.ts) against the
+  // rider's own clock.
+  placeCategory?: string
+  placeDetail?: string
+  openingHours?: string
 }
 
 // cityIds: the rider's currently-selected cities (CityDef.id), passed
@@ -32,9 +41,21 @@ export function useGeocode(stopsOnly = false, cityIds: string[] = []) {
   cityIdsRef.current = cityIds
   const localeRef = useRef(locale)
   localeRef.current = locale
+  // Aborts the previous in-flight request when a new one starts, and — as a
+  // second line of defense against a request that's already past the point
+  // an abort can stop it — tags every request with an incrementing sequence
+  // number so a late response can never overwrite a newer one's results.
+  // Without this, a slower response to an earlier keystroke landing after a
+  // faster response to a later one silently replaced the right dropdown
+  // with a stale one; not hypothetical once place search (a third, more
+  // variable-latency source — see /api/geocode) is merged into the same
+  // response as stops and addresses.
+  const abortRef = useRef<AbortController | null>(null)
+  const requestSeqRef = useRef(0)
 
   const search = useCallback((query: string) => {
     clearTimeout(debounceRef.current)
+    abortRef.current?.abort()
 
     // Mirrors /api/geocode's own minimum: 2 characters for a general place
     // search, but a single character is allowed for stopsOnly (the
@@ -47,25 +68,33 @@ export function useGeocode(stopsOnly = false, cityIds: string[] = []) {
     }
 
     debounceRef.current = setTimeout(async () => {
+      const seq = ++requestSeqRef.current
+      const controller = new AbortController()
+      abortRef.current = controller
       setLoading(true)
       try {
         const params = new URLSearchParams({ q: query, lang: localeRef.current })
         if (stopsOnly) params.set('type', 'stop')
         if (cityIdsRef.current.length > 0) params.set('cities', cityIdsRef.current.join(','))
-        const res = await fetch(`/api/geocode?${params}`)
+        const res = await fetch(`/api/geocode?${params}`, { signal: controller.signal })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
+        if (seq !== requestSeqRef.current) return // a newer request already landed or is in flight
         setResults(data.results || [])
       } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return // superseded, not a real failure
         console.error('Geocode error:', error)
-        setResults([])
+        if (seq === requestSeqRef.current) setResults([])
       } finally {
-        setLoading(false)
+        if (seq === requestSeqRef.current) setLoading(false)
       }
     }, 300)
   }, [stopsOnly])
 
-  const clear = useCallback(() => setResults([]), [])
+  const clear = useCallback(() => {
+    abortRef.current?.abort()
+    setResults([])
+  }, [])
 
   return { results, loading, search, clear }
 }

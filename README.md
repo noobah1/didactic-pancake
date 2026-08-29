@@ -21,7 +21,10 @@ cd didactic-pancake
 # 2. Install dependencies
 npm install
 
-# 3. Download OTP data files (OSM + GTFS) — this takes a few minutes
+# 3. Download OTP data files (OSM + GTFS) — this takes a few minutes.
+# Also fetches places.db (POI search) into the same place src/lib/db.ts
+# already keeps traffic.db, unless `osmium` is on your PATH — see that
+# script's own comments.
 bash otp/download-data.sh
 
 # 4. Start Docker services (OTP + GTFS updater)
@@ -114,6 +117,29 @@ systemctl list-timers otp-graph-sync.timer  # next run
 journalctl -u otp-graph-sync.service -n 50  # recent sync attempts
 ```
 
+### Keeping the POI Search Database Fresh
+
+`.github/workflows/build-places-db.yml` rebuilds `places.db` (the SQLite
+database behind restaurant/gym/shop search in `/api/geocode` — see
+`src/lib/places-db.ts`) weekly from the same OSM extract the graph above is
+built from, publishing it to the `places-db` GitHub Release. Same
+publish/pull split as the graph: CI builds and publishes, the server pulls.
+
+One-time setup on the server:
+
+```bash
+chmod +x otp/sync-places.sh
+cp otp/places-sync.service otp/places-sync.timer /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now places-sync.timer
+```
+
+Simpler than the graph sync: `places.db` is never written by the app, only
+read, so a plain atomic `mv` is enough — no container restart, no
+healthcheck, no rollback. `places-db.ts` re-stats the file before every
+search and reopens it when the mtime changes, so a new database takes effect
+immediately, with no app restart at all.
+
 ### If OTP Breaks on the Server
 
 ```bash
@@ -136,6 +162,7 @@ Set in `.env.local` for local development, and in the shell/`.env` Docker Compos
 | `TOMTOM_DAILY_REQUEST_BUDGET` | no | Hard ceiling on TomTom requests per UTC day. Defaults to 2000, under TomTom's ~2500/day free tier. |
 | `DATEX_API_KEY` | for road hazard alerts | Enables Tark Tee's authenticated DATEX II SRTI feeds — slippery/icy road, animals/debris on the road, unprotected accident areas, reduced visibility, road blockages, and exceptional weather, surfaced as service alerts on affected regional bus/ferry routes. Registration: https://tarktee.mnt.ee/#/et/datex. Without it that feature is simply off; the free closures/detectors below are unaffected. |
 | `TRAFFIC_DATA_DIR` / `SHARE_DATA_DIR` | no | Where the SQLite/JSON stores live. Compose sets both to bind-mounted volumes. Defaults to `./traffic-data` and `./share-data`, except `TRAFFIC_DATA_DIR` on Windows — see below. |
+| `PLACES_DB_PATH` | no | Overrides where `places.db` (POI search — see `src/lib/places-db.ts`) is read from. Defaults to `TRAFFIC_DATA_DIR/places.db`, so it needs no separate setup in production — it shares `traffic.db`'s bind mount and, on Windows, its `%LOCALAPPDATA%` fallback. Missing or corrupt just means place search returns nothing; nothing else is affected. |
 
 > **Never point `TRAFFIC_DATA_DIR` at a cloud-synced folder** (OneDrive,
 > Dropbox, iCloud Drive). The sync client rewrites the database underneath

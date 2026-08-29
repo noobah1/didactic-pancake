@@ -12,6 +12,8 @@ import { IssuesButton } from '@/components/IssuesButton'
 import { IssuesPanel } from '@/components/IssuesPanel'
 import { NearbyButton } from '@/components/NearbyButton'
 import { NearbyPanel } from '@/components/NearbyPanel'
+import { FilterButton } from '@/components/FilterButton'
+import { FilterPanel } from '@/components/FilterPanel'
 import { DelayToast } from '@/components/DelayToast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
@@ -19,7 +21,7 @@ import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
 import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
 import { RidingPanel } from '@/components/RidingPanel'
 import { useRidingMode } from '@/hooks/use-riding-mode'
-import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER } from '@/lib/constants'
+import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER, CITY_RELEVANCE_RADIUS_M } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
 import { resolveTravellerPosition } from '@/lib/traveller-position'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -32,18 +34,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { useTranslation } from '@/lib/i18n/context'
 import { useFavorites } from '@/hooks/use-favorites'
 import { cacheFavoriteDeparture } from '@/hooks/use-favorite-departure'
-
-// How far a disruption/delayed/searched-for vehicle can be from a selected
-// city (or a line search's own anchor stop) and still count as belonging to
-// it — wide enough to cover a city's own fanned-out regional routes, tight
-// enough that another city never bleeds in (any two of the top-15 cities are
-// 30km+ apart, most far more). Without this, selecting Tartu still showed
-// Tallinn's own delays/disruptions mixed in with Tartu's, right alongside
-// every other city's — impossible to actually read; and picking a line
-// number Tallinn also happens to run (e.g. "2") could match Tallinn's own bus
-// out of the nationwide delay board instead of Tartu's, since a plain
-// nearest-candidate search has nothing else to rule it out.
-const CITY_RELEVANCE_RADIUS_M = 30_000
+import { LineFilter, applyLineFilter } from '@/lib/vehicle-filter'
 
 function HomeContent() {
   const searchParams = useSearchParams()
@@ -100,6 +91,14 @@ function HomeContent() {
   const [extraMapVehicle, setExtraMapVehicle] = useState<VehiclePosition | null>(null)
   const [showIssues, setShowIssues] = useState(false)
   const [showNearby, setShowNearby] = useState(false)
+  const [showFilter, setShowFilter] = useState(false)
+  // The filter actually applied to the map right now.
+  const [lineFilter, setLineFilter] = useState<LineFilter | null>(null)
+  // The line ready to apply — set whenever a line is searched or a vehicle
+  // is tapped, independent of whether the filter itself is on. Kept separate
+  // from lineFilter so picking a line only offers the filter (badge on the
+  // FAB) rather than silently narrowing the map underneath the rider.
+  const [armedLine, setArmedLine] = useState<LineFilter | null>(null)
   const [focusedAlert, setFocusedAlert] = useState<ServiceAlert | null>(null)
   const [stopBoard, setStopBoard] = useState<StopBoardTarget | null>(null)
   // A line result picked from the departure-board search — flown to
@@ -380,6 +379,14 @@ function HomeContent() {
     // Fly to the picked line's own town right away, independent of whether a
     // live vehicle turns up below — see focusLine's own comment for why.
     setFocusLine({ lat: anchorLat, lng: anchorLng })
+    // Arm the filter FAB with this line right away too, same reasoning as
+    // focusLine above — a rider searching a line wants "filter to this" on
+    // offer even when no live vehicle for it turns up below. Replaces any
+    // already-applied filter as well, so the badge and the map never show
+    // two different lines at once.
+    const armed: LineFilter = { mode: mode as TransportMode, line, anchor: { lat: anchorLat, lng: anchorLng } }
+    setArmedLine(armed)
+    setLineFilter((cur) => (cur ? armed : cur))
     const nearest = <T extends { lat: number; lng: number }>(candidates: T[]): T | undefined => {
       if (candidates.length === 0) return undefined
       const best = candidates.reduce((best, v) =>
@@ -428,6 +435,13 @@ function HomeContent() {
     setSelectedVehicleInitialTripId(null)
     setSelectedVehicleDelayed(false)
     setExtraMapVehicle(null)
+    if (vehicle) {
+      const armed: LineFilter = { mode: vehicle.mode, line: vehicle.line, anchor: { lat: vehicle.lat, lng: vehicle.lng } }
+      setArmedLine(armed)
+      setLineFilter((cur) => (cur ? armed : cur))
+    } else {
+      setArmedLine(null)
+    }
   }
 
   // "All" (or none) selected means no city filter is actually active — show

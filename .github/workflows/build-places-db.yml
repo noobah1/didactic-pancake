@@ -1,0 +1,63 @@
+name: Build places database
+
+on:
+  schedule:
+    - cron: '0 4 * * 1' # Monday 04:00 UTC — weekly, matching how often OSM
+                         # POI data meaningfully changes; see otp/places-sync.timer
+                         # on the server side for why this cadence, not daily.
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-places-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24 # node:sqlite needs 22.5+; matches the Node this app's own Docker image runs (see Dockerfile)
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install osmium-tool
+        run: sudo apt-get update && sudo apt-get install -y osmium-tool
+
+      # Reuses the exact same OSM extract build-otp-graph.yml downloads for
+      # the routing graph — OTP throws away every amenity/shop/leisure tag
+      # in it, this workflow is what actually uses them. Downloaded fresh
+      # here rather than shared with that workflow (they run on independent
+      # schedules — see the file header comment in scripts/build-places-db.ts
+      # for why this is deliberately its own workflow, not folded into that
+      # one's GTFS-ETag gate).
+      - name: Download OSM extract
+        run: curl -L -o estonia-latest.osm.pbf https://download.geofabrik.de/europe/estonia-latest.osm.pbf
+
+      - name: Filter to POI tags
+        run: |
+          osmium tags-filter estonia-latest.osm.pbf \
+            nwr/amenity nwr/shop nwr/leisure nwr/tourism nwr/office nwr/healthcare \
+            -o poi.osm.pbf
+
+      - name: Export to GeoJSON sequence
+        run: osmium export poi.osm.pbf -f geojsonseq -o poi.geojsonseq
+
+      - name: Build places.db
+        run: TS_NODE_FILES=true npx ts-node --compiler-options '{"module":"commonjs"}' scripts/build-places-db.ts poi.geojsonseq places.db
+
+      # Same "release asset, not a git commit" reasoning as build-otp-graph.yml
+      # uses for graph.obj — a committed binary keeps every old version
+      # forever in LFS storage.
+      - name: Publish places.db to the places-db release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view places-db --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create places-db --repo "$GITHUB_REPOSITORY" \
+              --title "Places database (auto-updated)" \
+              --notes "POI search database, rebuilt weekly from the same OSM extract otp/data/estonia-latest.osm.pbf is built from (see .github/workflows/build-places-db.yml and scripts/build-places-db.ts). Latest asset is always places.db."
+          gh release upload places-db places.db --repo "$GITHUB_REPOSITORY" --clobber

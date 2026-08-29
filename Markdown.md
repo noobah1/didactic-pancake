@@ -97,7 +97,7 @@ All under `src/app/api/`. Every one is a `GET` unless noted.
 | `stop-board` | Departures at a stop | 20s server cache, matching `POLL_INTERVALS.stopBoard`. Serves stale on upstream error. |
 | `nearby-stops` | Stops around a coordinate | Widens 600 m → 8 km when fewer than 3 usable stops. |
 | `alerts` | Service alerts | OTP alerts + Tark Tee road disruptions. |
-| `geocode` | Address + stop search | Nominatim + OTP stop index, with reserved slots so addresses stay reachable. |
+| `geocode` | Stop + OSM place + address search | OTP stop index + local `places.db` (SQLite FTS5 — see `lib/places-db.ts`) + Maa-amet address gazetteer, merged with reserved slots so no source can shut the others out. `NOMINATIM_URL` from the original design was never wired up and has been removed. |
 | `route-shape` | Encoded polyline for a route | |
 | `share` | Live journey sharing | `POST` create · `GET` read · `PATCH` push position · `DELETE` stop. Hashed owner token. |
 
@@ -163,6 +163,15 @@ the OS dark-mode preference before first paint, so there is no flash of the wron
 - **`db.ts`** — SQLite via `node:sqlite`. `PRAGMA journal_mode = DELETE` deliberately:
   WAL breaks on OneDrive/network filesystems.
 - **`share-store.ts`** — one JSON file per share; position TTL 3 h, share TTL 30 days.
+- **`places-db.ts`** — read-only SQLite (FTS5) handle onto `places.db`, the POI database
+  behind place search in `/api/geocode`. Never writes; re-stats the file before every
+  query and reopens on a changed mtime, since `otp/sync-places.sh` replaces it with an
+  atomic `mv` while the app keeps running. Missing/corrupt file → `[]`, never a throw.
+  `place-search.ts` (pure ranking/query-building) and `place-categories.ts` (the ~40-slug
+  taxonomy + per-language search synonyms) sit alongside it; `opening-hours.ts` is a
+  deliberately partial `opening_hours` parser that returns `unknown` rather than guess.
+  The database itself is built by `scripts/build-places-db.ts` from the same
+  `estonia-latest.osm.pbf` the OTP graph is built from — see §12.
 
 ---
 
@@ -183,6 +192,7 @@ the OS dark-mode preference before first paint, so there is no flash of the wron
 | What | Where | Survives redeploy |
 |---|---|---|
 | Traffic baselines | SQLite at `TRAFFIC_DATA_DIR/traffic.db` | ✅ bind-mounted (takes days to relearn) |
+| POI search database | Read-only SQLite at `TRAFFIC_DATA_DIR/places.db` (or `PLACES_DB_PATH`) | ✅ same bind mount; synced weekly by `otp/sync-places.sh`, never written by the app |
 | Live shares | JSON at `SHARE_DATA_DIR` | ✅ bind-mounted |
 | Delays / vehicles / alerts caches | In-process | ❌ by design |
 | Favourites, last plan, theme | Browser `localStorage` | n/a |
@@ -238,3 +248,5 @@ OTP container.
 | Add a city | `CITIES` in `src/lib/constants.ts`, then regenerate `city-probes.json` |
 | Add an upstream feed | New `src/lib/<feed>.ts` + a proxying API route — never call it from the browser |
 | Tune polling or caching | `POLL_INTERVALS` and the per-route TTL constants |
+| Add/change a POI category, or how places rank in search | `src/lib/place-categories.ts` (taxonomy), `src/lib/place-search.ts` (ranking) |
+| Change the POI database schema or extraction | `scripts/build-places-db.ts`, `.github/workflows/build-places-db.yml` |

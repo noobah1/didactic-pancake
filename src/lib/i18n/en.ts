@@ -184,6 +184,17 @@ const en = {
     hide: 'Hide nearby stops',
     show: 'Nearby stops',
   },
+  filterButton: {
+    show: 'Show only line {line}',
+    hide: 'Show all vehicles',
+    open: 'Filter map',
+  },
+  filter: {
+    title: 'Filter map',
+    showAll: 'Show all vehicles',
+    noLines: 'No lines running right now',
+    close: 'Close filter',
+  },
   delayBanner: {
     alternatives: 'Alternatives',
   },
@@ -221,16 +232,11 @@ const en = {
     updatedAgo: 'Updated {ago}',
     affected: 'Affected: {routes}',
   },
-  geocode: {
-    line: 'Line',
-    ferryTerminal: 'Ferry terminal',
-    trainStation: 'Train station',
-    tramStop: 'Tram stop',
-    busStop: 'Bus stop',
-    ferry: 'Ferry',
-    train: 'Train',
-    tram: 'Tram',
-    bus: 'Bus',
+  places: {
+    openUntil: 'Open until {time}',
+    closesIn: 'Closes in {n} min',
+    closedOpensAt: 'Closed · opens {time}',
+    closed: 'Closed',
   },
   fare: {
     free: 'Free',

@@ -257,6 +257,17 @@ export interface StopBoardTarget {
   lng: number
 }
 
+// An accommodation (or other place) result picked from the Departures tab's
+// search (see /api/geocode's isStopSearch branch and place-categories.ts's
+// ACCOMMODATION_CATEGORIES) — the anchor for PlaceStopsPanel's "stops near
+// this place" list, same role StopBoardTarget plays for a single stop.
+export interface PlaceStopsTarget {
+  name: string
+  lat: number
+  lng: number
+  category?: string
+}
+
 export interface NearbyStop {
   stopId: string
   name: string
@@ -297,12 +308,26 @@ export interface RecentSearch {
   toLat: number
   toLng: number
   searchedAt: number // epoch ms
+  // OSM place category slug (see src/lib/place-categories.ts) for the "to"
+  // end, when it was picked from place search rather than a stop or a plain
+  // address — 'to' only, since a recent search's "from" is overwhelmingly
+  // "current location" or a mere waypoint, never the thing worth iconifying
+  // in the chip. Optional and not yet written by any caller — reserved so a
+  // future RecentChip can show a category icon without a schema migration;
+  // existing localStorage entries simply lack the field.
+  toCategory?: string
 }
 
 export interface SavedPlace {
   name: string
   lat: number
   lng: number
+  // OSM place category slug (see src/lib/place-categories.ts), when this
+  // was picked from place search rather than a stop or a plain address —
+  // reserved so a future HomeWorkChip can show a category icon. Optional
+  // and not yet written by any caller; existing localStorage entries
+  // simply lack the field.
+  category?: string
 }
 
 // The rider's two named-place shortcuts (see use-home-work.ts). Deliberately

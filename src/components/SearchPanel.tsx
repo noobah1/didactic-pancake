@@ -194,7 +194,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               }}
               stopsOnly
               cityIds={activeCities?.map((c) => c.id)}
-              onSelect={async (name, lat, lng, stopId, line, mode) => {
+              onSelect={async ({ name, lat, lng, stopId, line, mode }) => {
                 if (stopId) {
                   onViewStopBoard(name, lat, lng, stopId)
                   setBoardText('')
@@ -242,7 +242,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               value={fromText}
               onChange={setFromText}
               allowMyLocation
-              onSelect={(name, lat, lng) => {
+              onSelect={({ name, lat, lng }) => {
                 setFromText(name)
                 const coords = { lat, lng }
                 setFromCoords(coords)
@@ -256,7 +256,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               placeholder={t('search.toPlaceholder')}
               value={toText}
               onChange={setToText}
-              onSelect={(name, lat, lng) => {
+              onSelect={({ name, lat, lng }) => {
                 setToText(name)
                 const coords = { lat, lng }
                 setToCoords(coords)

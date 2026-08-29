@@ -1,0 +1,16 @@
+[Unit]
+Description=Weekly check for a fresh places.db
+
+[Timer]
+# Places data changes with OSM, refreshed weekly by
+# .github/workflows/build-places-db.yml (Monday 04:00 UTC) — daily polling
+# would just be a no-op check most days (sync-places.sh is itself a no-op
+# when nothing changed, so this schedule is about avoiding needless network
+# calls, not correctness). Still catches a manual workflow_dispatch rebuild
+# within a week with no separate handling needed.
+OnCalendar=Mon *-*-* 06:00:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

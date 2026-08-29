@@ -185,6 +185,17 @@ const ru: Dictionary = {
     hide: 'Скрыть ближайшие остановки',
     show: 'Ближайшие остановки',
   },
+  filterButton: {
+    show: 'Показать только маршрут {line}',
+    hide: 'Показать все транспортные средства',
+    open: 'Фильтр карты',
+  },
+  filter: {
+    title: 'Фильтр карты',
+    showAll: 'Показать все транспортные средства',
+    noLines: 'Сейчас не работает ни один маршрут',
+    close: 'Закрыть фильтр',
+  },
   delayBanner: {
     alternatives: 'Альтернативы',
   },
@@ -222,16 +233,11 @@ const ru: Dictionary = {
     updatedAgo: 'Обновлено {ago}',
     affected: 'Затронуты: {routes}',
   },
-  geocode: {
-    line: 'Маршрут',
-    ferryTerminal: 'Паромный терминал',
-    trainStation: 'Железнодорожная станция',
-    tramStop: 'Трамвайная остановка',
-    busStop: 'Автобусная остановка',
-    ferry: 'Паром',
-    train: 'Поезд',
-    tram: 'Трамвай',
-    bus: 'Автобус',
+  places: {
+    openUntil: 'Открыто до {time}',
+    closesIn: 'Закрывается через {n} мин',
+    closedOpensAt: 'Закрыто · откроется в {time}',
+    closed: 'Закрыто',
   },
   fare: {
     free: 'Бесплатно',

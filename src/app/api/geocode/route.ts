@@ -5,11 +5,15 @@ import {
   STOP_SEARCH_CITY_LABEL_RADIUS_M,
   STOP_SEARCH_MAX_RESULTS,
   ADDRESS_SEARCH_RESERVED_RESULTS,
+  PLACE_SEARCH_RESERVED_RESULTS,
+  ACCOMMODATION_SEARCH_RESERVED_RESULTS,
   LINE_SEARCH_MAX_RESULTS,
   LINE_SEARCH_CITY_LABEL_RADIUS_M,
   CITIES,
 } from '@/lib/constants'
 import { foldName, tokenize, scoreName, clusterByLocation, nearestCityName, nearestCityPopulation, distanceToNearestActiveCity } from '@/lib/stop-search'
+import { searchPlaces } from '@/lib/places-db'
+import { placeCategoryBySlug, categoryLabel, ACCOMMODATION_CATEGORIES } from '@/lib/place-categories'
 
 // Cache warming flag — set to true once the initial load completes, so
 // simultaneous cache-miss requests don't all re-fetch from OTP
@@ -64,10 +68,23 @@ interface GeoResult {
   // one means "show this line", not "open a departure board".
   line?: string
   mode?: 'train' | 'ferry' | 'bus' | 'tram'
-  // Internal-only relevance signal, used by the general (stop + address)
-  // search below to rank the two result kinds against each other instead of
-  // always listing stops first — never sent to the client (stripped before
-  // every Response.json in this file).
+  // Only present for an OSM place match (restaurant, gym, shop — see
+  // src/lib/places-db.ts) — mutually exclusive with stopId and line. The
+  // category slug (e.g. 'gym'), for the client to pick an icon.
+  placeCategory?: string
+  // Rider-facing "Category · Address" line for a place result, already
+  // localized server-side (see CATEGORY label lookups below) — e.g.
+  // "Supermarket · Tartu mnt 12". Only present alongside placeCategory.
+  placeDetail?: string
+  // Raw OSM opening_hours spec, only present alongside placeCategory — left
+  // unevaluated here and evaluated client-side (src/lib/opening-hours.ts)
+  // against the rider's own clock rather than the server's, so a rider's
+  // "open now" always matches the "now" they're looking at.
+  openingHours?: string
+  // Internal-only relevance signal, used by the general (stop + place +
+  // address) search below to rank all three result kinds against each
+  // other instead of always listing stops first — never sent to the client
+  // (stripped before every Response.json in this file).
   score?: number
 }
 
@@ -518,6 +535,32 @@ async function searchEstonianAddresses(query: string): Promise<GeoResult[]> {
   } catch { return [] }
 }
 
+// OSM places (restaurants, gyms, pharmacies, shops — see
+// src/lib/places-db.ts) — the third source merged into the general search
+// below, alongside transit stops and street addresses. Synchronous (SQLite
+// is a local file, not a network call) so this needs no timeout/abort
+// handling of its own, and searchPlaces already never throws (a missing or
+// corrupt places.db resolves to an empty array there, not here) — this
+// wrapper exists only to turn a PlaceResult into this route's own GeoResult
+// shape and localize its category label.
+function searchOsmPlaces(query: string, activeCities: ActiveCity[], lang: GeocodeLang, categories?: string[]): GeoResult[] {
+  const places = searchPlaces(query, { limit: STOP_SEARCH_MAX_RESULTS, activeCities, now: new Date(), categories })
+  return places.map((p) => {
+    const category = placeCategoryBySlug(p.category)
+    const label = category ? categoryLabel(category, lang) : p.category
+    const detail = [label, p.addr || p.city].filter(Boolean).join(' · ')
+    return {
+      name: p.name,
+      lat: p.lat,
+      lng: p.lng,
+      placeCategory: p.category,
+      placeDetail: detail,
+      openingHours: p.openingHours ?? undefined,
+      score: p.score,
+    }
+  })
+}
+
 // Same "all selected (or none) = no filter" convention page.tsx already uses
 // for delays/alerts (see its showAllCities) — otherwise selecting every city
 // would bias results toward whichever candidate is nearest ANY town, which
@@ -565,25 +608,56 @@ export async function GET(request: Request) {
   // The departure-board search wants transit stops *and* lines — an address
   // has no stopId to look departures up by, and this is also the only
   // search surface a bare line code ("5", "T2", "R16") makes sense in (see
-  // searchTransitLines; results merged in ahead of stops since a query that
-  // exactly matches a line code is a strong, deliberate signal — no stop is
-  // ever just named "5"). Skipping the gazetteer call here also means it
-  // can't stall the response, unlike the general search below.
+  // searchTransitLines; results kept ahead of stops+places since a query
+  // that exactly matches a line code is a strong, deliberate signal — no
+  // stop is ever just named "5"). Skipping the gazetteer call here also
+  // means it can't stall the response, unlike the general search below.
+  //
+  // Also merges in accommodation (hotel/hostel/guest_house/apartment/motel —
+  // see ACCOMMODATION_CATEGORIES) so a tourist can find departures near
+  // their hotel by name without first knowing which stop is nearby. Kept to
+  // this narrow category subset — unlike the general search's full place
+  // search — because this tab is a departure-board finder, not a POI
+  // browser: letting every restaurant/shop match in here would bury the
+  // stop and line results a departure search is actually for. Only run once
+  // the query is 2+ characters (like the general search), since a 1-char
+  // FTS prefix match against every accommodation nationwide isn't a
+  // deliberate query the way a 1-digit line code is.
   if (isStopSearch) {
     const [lineResults, stopResults] = await Promise.all([
       searchTransitLines(query, activeCities, lang),
       searchTransitStops(query, activeCities, lang),
     ])
-    // score is stopResults-only internal ranking state (see GeoResult) — not
-    // meaningful to the client here since nothing else is being merged in
-    // against it, so strip it same as every other outgoing response does.
-    const results = [...lineResults, ...stopResults].map(({ name, lat, lng, stopId, line, mode }) => ({ name, lat, lng, stopId, line, mode }))
+    const accommodationResults = query.length >= 2
+      ? searchOsmPlaces(query, activeCities, lang, ACCOMMODATION_CATEGORIES)
+      : []
+    // Stops and accommodation share one relevance scale (both carry `score`
+    // — see GeoResult) and are merged the same way the general search below
+    // merges stops/places/addresses: sorted by score with a kind tie-break,
+    // and a reserved minimum so a query matching many stops can't shut
+    // accommodation out entirely. Lines are exempt from all of this — an
+    // exact line-code match stays first, unconditionally.
+    const reservedForAccommodation = Math.min(accommodationResults.length, ACCOMMODATION_SEARCH_RESERVED_RESULTS)
+    const stopsCapped = stopResults.slice(0, STOP_SEARCH_MAX_RESULTS - reservedForAccommodation)
+    const withKind = [
+      ...stopsCapped.map((r) => ({ ...r, kind: 0 })),
+      ...accommodationResults.map((r) => ({ ...r, kind: 1 })),
+    ]
+    const mergedStopsAndPlaces = withKind
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || a.kind - b.kind)
+      .slice(0, STOP_SEARCH_MAX_RESULTS)
+    // score is internal ranking state (see GeoResult) — not meaningful to
+    // the client, so strip it same as every other outgoing response does.
+    const results = [...lineResults, ...mergedStopsAndPlaces].map(({ name, lat, lng, stopId, line, mode, placeCategory, placeDetail, openingHours }) => ({ name, lat, lng, stopId, line, mode, placeCategory, placeDetail, openingHours }))
     return Response.json({ results })
   }
   const [stopsResults, addressResults] = await Promise.all([
     searchTransitStops(query, activeCities, lang),
     searchEstonianAddresses(query),
   ])
+  // Synchronous (local SQLite, not a network call — see searchOsmPlaces),
+  // so it doesn't join the Promise.all above; nothing else is waiting on it.
+  const placeResults = searchOsmPlaces(query, activeCities, lang)
   // Addresses have no relevance score of their own (the external gazetteer
   // just returns its own best-guess order), so score them the same way stop
   // names are scored, against the same query — this is what lets the merge
@@ -598,14 +672,26 @@ export async function GET(request: Request) {
   const tokens = tokenize(query)
   const scoredAddresses = addressResults.map((r) => ({ ...r, score: Math.max(scoreName(foldName(r.name), foldedQuery, tokens), 1) }))
   // Stops are still capped below the full result count — see
-  // ADDRESS_SEARCH_RESERVED_RESULTS — so a query matching 10+ stops can't
-  // shut addresses out before the relevance sort below even runs; within
-  // that budget, ranking now decides order and which addresses make the cut.
+  // ADDRESS_SEARCH_RESERVED_RESULTS/PLACE_SEARCH_RESERVED_RESULTS — so a
+  // query matching 10+ stops can't shut places/addresses out before the
+  // relevance sort below even runs; within that budget, ranking now decides
+  // order and which of each make the cut.
   const reservedForAddresses = Math.min(addressResults.length, ADDRESS_SEARCH_RESERVED_RESULTS)
-  const stopsCapped = stopsResults.slice(0, STOP_SEARCH_MAX_RESULTS - reservedForAddresses)
-  const merged = [...stopsCapped, ...scoredAddresses]
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+  const reservedForPlaces = Math.min(placeResults.length, PLACE_SEARCH_RESERVED_RESULTS)
+  const stopsCapped = stopsResults.slice(0, STOP_SEARCH_MAX_RESULTS - reservedForAddresses - reservedForPlaces)
+  // Kind priority is the tie-break when two candidates score exactly the
+  // same (e.g. an exact-name match on both a stop and an unrelated address)
+  // — a transit stop is the most likely intent for a transit app, an OSM
+  // place beats a bare address next. "Balti jaam" must still resolve to the
+  // station itself even if some address happens to score identically.
+  const withKind = [
+    ...stopsCapped.map((r) => ({ ...r, kind: 0 })),
+    ...placeResults.map((r) => ({ ...r, kind: 1 })),
+    ...scoredAddresses.map((r) => ({ ...r, kind: 2 })),
+  ]
+  const merged = withKind
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || a.kind - b.kind)
     .slice(0, STOP_SEARCH_MAX_RESULTS)
-    .map(({ name, lat, lng, stopId }) => ({ name, lat, lng, stopId }))
+    .map(({ name, lat, lng, stopId, placeCategory, placeDetail, openingHours }) => ({ name, lat, lng, stopId, placeCategory, placeDetail, openingHours }))
   return Response.json({ results: merged })
 }
