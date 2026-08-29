@@ -47,7 +47,12 @@ const CITY_LABEL_RADIUS_M = 30_000
 // plus its containing building way) — verified against real OSM data, where
 // this is a common double-tagging pattern for supermarkets and malls.
 const DEDUP_RADIUS_M = 50
-const MIN_EXPECTED_ROWS = 30_000
+// A real full build of Estonia's OSM extract (~1.3M population, ~40 tracked
+// categories) lands around 10.5-11k named+categorized rows after dedup — see
+// the "By category" breakdown this script prints. Floor set comfortably
+// below that, not at some larger guess: this only needs to catch a genuinely
+// broken/truncated extract, not second-guess a legitimately small country.
+const MIN_EXPECTED_ROWS = 8_000
 
 interface RawFeature {
   type: 'Feature'

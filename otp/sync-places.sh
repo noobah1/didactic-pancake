@@ -28,9 +28,10 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # src/lib/places-db.ts's defaultDataDir, which mirrors src/lib/db.ts's).
 PLACES_PATH="$APP_DIR/traffic-data/places.db"
 STATE_FILE="$APP_DIR/otp/.places-synced-at"
-# Verified against a real build: ~60-90k named, categorized places nationwide
-# lands around 10-20MB. Anything drastically smaller is a bad download or a
-# broken build, not a real database.
+# Verified against a real build: ~10.5-11k named, categorized places
+# nationwide (see MIN_EXPECTED_ROWS in scripts/build-places-db.ts) lands
+# around 3-5MB. Anything drastically smaller is a bad download or a broken
+# build, not a real database.
 MIN_EXPECTED_BYTES=2000000
 
 log() { echo "$(date -u +%FT%TZ) sync-places: $*"; }
