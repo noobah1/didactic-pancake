@@ -215,6 +215,12 @@ const en = {
   journeyMonitor: {
     runningLate: '{mode} {route} is running about {duration} late',
   },
+  departureAlert: {
+    leaveTitle: 'Time to leave',
+    leaveBody: 'Leave now to catch your {mode} {route}',
+    arrivingTitle: 'Your ride is arriving',
+    arrivingBody: '{mode} {route} is pulling up to your stop',
+  },
   delayToast: {
     vehicleLate: '{mode} {line} → {destination} is running {duration} late',
     multipleLate: '{n} vehicles are now running late',

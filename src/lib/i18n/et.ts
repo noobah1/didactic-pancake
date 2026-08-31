@@ -216,6 +216,12 @@ const et: Dictionary = {
   journeyMonitor: {
     runningLate: '{mode} {route} hilineb umbes {duration}',
   },
+  departureAlert: {
+    leaveTitle: 'Aeg on minema hakata',
+    leaveBody: 'Mine kohe, et jõuda oma sõidukile: {mode} {route}',
+    arrivingTitle: 'Sinu sõiduk saabub',
+    arrivingBody: '{mode} {route} saabub sinu peatusesse',
+  },
   delayToast: {
     vehicleLate: '{mode} {line} → {destination} hilineb {duration}',
     multipleLate: '{n} sõidukit hilineb nüüd',

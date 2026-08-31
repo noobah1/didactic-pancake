@@ -216,6 +216,12 @@ const ru: Dictionary = {
   journeyMonitor: {
     runningLate: '{mode} {route} опаздывает примерно на {duration}',
   },
+  departureAlert: {
+    leaveTitle: 'Пора выходить',
+    leaveBody: 'Выходите сейчас, чтобы успеть на {mode} {route}',
+    arrivingTitle: 'Ваш транспорт прибывает',
+    arrivingBody: '{mode} {route} подъезжает к вашей остановке',
+  },
   delayToast: {
     vehicleLate: '{mode} {line} → {destination} опаздывает на {duration}',
     multipleLate: 'Сейчас опаздывает транспортных средств: {n}',

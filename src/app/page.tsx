@@ -21,6 +21,7 @@ import { StopBoard, StopBoardTarget } from '@/components/StopBoard'
 import { TransportMode, VehiclePosition, ServiceAlert, StopDeparture, SharePosition, RouteLeg } from '@/lib/types'
 import { RidingPanel } from '@/components/RidingPanel'
 import { useRidingMode } from '@/hooks/use-riding-mode'
+import { useDepartureAlert } from '@/hooks/use-departure-alert'
 import { ALL_MODES, CITIES, CityDef, TALLINN_CENTER, CITY_RELEVANCE_RADIUS_M } from '@/lib/constants'
 import { OVERVIEW_THRESHOLD_SEC, findVehicleForLeg, distanceMeters } from '@/lib/delay'
 import { resolveTravellerPosition } from '@/lib/traveller-position'
@@ -492,6 +493,12 @@ function HomeContent() {
   }, [delayData.data?.estimates, activeCities, showAllCities])
 
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || null
+  // Whether the route-results sheet is currently rendering anything at all —
+  // mirrors RouteResults' own early-return logic (loading/error states, or a
+  // non-empty route list; an empty, non-loading, non-error list renders
+  // null). Used below to also hide the bottom-right FABs while the
+  // unselected route *list* is showing, not just a single selected card.
+  const resultsSheetVisible = loading || !!error || routes.length > 0
 
   // For the journey you've picked, find the actual live vehicle running each
   // transit leg (by tripId) — GPS-tracked modes (including trains, via Elron's
@@ -588,6 +595,12 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
   }, [selectedRouteId])
   const { progress: ridingProgress, error: ridingError } = useRidingMode(ridingLeg, () => setRidingLeg(null))
 
+  // "Leave now" / "bus arriving" alarms for a journey you've picked but
+  // haven't boarded yet — see use-departure-alert.ts. Scoped to the same
+  // selectedRoute as everything else above; ridingLeg's tripId tells it not
+  // to also alarm "arriving" for a leg you're already riding.
+  useDepartureAlert(selectedRoute, delayData.data?.vehicles, vehicleData.data?.vehicles, ridingLeg?.tripId ?? null)
+
   // Sync extraMapVehicle (and the selectedVehicle it was set alongside, in
   // handleSelectLine's nationwide branch) to each fresh position reported by
   // extraVehicleData — see that hook's own comment for why this is needed.
@@ -668,47 +681,56 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
 
       {/* Floating UI column - top center. On mobile it spans full width, leaving just
           a gutter on the right to clear the map's zoom/locate controls, instead of
-          shrinking the whole box down; from sm: up it's centered and capped as before. */}
-      <div
-        id="floating-ui-column"
-        className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
-      >
-        <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} />
+          shrinking the whole box down; from sm: up it's centered and capped as before.
+          Hidden entirely once a single route is focused (selectedRoute), Google Maps
+          style: with a journey actually on screen, the search bar/city toggles/
+          tracking banners/riding panel/stop board just compete with the route and
+          its card for space and attention. RouteResults' own "X" on the focused
+          card (onSelect(null)) is the way back to the route list, which brings this
+          whole column back — still gated on selectedRoute, not selectedRouteId, so
+          it reappears the instant that happens. */}
+      {!selectedRoute && (
+        <div
+          id="floating-ui-column"
+          className="absolute top-3 left-3 right-11 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-[88%] sm:max-w-lg pointer-events-none"
+        >
+          <div className="pointer-events-auto">
+            <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} wheelchair={wheelchair} onWheelchairToggle={() => setWheelchair((w) => !w)} onViewStopBoard={handleViewStopBoard} onSelectLine={handleSelectLine} />
+          </div>
+          {/* Vehicle markers on the map are otherwise silent about their own
+              data source going down — a rider watching a frozen or empty map
+              has no way to tell "no vehicles right now" from "tracking is
+              broken." Mirrors the same live/stale/unavailable language the
+              issues button and nearby panel already use elsewhere. */}
+          {vehicleData.status === 'unavailable' && (
+            <div className="pointer-events-auto mt-2 flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-700 dark:text-red-300">
+              <span className="text-red-500">⚠️</span>
+              {t('page.vehicleTrackingUnavailable')}
+            </div>
+          )}
+          {vehicleData.status === 'stale' && (
+            <div className="pointer-events-auto mt-2 flex items-center gap-1.5 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-300">
+              <span className="text-amber-500">⚠️</span>
+              {t('page.vehicleTrackingStale')}
+            </div>
+          )}
+          {ridingLeg && (
+            <div className="pointer-events-auto mt-2">
+              <RidingPanel leg={ridingLeg} progress={ridingProgress} error={ridingError} onStop={() => setRidingLeg(null)} />
+            </div>
+          )}
+          {stopBoard && (
+            <div className="pointer-events-auto mt-8 sm:mt-0">
+              <ErrorBoundary
+                key="stop-board"
+                fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">{t('page.departureBoardUnavailable')}</div>}
+              >
+                <StopBoard stop={stopBoard} onClose={() => setStopBoard(null)} onSelectDeparture={handleSelectDeparture} />
+              </ErrorBoundary>
+            </div>
+          )}
         </div>
-        {/* Vehicle markers on the map are otherwise silent about their own
-            data source going down — a rider watching a frozen or empty map
-            has no way to tell "no vehicles right now" from "tracking is
-            broken." Mirrors the same live/stale/unavailable language the
-            issues button and nearby panel already use elsewhere. */}
-        {vehicleData.status === 'unavailable' && (
-          <div className="pointer-events-auto mt-2 flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-700 dark:text-red-300">
-            <span className="text-red-500">⚠️</span>
-            {t('page.vehicleTrackingUnavailable')}
-          </div>
-        )}
-        {vehicleData.status === 'stale' && (
-          <div className="pointer-events-auto mt-2 flex items-center gap-1.5 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-300">
-            <span className="text-amber-500">⚠️</span>
-            {t('page.vehicleTrackingStale')}
-          </div>
-        )}
-        {ridingLeg && (
-          <div className="pointer-events-auto mt-2">
-            <RidingPanel leg={ridingLeg} progress={ridingProgress} error={ridingError} onStop={() => setRidingLeg(null)} />
-          </div>
-        )}
-        {stopBoard && (
-          <div className="pointer-events-auto mt-8 sm:mt-0">
-            <ErrorBoundary
-              key="stop-board"
-              fallback={<div className="p-4 text-center text-gray-500 dark:text-gray-400">{t('page.departureBoardUnavailable')}</div>}
-            >
-              <StopBoard stop={stopBoard} onClose={() => setStopBoard(null)} onSelectDeparture={handleSelectDeparture} />
-            </ErrorBoundary>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Journey results - anchored to the bottom of the screen, Google Maps
           style: a full-width bottom sheet on mobile, a floating card near
@@ -848,10 +870,13 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
           `relative` added to IssuesButton's own <button>. z-45 (above the
           z-40 route-results sheet) so these stay reachable on mobile even
           when the bottom sheet's full-width card is tall enough to reach
-          this corner, instead of getting buried under it. Hidden once a
-          route is selected: the expanded route card occupies this corner
-          on mobile, and the three FABs on top of it made it unreachable. */}
-      {!selectedRoute && (
+          this corner, instead of getting buried under it. Hidden whenever
+          the results sheet is showing anything — a selected card, the
+          unselected route list, or its loading/error state — since on
+          mobile that sheet is full-width and bottom-anchored, so its
+          bottom-right corner always sits exactly where these FABs float,
+          on top of whatever route content is there. */}
+      {!selectedRoute && !resultsSheetVisible && (
         <div className="absolute bottom-6 right-4 z-[45] flex items-center gap-2 pointer-events-auto">
           <FilterButton
             active={!!lineFilter}
