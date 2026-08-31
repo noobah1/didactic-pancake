@@ -429,5 +429,9 @@ function mapPlace(place: GqlPlace): LegPlace {
     arrival: place.arrival
       ? (place.arrival.estimated?.time || place.arrival.scheduledTime)
       : undefined,
+    // Never realtime-adjusted — see LegPlace.scheduledDeparture's own comment
+    // for why leg-estimate.ts needs the pure timetable figure.
+    scheduledDeparture: place.departure?.scheduledTime || undefined,
+    scheduledArrival: place.arrival?.scheduledTime || undefined,
   }
 }

@@ -30,6 +30,7 @@ import { useVehicles } from '@/hooks/use-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
 import { useDelays } from '@/hooks/use-delays'
+import { useRouteConditions } from '@/hooks/use-route-conditions'
 import { useDelayToast } from '@/hooks/use-delay-toast'
 import { useTheme } from '@/hooks/use-theme'
 import { useTranslation } from '@/lib/i18n/context'
@@ -129,6 +130,11 @@ function HomeContent() {
   const { routes, loading, error, notice, search, clear, selectedRouteId, selectRoute, loadSharedRoute, setShareError } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
   const delayData = useDelays(activeCities)
+  // Leg-scoped traffic for whatever itineraries are currently on screen —
+  // see ItineraryConditions. Polls only while `routes` is non-empty (see
+  // useRouteConditions' own enabled gate), so an idle search screen never
+  // spends a request on it.
+  const routeConditionsData = useRouteConditions(routes, activeCities)
   const { findFavorite } = useFavorites()
   // The from/to of the search that produced the current `routes`, kept only
   // to check afterwards whether it matches a saved favorite -- SearchPanel
@@ -781,7 +787,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
               onSelect={selectRoute}
               onClose={handleClear}
               delayVehicles={delayData.data?.vehicles}
-              trafficEstimates={delayData.data?.estimates}
+              conditions={routeConditionsData.data?.conditions}
               ridingTripId={ridingLeg?.tripId ?? null}
               onToggleRiding={(leg) => setRidingLeg((cur) => (cur?.tripId === leg.tripId ? null : leg))}
             />

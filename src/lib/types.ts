@@ -164,6 +164,15 @@ export interface LegPlace {
   stopId?: string
   departure?: string
   arrival?: string
+  // Scheduled (never realtime-adjusted) versions of departure/arrival —
+  // unlike those two, which prefer a realtime `estimated.time` when OTP has
+  // one. A leg-scoped traffic estimate (src/lib/traffic/leg-estimate.ts)
+  // needs the pure timetable figure: comparing current road speed against a
+  // baseline built from a time that already contains today's delay would
+  // double-count it and understate the result. Absent only when OTP never
+  // returned a scheduledTime for this stop at all.
+  scheduledDeparture?: string
+  scheduledArrival?: string
   // Elron trains only (see src/lib/elron-platform.ts) — absent for every
   // other mode, and when this stop/time/destination couldn't be matched
   // against Elron's own live-map board. Never guess a platform. `from`'s
@@ -414,4 +423,28 @@ export interface RiderReport {
   evidence: 'rider-reported'
   reportedAt: number // epoch ms of the freshest contributing report
   reporterCount: number
+}
+
+// A road-speed-inferred slowdown scoped to exactly one itinerary leg's own
+// stop chain — see src/lib/traffic/leg-estimate.ts. Distinct from
+// RouteTrafficEstimate, which is computed over a whole route's representative
+// trip: a rider boarding a 185km intercity coach for four stops shouldn't be
+// shown the slowdown for the whole corridor. Deliberately a smaller shape
+// than RouteTrafficEstimate (no routeGtfsId/shortName/lat/lng) — it's already
+// scoped to one leg by construction, the same reasoning LegAlert uses against
+// ServiceAlert.
+export type LegTrafficEstimate = TrafficEstimate
+
+// Leg-scoped traffic conditions for one itinerary, from POST /api/route-conditions.
+// `routeId` matches RouteResult.id so the client can join this back onto the
+// itinerary it was computed for.
+export interface ItineraryConditions {
+  routeId: string
+  legs: Record<number, LegTrafficEstimate> // keyed by leg index into RouteResult.legs
+  // Sum of every covered leg's minSeconds/maxSeconds — the itinerary-level
+  // figure RouteResults' traffic sort uses. Zero when no leg had an estimate,
+  // same "unmeasured counts as zero excess, never as a penalty" rule the
+  // price sort already applies to an unknown fare.
+  totalMinSeconds: number
+  totalMaxSeconds: number
 }

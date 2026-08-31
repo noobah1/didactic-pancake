@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Check, MapPin, Share2, X } from 'lucide-react'
-import { RouteResult, RouteTrafficEstimate, RouteLeg } from '@/lib/types'
+import { RouteResult, ItineraryConditions, RouteLeg } from '@/lib/types'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { RouteCard } from './RouteCard'
 import { SheetHandle } from './SheetHandle'
@@ -12,7 +12,7 @@ import { useTranslation } from '@/lib/i18n/context'
 import { useRiderProfile } from '@/hooks/use-rider-profile'
 import { priceItinerary } from '@/lib/fares/price'
 
-type SortMode = 'duration' | 'departure' | 'price'
+type SortMode = 'duration' | 'departure' | 'price' | 'traffic'
 type ShareState = 'idle' | 'sharing' | 'error'
 
 // How far the sheet can be dragged, in vh — small enough to always leave
@@ -29,12 +29,17 @@ interface RouteResultsProps {
   onSelect: (id: string | null) => void
   onClose?: () => void
   delayVehicles?: DelayedVehicle[]
-  trafficEstimates?: RouteTrafficEstimate[]
+  // Leg-scoped traffic conditions, one entry per itinerary (see
+  // ItineraryConditions and /api/route-conditions) — joined onto each
+  // RouteCard below by routeId, and used for the traffic sort's excess-time
+  // figure. Distinct from IssuesPanel's own RouteTrafficEstimate[], which
+  // stays whole-route for the nationwide overview.
+  conditions?: ItineraryConditions[]
   ridingTripId?: string | null
   onToggleRiding?: (leg: RouteLeg) => void
 }
 
-export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, trafficEstimates, ridingTripId, onToggleRiding }: RouteResultsProps) {
+export function RouteResults({ routes, loading, error, notice, selectedId, onSelect, onClose, delayVehicles, conditions, ridingTripId, onToggleRiding }: RouteResultsProps) {
   const { t } = useTranslation()
   const { profile } = useRiderProfile()
   const [sortBy, setSortBy] = useState<SortMode>('duration')
@@ -156,10 +161,19 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
   // enough (a handful of itineraries) that this doesn't need memoizing, and
   // keeps the sort and each RouteCard's own chip using the exact same number.
   const priceOf = (route: RouteResult) => priceItinerary(route, profile).totalCents
+  const conditionsOf = (route: RouteResult) => conditions?.find((c) => c.routeId === route.id)
+  // The upper bound, not the midpoint — a sort labelled "Traffic" should be
+  // conservative rather than optimistic, and it's the same number the card's
+  // own chip shows. An itinerary with no coverage counts as zero excess: it
+  // is neither penalised nor rewarded for being unmeasured, the same
+  // "unknown never masquerades as free" rule the price sort applies below.
+  const trafficExcessOf = (route: RouteResult) => conditionsOf(route)?.totalMaxSeconds || 0
+  const hasTrafficSignal = routes.some((r) => trafficExcessOf(r) > 0)
 
   const sorted = [...routes].sort((a, b) => {
     if (sortBy === 'duration') return a.duration - b.duration
     if (sortBy === 'departure') return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    if (sortBy === 'traffic') return (a.duration + trafficExcessOf(a)) - (b.duration + trafficExcessOf(b))
     // 'price' — an itinerary with no quotable total (evidence 'operator' or
     // 'unknown') sorts last, never first as if it were free.
     const priceA = priceOf(a)
@@ -242,6 +256,18 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
             >
               {t('results.cheapest')}
             </button>
+            {hasTrafficSignal && (
+              // Only shown once at least one visible itinerary actually has
+              // an estimate — otherwise this tab would sort identically to
+              // Fastest and read as broken.
+              <button
+                type="button"
+                onClick={() => setSortBy('traffic')}
+                className={`px-2 py-1.5 text-xs rounded-full ${sortBy === 'traffic' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+              >
+                {t('results.leastTraffic')}
+              </button>
+            )}
             {onClose && (
               <button
                 type="button"
@@ -324,7 +350,7 @@ export function RouteResults({ routes, loading, error, notice, selectedId, onSel
           selected={route.id === selectedId}
           onSelect={() => onSelect(route.id === selectedId ? null : route.id)}
           delayVehicles={delayVehicles}
-          trafficEstimates={trafficEstimates}
+          conditions={conditionsOf(route)}
           ridingTripId={ridingTripId}
           onToggleRiding={onToggleRiding}
         />

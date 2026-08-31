@@ -47,6 +47,7 @@ export const CITY_PROBE_SETS: CityProbeSet[] = cityProbesData
 
 const byCityId = new Map(CITY_PROBE_SETS.map((c) => [c.cityId, c]))
 const probeById = new Map(CITY_PROBE_SETS.flatMap((c) => c.probes.map((p) => [p.id, p] as const)))
+const probeRouteByGtfsId = new Map(CITY_PROBE_SETS.flatMap((c) => c.routes.map((r) => [r.routeGtfsId, r] as const)))
 
 export function getCityProbeSet(cityId: string): CityProbeSet | undefined {
   return byCityId.get(cityId)
@@ -54,4 +55,11 @@ export function getCityProbeSet(cityId: string): CityProbeSet | undefined {
 
 export function getProbe(probeId: string): CityProbe | undefined {
   return probeById.get(probeId)
+}
+
+// Reverse of CityProbeSet.routes — today probe routes are only reachable by
+// city id (computeCityTrafficEstimates walks a city's whole probe set); this
+// is the per-route lookup a single leg's traffic estimate needs instead.
+export function getCityProbeRoute(routeGtfsId: string): CityProbeRoute | undefined {
+  return probeRouteByGtfsId.get(routeGtfsId)
 }

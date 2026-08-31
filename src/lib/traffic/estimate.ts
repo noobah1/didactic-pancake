@@ -11,7 +11,7 @@ import { getBaselines } from './baseline'
 // the same "don't let one lucky highway crossing speak for a 200km corridor"
 // concern route-coverage.json's own generation comment describes, just
 // applied per-segment instead of per-route.
-const MAX_REPRESENTATION_M = 15_000
+export const MAX_REPRESENTATION_M = 15_000
 // Below this fraction of a route's scheduled in-motion time actually backed
 // by a fresh, baselined detector, an estimate would be a handful of sensors
 // speaking for a route they mostly don't touch — suppress it rather than

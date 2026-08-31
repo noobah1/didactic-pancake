@@ -58,7 +58,7 @@ import {
 // This is a walkable few blocks — roughly the spacing between neighbouring
 // probes (see PROBE_SEPARATION_FRACTION in the generator), so a segment
 // takes the nearest probe or none.
-const MAX_PROBE_REPRESENTATION_M = 1_200
+export const MAX_PROBE_REPRESENTATION_M = 1_200
 
 // A city's probe budget is only worth spending while someone is looking at
 // that city, so corridors are fetched per city and cached the same 6h the

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Footprints, X, Accessibility } from 'lucide-react'
-import { RouteResult, RouteLeg, LegPlace, TransportMode, RouteTrafficEstimate, ItineraryFare } from '@/lib/types'
+import { RouteResult, RouteLeg, LegPlace, TransportMode, ItineraryConditions, LegTrafficEstimate, ItineraryFare } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
@@ -22,7 +22,11 @@ interface RouteCardProps {
   selected: boolean
   onSelect: () => void
   delayVehicles?: DelayedVehicle[]
-  trafficEstimates?: RouteTrafficEstimate[]
+  // This itinerary's own leg-scoped traffic conditions (see
+  // ItineraryConditions), already resolved by RouteResults from the polled
+  // /api/route-conditions response by routeId — RouteCard never needs to
+  // know about any other itinerary's.
+  conditions?: ItineraryConditions
   // The tripId of the leg currently being ridden (see use-riding-mode.ts),
   // if any — there's only ever one riding session app-wide, so this is
   // compared against each leg's own tripId to show "Stop" instead of "I'm on
@@ -212,10 +216,16 @@ function ExpandableLeg({
   leg,
   riding,
   onToggleRiding,
+  trafficEstimate,
 }: {
   leg: RouteLeg
   riding: boolean
   onToggleRiding?: (leg: RouteLeg) => void
+  // This specific leg's own slowdown, if the leg's route is covered and
+  // currently shows one (see ItineraryConditions.legs) — the whole point of
+  // going leg-scoped is being able to point at which leg is actually slow,
+  // not just the itinerary as a whole.
+  trafficEstimate?: LegTrafficEstimate
 }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -265,6 +275,21 @@ function ExpandableLeg({
               {riding ? t('riding.stopRiding') : t('riding.imOnThis')}
             </button>
           )}
+          {trafficEstimate && (
+            // Same outlined-amber "estimated, not confirmed" treatment as the
+            // card's own itinerary-level adjunct — this is the leg it's
+            // actually summed from.
+            <span
+              className="text-xs text-amber-600 dark:text-amber-400 font-medium border border-amber-400 dark:border-amber-600 rounded px-1"
+              title={t('route.trafficPointsTooltip', { n: trafficEstimate.detectorCount, plural: trafficEstimate.detectorCount === 1 ? '' : 's' })}
+            >
+              {t('route.delaySlower', {
+                range: Math.round(trafficEstimate.maxSeconds / 60) > Math.round(trafficEstimate.minSeconds / 60)
+                  ? `${Math.round(trafficEstimate.minSeconds / 60)}-${Math.round(trafficEstimate.maxSeconds / 60)}`
+                  : `${Math.round(trafficEstimate.minSeconds / 60)}`,
+              })}
+            </span>
+          )}
           <span className="text-xs text-gray-400 dark:text-gray-500">{t('common.minShort', { n: Math.round(leg.duration / 60) })}</span>
           {stops.length > 0 && (
             <svg
@@ -281,7 +306,7 @@ function ExpandableLeg({
   )
 }
 
-export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEstimates, ridingTripId, onToggleRiding }: RouteCardProps) {
+export function RouteCard({ route, selected, onSelect, delayVehicles, conditions, ridingTripId, onToggleRiding }: RouteCardProps) {
   const { t, modeLabel, locale } = useTranslation()
   const { profile } = useRiderProfile()
   const fare = useMemo(() => priceItinerary(route, profile), [route, profile])
@@ -325,15 +350,18 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
   const maxDelaySeconds = knownDelays.length ? Math.max(...knownDelays.map((d) => d.delaySeconds)) : null
   const delayMinutes = maxDelaySeconds !== null ? Math.round(maxDelaySeconds / 60) : null
 
-  // Falls through only when nothing above found a GPS-confirmed delay —
-  // routeGtfsId is unambiguous (unlike leg.route's bare line number, see its
-  // own comment in types.ts), so this never risks crediting the wrong
-  // operator's same-numbered route with someone else's slowdown.
-  const routeEstimate =
-    delayMinutes === null
-      ? transitLegs
-          .map((leg) => trafficEstimates?.find((e) => e.routeGtfsId === leg.routeGtfsId))
-          .find((e): e is RouteTrafficEstimate => e != null)
+  // Falls through only when nothing above found a GPS-confirmed delay — same
+  // precedence the old whole-route fallback used, just now summed over this
+  // itinerary's own leg-scoped estimates (see ItineraryConditions) instead
+  // of one arbitrary matching route's whole corridor.
+  const legEstimateEntries = conditions ? Object.entries(conditions.legs) : []
+  const itineraryEstimate =
+    delayMinutes === null && legEstimateEntries.length > 0
+      ? {
+          minSeconds: conditions!.totalMinSeconds,
+          maxSeconds: conditions!.totalMaxSeconds,
+          detectorCount: legEstimateEntries.reduce((sum, [, e]) => sum + e.detectorCount, 0),
+        }
       : undefined
 
   return (
@@ -439,19 +467,19 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
         <span className="text-xs text-gray-500 dark:text-gray-400">{startTime} &rarr; {endTime}</span>
         {transitLegs.length > 0 && (
           delayMinutes === null ? (
-            routeEstimate ? (
+            itineraryEstimate ? (
               // Outlined, not solid — visually distinct from the
               // GPS-confirmed amber chip below, same "estimated, not
               // confirmed" honesty rule as MapView's dashed markers for
               // schedule-interpolated vehicles.
               <span
                 className="text-xs text-amber-600 dark:text-amber-400 font-medium border border-amber-400 dark:border-amber-600 rounded px-1"
-                title={t('route.trafficPointsTooltip', { n: routeEstimate.detectorCount, plural: routeEstimate.detectorCount === 1 ? '' : 's' })}
+                title={t('route.trafficPointsTooltip', { n: itineraryEstimate.detectorCount, plural: itineraryEstimate.detectorCount === 1 ? '' : 's' })}
               >
                 {t('route.delaySlower', {
-                  range: Math.round(routeEstimate.maxSeconds / 60) > Math.round(routeEstimate.minSeconds / 60)
-                    ? `${Math.round(routeEstimate.minSeconds / 60)}-${Math.round(routeEstimate.maxSeconds / 60)}`
-                    : `${Math.round(routeEstimate.minSeconds / 60)}`,
+                  range: Math.round(itineraryEstimate.maxSeconds / 60) > Math.round(itineraryEstimate.minSeconds / 60)
+                    ? `${Math.round(itineraryEstimate.minSeconds / 60)}-${Math.round(itineraryEstimate.maxSeconds / 60)}`
+                    : `${Math.round(itineraryEstimate.minSeconds / 60)}`,
                 })}
               </span>
             ) : (
@@ -478,6 +506,7 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, trafficEst
                   leg={leg}
                   riding={!!leg.tripId && leg.tripId === ridingTripId}
                   onToggleRiding={onToggleRiding}
+                  trafficEstimate={conditions?.legs[i]}
                 />
               )}
             </div>

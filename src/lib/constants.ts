@@ -237,6 +237,11 @@ export const POLL_INTERVALS = {
   delays: 20_000,
   stopBoard: 20_000, // matches the server-side cache TTL in /api/stop-board
   nearbyStops: 20_000, // matches the server-side cache TTL in /api/nearby-stops
+  // Slower than delays' own 20s — detector readings only refresh ~5min
+  // upstream (DETECTOR_CACHE_TTL) and TomTom flow is cached 10min
+  // (CITY_FLOW_CACHE_TTL), so polling faster than this would just return
+  // identical numbers.
+  routeConditions: 60_000,
 }
 
 // Default search radius for "nearby stops" — enough to catch every platform
