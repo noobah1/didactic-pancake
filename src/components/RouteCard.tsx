@@ -498,8 +498,10 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
             <div key={i}>
               {leg.mode === 'walk' ? (
                 <div className="flex items-center gap-2 py-1.5 text-xs text-gray-400 dark:text-gray-500">
+                  <span className="font-medium text-gray-500 dark:text-gray-400">{formatTime(leg.startTime)}</span>
                   <Footprints size={14} />
                   <span>{t('route.walkMin', { n: Math.round(leg.duration / 60) })}</span>
+                  <span>&rarr; {formatTime(leg.endTime)}</span>
                 </div>
               ) : (
                 <ExpandableLeg
