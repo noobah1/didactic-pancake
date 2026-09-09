@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Footprints } from 'lucide-react'
+import { Footprints, Share2, Check } from 'lucide-react'
 import { RouteResult, RouteLeg } from '@/lib/types'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
 
@@ -81,6 +81,31 @@ export function RouteCard({ route, selected, onSelect }: RouteCardProps) {
   const endTime = formatTime(route.endTime)
   const maxDelay = Math.max(...route.legs.map((l) => l.delay || 0))
   const delayMinutes = Math.round(maxDelay / 60)
+  const [copied, setCopied] = useState(false)
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const url = window.location.href
+    const firstLeg = route.legs[0]
+    const lastLeg = route.legs[route.legs.length - 1]
+    const title = `${firstLeg.from.name} → ${lastLeg.to.name}`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url })
+        return
+      } catch {
+        // user cancelled the native share sheet — fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard blocked — the URL bar already has the link
+    }
+  }
 
   return (
     <div
@@ -128,6 +153,25 @@ export function RouteCard({ route, selected, onSelect }: RouteCardProps) {
       </div>
       {selected && (
         <div className="mt-2 flex flex-col divide-y divide-gray-100">
+          <div className="flex justify-end pb-1.5">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check size={12} className="text-green-600" />
+                  <span className="text-green-600">Link copied</span>
+                </>
+              ) : (
+                <>
+                  <Share2 size={12} />
+                  <span>Share</span>
+                </>
+              )}
+            </button>
+          </div>
           {route.legs.map((leg, i) => (
             <div key={i}>
               {leg.mode === 'walk' ? (
