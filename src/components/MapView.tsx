@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TALLINN_CENTER, DEFAULT_ZOOM, MODE_COLORS, CityDef } from '@/lib/constants'
-import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo } from '@/lib/types'
+import { VehiclePosition, TransportMode, RouteResult, ServiceAlert, TripStopInfo, StopInfo } from '@/lib/types'
 import { decodePolyline } from '@/lib/decode-polyline'
 
 function formatSecondsToTime(seconds: number): string {
@@ -39,6 +39,11 @@ const PLAN_STOPS_LABEL_LAYER = 'plan-stops-label-layer'
 const INCIDENT_LINE_PREFIX = 'incident-line-'
 const INCIDENT_SOURCE_PREFIX = 'incident-src-'
 
+const STOPS_SOURCE = 'stops-source'
+const STOPS_LAYER = 'stops-layer'
+const STOPS_LABEL_LAYER = 'stops-label-layer'
+const STOPS_MIN_ZOOM = 15
+
 interface RouteShapePattern {
   directionId: number
   geometry: string
@@ -53,9 +58,10 @@ interface MapViewProps {
   incidents?: ServiceAlert[]
   cities?: CityDef[]
   onVehicleClick?: (vehicle: VehiclePosition | null) => void
+  onStopClick?: (stop: StopInfo) => void
 }
 
-export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVehicle, incidents, cities, onVehicleClick }: MapViewProps) {
+export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVehicle, incidents, cities, onVehicleClick, onStopClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -68,6 +74,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
   const incidentLayerIdsRef = useRef<string[]>([])
   const showRouteShapeRef = useRef<(v: VehiclePosition) => void>(() => {})
   const onVehicleClickRef = useRef(onVehicleClick)
+  const onStopClickRef = useRef(onStopClick)
   const vehicleDotTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([])
 
@@ -318,6 +325,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
   useEffect(() => {
     onVehicleClickRef.current = onVehicleClick
   }, [onVehicleClick])
+  useEffect(() => {
+    onStopClickRef.current = onStopClick
+  }, [onStopClick])
 
   // Clear route shape when vehicle is deselected externally (e.g. timetable X)
   useEffect(() => {
@@ -410,6 +420,65 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
         map.getCanvas().style.cursor = ''
       })
 
+      // Nearby-stops layer — populated by a bbox fetch on moveend, own effect below
+      map.addSource(STOPS_SOURCE, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+
+      map.addLayer({
+        id: STOPS_LAYER,
+        type: 'circle',
+        source: STOPS_SOURCE,
+        minzoom: STOPS_MIN_ZOOM,
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#ffffff',
+          'circle-stroke-color': '#6B7280',
+          'circle-stroke-width': 1.5,
+        },
+      })
+
+      map.addLayer({
+        id: STOPS_LABEL_LAYER,
+        type: 'symbol',
+        source: STOPS_SOURCE,
+        minzoom: STOPS_MIN_ZOOM,
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 11,
+          'text-offset': [0, 1.1],
+          'text-anchor': 'top',
+          'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+          'text-optional': true,
+        },
+        paint: {
+          'text-color': '#4B5563',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5,
+        },
+      })
+
+      map.on('click', STOPS_LAYER, (e) => {
+        if (!e.features?.length) return
+        const feature = e.features[0]
+        const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
+        const props = feature.properties || {}
+        onStopClickRef.current?.({
+          stopId: props.stopId,
+          name: props.name,
+          lat: coords[1],
+          lng: coords[0],
+        })
+      })
+
+      map.on('mouseenter', STOPS_LAYER, () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', STOPS_LAYER, () => {
+        map.getCanvas().style.cursor = ''
+      })
+
       // Hide individual markers that are inside a cluster
       const updateVisibility = () => {
         if (!map.getSource(VEHICLE_CLUSTER_SOURCE)) return
@@ -433,7 +502,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
       // Click empty map area to dismiss route shape and timetable
       map.on('click', (e) => {
         const interactive = map.queryRenderedFeatures(e.point, {
-          layers: [CLUSTER_CIRCLE_LAYER, ROUTE_STOPS_LAYER].filter((id) => map.getLayer(id)),
+          layers: [CLUSTER_CIRCLE_LAYER, ROUTE_STOPS_LAYER, STOPS_LAYER].filter((id) => map.getLayer(id)),
         })
         if (interactive.length > 0) return
         if (activeRouteRef.current) {
@@ -497,6 +566,73 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, selectedVeh
       map.remove()
       mapRef.current = null
       mapReadyRef.current = false
+    }
+  }, [])
+
+  // Nearby-stops layer: fetch stops in the current viewport whenever it settles
+  // at zoom >= STOPS_MIN_ZOOM. Own source/layer (added above), own fetch logic —
+  // deliberately not sharing state with the vehicle/plan/incident effects.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null
+    let abortController: AbortController | null = null
+
+    const fetchStops = async () => {
+      if (!mapReadyRef.current || !map.getSource(STOPS_SOURCE)) return
+      if (map.getZoom() < STOPS_MIN_ZOOM) {
+        ;(map.getSource(STOPS_SOURCE) as maplibregl.GeoJSONSource).setData({
+          type: 'FeatureCollection',
+          features: [],
+        })
+        return
+      }
+
+      abortController?.abort()
+      abortController = new AbortController()
+
+      const bounds = map.getBounds()
+      const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(',')
+
+      try {
+        const res = await fetch(`/api/stops?bbox=${bbox}`, { signal: abortController.signal })
+        if (!res.ok) return
+        const data: { stops: StopInfo[] } = await res.json()
+        if (!map.getSource(STOPS_SOURCE)) return
+
+        const features: GeoJSON.Feature<GeoJSON.Point>[] = data.stops.map((s) => ({
+          type: 'Feature',
+          properties: { stopId: s.stopId, name: s.name },
+          geometry: { type: 'Point', coordinates: [s.lng, s.lat] },
+        }))
+        ;(map.getSource(STOPS_SOURCE) as maplibregl.GeoJSONSource).setData({
+          type: 'FeatureCollection',
+          features,
+        })
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Failed to fetch stops:', err)
+        }
+      }
+    }
+
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(fetchStops, 300)
+    }
+
+    map.on('moveend', scheduleFetch)
+    if (mapReadyRef.current) {
+      fetchStops()
+    } else {
+      map.once('load', fetchStops)
+    }
+
+    return () => {
+      map.off('moveend', scheduleFetch)
+      if (debounceTimer) clearTimeout(debounceTimer)
+      abortController?.abort()
     }
   }, [])
 

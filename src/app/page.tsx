@@ -13,7 +13,8 @@ import { MapView } from '@/components/MapView'
 import { IncidentButton } from '@/components/IncidentButton'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
-import { TransportMode, VehiclePosition } from '@/lib/types'
+import { StopPanel } from '@/components/StopPanel'
+import { TransportMode, VehiclePosition, StopInfo, StopDeparture } from '@/lib/types'
 import { ALL_MODES, CITIES, CityDef } from '@/lib/constants'
 import { useVehicles } from '@/hooks/use-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
@@ -38,6 +39,7 @@ function HomeContent() {
   )
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
+  const [selectedStop, setSelectedStop] = useState<StopInfo | null>(null)
   const [showIncidents, setShowIncidents] = useState(false)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
@@ -115,6 +117,29 @@ function HomeContent() {
     setSelectedRouteId(null)
   }
 
+  const handleVehicleClick = useCallback((vehicle: VehiclePosition | null) => {
+    setSelectedVehicle(vehicle)
+    if (vehicle) setSelectedStop(null)
+  }, [])
+
+  const handleStopClick = useCallback((stop: StopInfo) => {
+    setSelectedStop(stop)
+    setSelectedVehicle(null)
+  }, [])
+
+  const handleSelectDeparture = useCallback((departure: StopDeparture, stop: StopInfo) => {
+    setSelectedVehicle({
+      id: departure.tripId,
+      mode: departure.mode,
+      line: departure.line,
+      destination: departure.headsign,
+      lat: stop.lat,
+      lng: stop.lng,
+      heading: 0,
+    })
+    setSelectedStop(null)
+  }, [])
+
   const activeAlerts = useMemo(
     () =>
       (alertData.data?.alerts || []).filter(
@@ -144,18 +169,25 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute)
           selectedVehicle={selectedVehicle}
           incidents={showIncidents ? activeAlerts : undefined}
           cities={activeCities}
-          onVehicleClick={setSelectedVehicle}
+          onVehicleClick={handleVehicleClick}
+          onStopClick={handleStopClick}
         />
       </ErrorBoundary>
 
-      {/* Timetable panel - bottom left */}
-      {selectedVehicle && (
+      {/* Timetable / stop panel - bottom center. Only one shown at a time. */}
+      {selectedVehicle ? (
         <TimetablePanel
           vehicle={selectedVehicle}
           vehicles={vehicleData.data?.vehicles}
           onClose={() => setSelectedVehicle(null)}
         />
-      )}
+      ) : selectedStop ? (
+        <StopPanel
+          stop={selectedStop}
+          onClose={() => setSelectedStop(null)}
+          onSelectDeparture={(departure) => handleSelectDeparture(departure, selectedStop)}
+        />
+      ) : null}
 
       {/* Alert banner - top of viewport */}
       {alertData.data?.alerts && alertData.data.alerts.length > 0 && (

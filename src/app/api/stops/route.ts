@@ -28,6 +28,24 @@ interface GqlStop {
 // viewport is always much smaller than this.
 const MAX_BBOX_DEGREES = 0.5
 
+// GTFS commonly carries the same physical stop pole under multiple feed_ids
+// (e.g. a legacy trolleybus feed alongside the live bus feed) at identical
+// coordinates. Left undeduped, the map renders overlapping circles and a
+// click always hits whichever feed happened to be listed last — which is
+// frequently the one with no vehicleMode and no real schedule data. Collapse
+// stops at the same coordinate, preferring the record OTP tagged with a mode.
+function dedupeCoincidentStops(stops: StopInfo[]): StopInfo[] {
+  const byLocation = new Map<string, StopInfo>()
+  for (const stop of stops) {
+    const key = `${stop.lat.toFixed(5)},${stop.lng.toFixed(5)}`
+    const existing = byLocation.get(key)
+    if (!existing || (!existing.mode && stop.mode)) {
+      byLocation.set(key, stop)
+    }
+  }
+  return [...byLocation.values()]
+}
+
 const cache = new Map<string, { data: { stops: StopInfo[] }; timestamp: number }>()
 const CACHE_TTL = 300_000 // 5 min — stop locations are static data
 
@@ -68,7 +86,7 @@ export async function GET(request: Request) {
     const json = await response.json()
     const gqlStops: GqlStop[] = json.data?.stopsByBbox || []
 
-    const stops: StopInfo[] = gqlStops.map((s) => ({
+    const mapped: StopInfo[] = gqlStops.map((s) => ({
       stopId: s.gtfsId,
       name: s.name,
       lat: s.lat,
@@ -76,6 +94,7 @@ export async function GET(request: Request) {
       mode: otpModeToLocalOrUndefined(s.vehicleMode),
     }))
 
+    const stops = dedupeCoincidentStops(mapped)
     const data = { stops }
     cache.set(cacheKey, { data, timestamp: Date.now() })
     return NextResponse.json(data)
