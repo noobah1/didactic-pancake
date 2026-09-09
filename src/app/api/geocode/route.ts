@@ -1,4 +1,4 @@
-import { OTP_BASE_URL } from '@/lib/constants'
+import { NOMINATIM_URL, OTP_BASE_URL } from '@/lib/constants'
 const TRANSIT_STOPS_QUERY = `
 query {
   rail: routes(transportModes: [RAIL]) {
@@ -116,8 +116,60 @@ async function searchEstonianAddresses(query: string): Promise<GeoResult[]> {
   } catch { return [] }
 }
 
+interface NominatimAddress {
+  road?: string
+  pedestrian?: string
+  footway?: string
+  suburb?: string
+  house_number?: string
+}
+
+const reverseCache = new Map<string, { name: string; timestamp: number }>()
+const REVERSE_CACHE_TTL = 300_000 // 5 min
+
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  // Round to ~10m so small GPS jitter reuses the cached name
+  const key = `${lat.toFixed(4)},${lng.toFixed(4)}`
+  const hit = reverseCache.get(key)
+  if (hit && Date.now() - hit.timestamp < REVERSE_CACHE_TTL) return hit.name
+
+  try {
+    const url = `${NOMINATIM_URL}/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'LiveTravely/0.1 (github.com/noobah1/didactic-pancake)' },
+    })
+    if (!res.ok) return null
+    const data: { address?: NominatimAddress; name?: string; display_name?: string } = await res.json()
+    const a = data.address || {}
+    const road = a.road || a.pedestrian || a.footway || a.suburb
+    const name = road
+      ? a.house_number ? `${road} ${a.house_number}` : road
+      : data.name || data.display_name?.split(',')[0] || null
+
+    if (name) reverseCache.set(key, { name, timestamp: Date.now() })
+    return name
+  } catch {
+    return null
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
+
+  // Reverse mode: coordinates -> place name
+  const lat = searchParams.get('lat')
+  const lng = searchParams.get('lng')
+  if (lat && lng) {
+    const latNum = parseFloat(lat)
+    const lngNum = parseFloat(lng)
+    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+      return Response.json({ error: 'invalid coordinates' }, { status: 400 })
+    }
+    const name = await reverseGeocode(latNum, lngNum)
+    return Response.json({ name: name || 'My location' })
+  }
+
+  // Forward mode: text -> coordinates
   const query = searchParams.get('q')
   if (!query || query.length < 2) return Response.json({ results: [] })
   const [stopsResults, addressResults] = await Promise.all([searchTransitStops(query), searchEstonianAddresses(query)])
