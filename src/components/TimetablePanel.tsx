@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { X } from 'lucide-react'
 import { VehiclePosition, TripStopInfo } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
+import { trimStops, computeArrivalInfo, ArrivalInfo } from '@/lib/timetable'
 
 interface TimetablePanelProps {
   vehicle: VehiclePosition
@@ -29,18 +30,6 @@ function getNowSeconds(): number {
   const now = new Date()
   const parts = now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Tallinn', hour12: false }).split(':')
   return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
-}
-
-function trimStops(stops: TripStopInfo[]): TripStopInfo[] {
-  let lastPassedIdx = -1
-  for (let i = stops.length - 1; i >= 0; i--) {
-    if (stops[i].status === 'passed') {
-      lastPassedIdx = i
-      break
-    }
-  }
-  const from = Math.max(0, lastPassedIdx - 1)
-  return stops.slice(from)
 }
 
 export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelProps) {
@@ -70,7 +59,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
       let url: string
       if (lockedTripId && isScheduled) {
           // Only lock trip ID for scheduled vehicles (OTP trips with colon in ID)
-          url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId)}&lat=${lat}&lng=${lng}`
+          url = `/api/trip-stops?tripId=${encodeURIComponent(lockedTripId!)}&lat=${lat}&lng=${lng}`
         } else if (isScheduled) {
         url = `/api/trip-stops?tripId=${encodeURIComponent(vehicle.id)}&lat=${lat}&lng=${lng}`
       } else {
@@ -136,19 +125,7 @@ export function TimetablePanel({ vehicle, vehicles, onClose }: TimetablePanelPro
   const nextStop = stops?.find((s) => s.status === 'upcoming')
   const currentStop = stops?.find((s) => s.status === 'current')
 
-  // Lateness: GPS says bus hasn't reached the stop yet + schedule says it should have (+ 59s buffer)
-  // No prediction — just facts: is the bus there or not, and is the time past?
-  let arrivalInfo: { minutes: number; late: boolean } | null = null
-  if (nextStop) {
-    const diff = nextStop.scheduledArrival - nowSec
-    if (diff >= -59) {
-      // Within 59s buffer = on time
-      arrivalInfo = { minutes: Math.max(0, Math.ceil(diff / 60)), late: false }
-    } else {
-      // GPS shows bus isn't at the stop yet AND more than 59s past schedule = late
-      arrivalInfo = { minutes: Math.ceil(Math.abs(diff) / 60), late: true }
-    }
-  }
+  const arrivalInfo: ArrivalInfo | null = nextStop ? computeArrivalInfo(nextStop.scheduledArrival, nowSec) : null
 
   return (
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 w-80 max-h-[70vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
-import { TransportMode, RouteResult, RouteLeg, LegPlace } from '@/lib/types'
+import { TransportMode, RouteResult, RouteLeg } from '@/lib/types'
 import { otpModeToLocal } from '@/lib/otp'
+import { GqlTime, GqlPlace, resolveTime, mapPlace } from '@/lib/plan-mapping'
 
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
@@ -62,20 +63,6 @@ query Plan($from: InputCoordinates!, $to: InputCoordinates!, $modes: [TransportM
   }
 }
 `
-
-interface GqlTime {
-  scheduledTime: string
-  estimated?: { time: string; delay?: number } | null
-}
-
-interface GqlPlace {
-  name?: string
-  lat: number
-  lon: number
-  stop?: { gtfsId: string } | null
-  departure?: GqlTime | null
-  arrival?: GqlTime | null
-}
 
 interface GqlLeg {
   mode: string
@@ -200,21 +187,3 @@ export async function GET(request: Request) {
   }
 }
 
-function resolveTime(t: GqlTime): string {
-  return t.estimated?.time || t.scheduledTime
-}
-
-function mapPlace(place: GqlPlace): LegPlace {
-  return {
-    name: place.name || '',
-    lat: place.lat,
-    lng: place.lon,
-    stopId: place.stop?.gtfsId || undefined,
-    departure: place.departure
-      ? (place.departure.estimated?.time || place.departure.scheduledTime)
-      : undefined,
-    arrival: place.arrival
-      ? (place.arrival.estimated?.time || place.arrival.scheduledTime)
-      : undefined,
-  }
-}
