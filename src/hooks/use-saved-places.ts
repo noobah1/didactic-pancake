@@ -18,6 +18,7 @@ export function useSavedPlaces() {
 
   // Hydrate after mount — reading storage during render breaks SSR
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSaved(getSavedPlaces())
     setRecents(getRecentSearches())
   }, [])
