@@ -212,7 +212,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute)
 
       {/* Logo - bottom center */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
-        <Image src={logo3} alt="Logo" width={96} height={24} className="w-auto" />
+        <Image src={logo3} alt="Logo" width={80} height={24} className="w-auto" />
       </div>
     </main>
   )
@@ -225,4 +225,3 @@ export default function Home() {
     </Suspense>
   )
 }
-
