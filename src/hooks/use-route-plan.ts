@@ -12,7 +12,14 @@ export function useRoutePlan() {
   const [error, setError] = useState<string | null>(null)
 
   const search = useCallback(
-    async (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => {
+    async (
+      fromPlace: string,
+      toPlace: string,
+      modes: TransportMode[],
+      dateTime?: string,
+      arriveBy?: boolean,
+      bannedTrips?: string[],
+    ) => {
       setLoading(true)
       setError(null)
 
@@ -23,6 +30,7 @@ export function useRoutePlan() {
           modes: modes.join(','),
           ...(dateTime ? { dateTime } : {}),
           ...(arriveBy ? { arriveBy: 'true' } : {}),
+          ...(bannedTrips?.length ? { bannedTrips: bannedTrips.join(',') } : {}),
         })
 
         const res = await fetch(`/api/plan?${params}`)

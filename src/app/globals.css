@@ -4,3 +4,14 @@ html, body {
   height: 100%;
   margin: 0;
 }
+
+/* Your live vehicle on the selected journey — needs to visibly pulse since it
+   often sits right on top of the same-colored route line beneath it, where a
+   static dot of the same color would otherwise blend straight in. */
+@keyframes journey-vehicle-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--pulse-color), 0 2px 6px rgba(0,0,0,0.4); }
+  50% { box-shadow: 0 0 0 10px transparent, 0 2px 6px rgba(0,0,0,0.4); }
+}
+.journey-vehicle-marker {
+  animation: journey-vehicle-pulse 1.6s ease-in-out infinite;
+}

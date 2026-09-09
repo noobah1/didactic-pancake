@@ -1,0 +1,7719 @@
+[
+  {
+    "routeGtfsId": "1:7396646ab7496bb5923d5799871317c0",
+    "shortName": "189",
+    "longName": "Tallinn - Tartu - Põlva - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 17
+      },
+      {
+        "detectorId": "CA00064011",
+        "distanceMeters": 121
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 208
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00061018",
+        "distanceMeters": 217
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin101",
+    "shortName": "101",
+    "longName": "Valga - Karksi-Nuia - Viljandi - Paide - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00049033",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00049060",
+        "distanceMeters": 29
+      },
+      {
+        "detectorId": "CA00006034",
+        "distanceMeters": 30
+      },
+      {
+        "detectorId": "CA00050000",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00026006",
+        "distanceMeters": 206
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 232
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:bbdb2f69f11bc59b2d4d0e2aa51d4b8c",
+    "shortName": "186",
+    "longName": "Tallinn - Tartu - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002238",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:67435e592d9e99b54d8c70eaf3fc3e43",
+    "shortName": "384",
+    "longName": "Tallinn - Kohtla-Järve - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 177
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 188
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:99c2d40f02551fd1a5c40ccd86eea44f",
+    "shortName": "194",
+    "longName": "Tallinn - Paide - Viljandi - Tõrva",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00049033",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00049060",
+        "distanceMeters": 29
+      },
+      {
+        "detectorId": "CA00006034",
+        "distanceMeters": 30
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 82
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 109
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 132
+      },
+      {
+        "detectorId": "CA00050000",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 220
+      },
+      {
+        "detectorId": "CA00026006",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin346lux",
+    "shortName": "346",
+    "longName": "Tallinn - Rakvere - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 288
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:60e81f39cc6c698f35698bf8f09c8c0a",
+    "shortName": "746",
+    "longName": "Tallinn - Rakvere - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 288
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin323",
+    "shortName": "323",
+    "longName": "Tallinn - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00020003",
+        "distanceMeters": 51
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 202
+      },
+      {
+        "detectorId": "CA00091008",
+        "distanceMeters": 262
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:69cc1f9ad05fb691e0b9d5b580d1a473",
+    "shortName": "340",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM350",
+    "shortName": "350",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 134
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 229
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 270
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 285
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 293
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM351",
+    "shortName": "351",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 134
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 262
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 270
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 285
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 293
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM352",
+    "shortName": "352",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 97
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 159
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 200
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 287
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM349",
+    "shortName": "349",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 134
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 262
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 270
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 285
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 293
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM343",
+    "shortName": "343",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 97
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 159
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 200
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 287
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM345",
+    "shortName": "345",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 97
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 159
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 200
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 287
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c8007d3e3f546aebc8de66ffd19b5621",
+    "shortName": "347",
+    "longName": "Tallinn - Kohtla-Järve - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 134
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:9c31f6907e923a469250bb61ee533271",
+    "shortName": "314",
+    "longName": "Tallinn - Kohtla-Järve - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 97
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 159
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 184
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 200
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 287
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:bd5abdc9cb547a7115b20c03eae37229",
+    "shortName": "342",
+    "longName": "Tallinn - Aseri - Kohtla-Järve - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 97
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 134
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:961472f94c4ddd470cf2eb481f45f3d6",
+    "shortName": "344",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:6ba7fa55768c0121cf922a830efec9f2",
+    "shortName": "368",
+    "longName": "Narva - Jõhvi - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e1ae7d119599866b6f13c2416f1b7471",
+    "shortName": "396",
+    "longName": "Tallinn - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:789594b8775c94d79e1cbb3799e9565f",
+    "shortName": "382",
+    "longName": "Tallinn - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001109",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 97
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 283
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliinid177",
+    "shortName": "177",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 186
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 270
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin195-1",
+    "shortName": "195",
+    "longName": "Tallinn - Paide - Viljandi",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00049033",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00026006",
+        "distanceMeters": 47
+      },
+      {
+        "detectorId": "CA00050000",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 232
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin135uus",
+    "shortName": "135",
+    "longName": "Tallinn - Paide - Viljandi",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00049033",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00026006",
+        "distanceMeters": 47
+      },
+      {
+        "detectorId": "CA00050000",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 232
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:96ce4a18dd43814ade17647c3322f4bf",
+    "shortName": "103",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 208
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 262
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 281
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e4f475dccb1439807b55b89c76da33ce",
+    "shortName": "149",
+    "longName": "Tartu - Viljandi - Pärnu - Kuressaare",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00092101",
+        "distanceMeters": 5
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 173
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 183
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 184
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin115",
+    "shortName": "115",
+    "longName": "Tallinn - Paide - Viljandi",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00049033",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00026006",
+        "distanceMeters": 47
+      },
+      {
+        "detectorId": "CA00050000",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 232
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin140",
+    "shortName": "140",
+    "longName": "Tallinn - Paide - Viljandi",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00049033",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00026006",
+        "distanceMeters": 47
+      },
+      {
+        "detectorId": "CA00050000",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 232
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:0b88592bc34218288f10a2a8decd0399",
+    "shortName": "180",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 168
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 292
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 299
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin198",
+    "shortName": "198",
+    "longName": "Tallinn - Tartu - Koidula",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00045012",
+        "distanceMeters": 196
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 247
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 266
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliinid173",
+    "shortName": "173",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 233
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliinid174",
+    "shortName": "174",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 81
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliinid167",
+    "shortName": "167",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c4ea1f16a5e4db024d0a5ef9db022cb1",
+    "shortName": "158",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:82d476c8d9f5ef1b40f5d7b914ff2498",
+    "shortName": "266",
+    "longName": "Tallinn - Kuressaare",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 176
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 205
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:109ff1d89d4c35ee7b542733ed702c56",
+    "shortName": "129",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 132
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 186
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:b2cc994ff08d6f0d1b92e1ba9eef74bd",
+    "shortName": "152",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 168
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 252
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 281
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:9c8313ca69640ddef13bbd946898e6d6",
+    "shortName": "245",
+    "longName": "Tallinn - Kuivastu - Orissaare - Kuressaare",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:41976080d3a6e5025638382eaf7694fc",
+    "shortName": "143",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 34
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 153
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 171
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 207
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 293
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c081709c39cf78b7fc3a7e7c0afa124b",
+    "shortName": "130",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 186
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:94ea95fc5eafa81987a9a0448a79d0c6",
+    "shortName": "165",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 168
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 211
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 252
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:a1fee0dbbdc0b3130430207c7995e836",
+    "shortName": "166",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:Kaugliin141",
+    "shortName": "141",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:750db10afa2eebb6d373efc2a8df88c3",
+    "shortName": "251",
+    "longName": "Kuressaare - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 176
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM121",
+    "shortName": "121",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:3041487bd25a069a7cb4cfb22fe948a6",
+    "shortName": "272",
+    "longName": "Tallinn - Risti - Lihula - Kuivastu - Orissaare - Kuressaare",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 176
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 252
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:118357f4e8eff26389a2fee6cd0e81e7",
+    "shortName": "153",
+    "longName": "Haapsalu - Risti - Märjamaa - Rapla - Türi - Paide - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00015059",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00028005",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 186
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:851f956add93be3d88da2e0610781f08",
+    "shortName": "126",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 77
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:7912f56851ef6beb272b00a2ca486dc8",
+    "shortName": "127",
+    "longName": "Kuressaare - Pärnu - Viljandi - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00092101",
+        "distanceMeters": 5
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 169
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:9d3aa267d92b9d5b8fa907085a3934e8",
+    "shortName": "123",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 153
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 247
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:3a7c4c242a9496ecb12d1ab87c5e53cd",
+    "shortName": "128",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 186
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin164",
+    "shortName": "164",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 161
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM kaugliin240",
+    "shortName": "240",
+    "longName": "Tallinn - Kuivastu - Orissaare - Kuressaare",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin120",
+    "shortName": "120",
+    "longName": "Kuressaare - Pärnu - Viljandi - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00092101",
+        "distanceMeters": 5
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 169
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin125",
+    "shortName": "125",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 186
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 264
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 298
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliinid 179",
+    "shortName": "179",
+    "longName": "Tallinn-Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:0fc72b3656f81d12f03a9cda884024c6",
+    "shortName": "247",
+    "longName": "Kuressaare - Orissaare - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:98bb20738367721493df87ae57968550",
+    "shortName": "244",
+    "longName": "Tallinn - Kuivastu - Orissaare - Kuressaare",
+    "detectors": [
+      {
+        "detectorId": "CA00010070",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010118",
+        "distanceMeters": 213
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:69cd4aaaa9026326afba99c56e2843c5",
+    "shortName": "160",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:060bf25f3a558acde868ed3b243e2d50",
+    "shortName": "122",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8a01e960e5a8f76e1e33cb7e7ff52ef9",
+    "shortName": "139",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 168
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 252
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 264
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e3c46447b3d60b8642b91547e0c1d627",
+    "shortName": "114",
+    "longName": "Tartu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 132
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 148
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 266
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:1afb9076ec99d77d5553c8c7c41a5781",
+    "shortName": "124",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 210
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8b144ce9985f7b044195a24cdd510f8c",
+    "shortName": "119",
+    "longName": "Tallinn - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002045",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 186
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 209
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:639f2a7b46d475700de42d2a0f05e1a5",
+    "shortName": "292",
+    "longName": "Kärdla - Haapsalu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00080019",
+        "distanceMeters": 2
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00009079",
+        "distanceMeters": 258
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:302043a3cbb37df326d8d4f39bca38a5",
+    "shortName": "341",
+    "longName": "Tartu - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 19
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 177
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 252
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin392",
+    "shortName": "392",
+    "longName": "Tallinn - Rakvere - Mustvee - Kauksi",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 37
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 88
+      },
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 126
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 188
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 243
+      },
+      {
+        "detectorId": "CA00021006",
+        "distanceMeters": 270
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 293
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:79da6adc987eae46f664d233c8d69afe",
+    "shortName": "199",
+    "longName": "Tartu - Mustvee - Jõhvi - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 19
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 53
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 110
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 158
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 252
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:83f9e0c7b98d866f19f6ec384a04e923",
+    "shortName": "800",
+    "longName": "Narva - Sillamäe - Jõhvi - Mustvee - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 19
+      },
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 35
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 203
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 215
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 265
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 270
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:Kaugliin175010926",
+    "shortName": "175",
+    "longName": "Tartu - Mustvee - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 19
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 177
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 265
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:dccb91f1d45d9fc19e2d33f12fd21a11",
+    "shortName": "805",
+    "longName": "Tartu - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 19
+      },
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 35
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 119
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 203
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 215
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 270
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8a87fc6f912e5c6beb75cbe6afacf2db",
+    "shortName": "295",
+    "longName": "Tallinn - Haapsalu - Kärdla - Viskoosa - Luidja",
+    "detectors": [
+      {
+        "detectorId": "CA00080019",
+        "distanceMeters": 2
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 130
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00009079",
+        "distanceMeters": 258
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliinid385",
+    "shortName": "385",
+    "longName": "Tartu - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 19
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 107
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 177
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 265
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliinid380",
+    "shortName": "380",
+    "longName": "Narva - Sillamäe - Jõhvi - Mustvee - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003062",
+        "distanceMeters": 19
+      },
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 35
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 142
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 203
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 215
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 265
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 270
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d8a91b4985ebfc203140f332bfc54794",
+    "shortName": "347",
+    "longName": "Pärnu - Vändra - Suure-Jaani - Viljandi - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00049033",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00059002",
+        "distanceMeters": 87
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00050000",
+        "distanceMeters": 139
+      },
+      {
+        "detectorId": "CA00005022",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin287",
+    "shortName": "287",
+    "longName": "Tallinn - Haapsalu - Käina - Nurste",
+    "detectors": [
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 127
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00009079",
+        "distanceMeters": 258
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2a52dcb381bae25c49de9bcc8731e267",
+    "shortName": "257",
+    "longName": "Tallinn - Haapsalu - Rohuküla - Haapsalu",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 216
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00009079",
+        "distanceMeters": 258
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 272
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c116a3d9260e72bd4e688770a7ff1026",
+    "shortName": "104",
+    "longName": "Rapla - Türi - Paide - Põltsamaa - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00015059",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 186
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:14b18e9120dfdd73bcedb8f29c9e83a6",
+    "shortName": "227",
+    "longName": "Tallinn - Turba - Risti - Palivere - Taebla - Haapsalu",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      },
+      {
+        "detectorId": "CA00009079",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e2b1f94a50c819c8c4055c3bd4573e86",
+    "shortName": "366",
+    "longName": "Tallinn - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 35
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 174
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 251
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c0dcd09d66cc1752b3785d5f3c68e7bc",
+    "shortName": "329",
+    "longName": "Rakvere - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e509e4ff42c2a5719a39071cd8ba14a1",
+    "shortName": "305",
+    "longName": "Rakvere - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 264
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REM205",
+    "shortName": "205",
+    "longName": "Haapsalu - Taebla - Palivere - Risti - Turba - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 157
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 263
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 264
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5b9306929a8be3ea7abf924293367073",
+    "shortName": "368",
+    "longName": "Pärnu - Paide - Koeru - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00022014",
+        "distanceMeters": 38
+      },
+      {
+        "detectorId": "CA00002093",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00059002",
+        "distanceMeters": 194
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00005022",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:dc0aa9a2f40e5b5d53aabdc68d528444",
+    "shortName": "717",
+    "longName": "Tallinn - Risti - Pürksi - Haapsalu",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:20b3b5db2261e44694da0b042838feb7",
+    "shortName": "367",
+    "longName": "Rakvere - Haljala - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 225
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 275
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 293
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 299
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin348",
+    "shortName": "348",
+    "longName": "Pärnu - Paide - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00005155",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00059002",
+        "distanceMeters": 87
+      },
+      {
+        "detectorId": "CA00005095",
+        "distanceMeters": 88
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 252
+      },
+      {
+        "detectorId": "CA00005022",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d40e419637d48a1d3b99cf7e6c772cda",
+    "shortName": "226",
+    "longName": "Tallinn - Risti - Palivere - Taebla - Haapsalu",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:852062490e1534dffc88414660996484",
+    "shortName": "286",
+    "longName": "Haapsalu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:63fbea8bef218a020bab39f68992ecca",
+    "shortName": "310",
+    "longName": "Tallinn - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001074",
+        "distanceMeters": 202
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:6b37a9b6df85be3619ac9695578740c8",
+    "shortName": "253",
+    "longName": "Haapsalu - Risti - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:24912b19d6c26a8df805f870169fadca",
+    "shortName": "732",
+    "longName": "Tallinn - Risti - Haapsalu",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 195
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d7e540c25975770888a1edee3ec04445",
+    "shortName": "234",
+    "longName": "Haapsalu - Risti - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:443f9af5a9b0d334108419149966d8c6",
+    "shortName": "222",
+    "longName": "Tallinn - Turba - Risti - Palivere - Taebla - Haapsalu",
+    "detectors": [
+      {
+        "detectorId": "CA00009038",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 233
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8d10cb374b6f4f19d4a777c51a485321",
+    "shortName": "328",
+    "longName": "Rakvere - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 46
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 275
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 293
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5ab63f8d14d2ce44744b0f2be14bd7d6",
+    "shortName": "155",
+    "longName": "Tallinn - Laagna - Kuusalu - Loksa",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 237
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:3b6b6b36bb5f523b25c94f6939119c6d",
+    "shortName": "307",
+    "longName": "Rakvere - Haljala - Viitna - Valgejõe - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 254
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:9ecd5f58b2a0ee72901538a6d817c914",
+    "shortName": "151",
+    "longName": "Tallinn - Laagna - Kuusalu - Kolga - Loksa",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 237
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:6966dd899a36292aaa721b39da892d9f",
+    "shortName": "18V",
+    "longName": "Aseri - Kunda - Võsu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:60b8165baca8ca2764604f29b665f09a",
+    "shortName": "144",
+    "longName": "Tallinn - Kose",
+    "detectors": [
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 248
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:acbcf98a8a63a5f81737d4bf35b16589",
+    "shortName": "326",
+    "longName": "Tallinn - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 35
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 248
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:f504c6ebc613569570fa01bfad72006f",
+    "shortName": "157A",
+    "longName": "Loksa - Kolga - Kuusalu - Kiiu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 37
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 238
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c5322387fc38f24dd09ca33356a6ffaa",
+    "shortName": "145",
+    "longName": "Tartu - Viljandi - Kilingi-Nõmme - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00092101",
+        "distanceMeters": 5
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:a031deb11eb8e3bbc57dd793bac7e920",
+    "shortName": "277",
+    "longName": "Tallinn - Tammispea - Käsmu - Võsu",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 161
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:bcf96e10686903e9b4a53e351331d035",
+    "shortName": "540",
+    "longName": "Paide bussijaam - Türi -Põltsamaa-Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 6
+      },
+      {
+        "detectorId": "CA00026006",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00005087",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002182",
+        "distanceMeters": 8
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:0e701405998d21ddfb6816c5217ffa70",
+    "shortName": "151A",
+    "longName": "Tallinn - Laagna - Kuusalu - Loksa - Pärispea - Loksa",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 237
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:4dbe975b2aa7f93d3fae9fddb7d6aa8f",
+    "shortName": "199",
+    "longName": "Mustakivi - Jüri - Saku - Saue",
+    "detectors": [
+      {
+        "detectorId": "CA00011012",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA11420003",
+        "distanceMeters": 199
+      },
+      {
+        "detectorId": "CA00011022",
+        "distanceMeters": 247
+      },
+      {
+        "detectorId": "CA00011016",
+        "distanceMeters": 255
+      },
+      {
+        "detectorId": "CA00011007",
+        "distanceMeters": 280
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:285f69f4704d2e24bf01b10ac3ff13a6",
+    "shortName": "140",
+    "longName": "Tallinn - Kose - Ravila - Ardu",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 248
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:7c3ba106c40cea74bb1665e3074f75f3",
+    "shortName": "82",
+    "longName": "Kohtla-Järve - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 260
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 261
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 278
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 292
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:32929aa8389e7c94d271af1d3bfce55b",
+    "shortName": "246",
+    "longName": "Pärnu - Tõrva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00006077",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00006034",
+        "distanceMeters": 30
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 148
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:69be8b34a85a23a995607826c3bf10e1",
+    "shortName": "139",
+    "longName": "Tallinn - Vaida - Kose-Uuemõisa - Kose - Ardu",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 251
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2a8b2e872dfb3be121bc6744e94c1d96",
+    "shortName": "325",
+    "longName": "Tallinn - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 35
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 248
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin309",
+    "shortName": "309",
+    "longName": "Tallinn - Valgejõe - Viitna - Haljala - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 241
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 254
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:88755cb6ffb768267fd9fdb4d8bf7d5e",
+    "shortName": "130",
+    "longName": "Tallinn - Vaida - Tuhala - Kose-Uuemõisa - Kose",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 219
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 248
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:7b2511c3e8209141c2388a5308df5eca",
+    "shortName": "282",
+    "longName": "Tartu - Viljandi - Kilingi-Nõmme - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00092101",
+        "distanceMeters": 5
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin146",
+    "shortName": "146",
+    "longName": "Tartu - Viljandi - Kilingi-Nõmme - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00092101",
+        "distanceMeters": 5
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:24cd59d0d68c0c55ce2973842807970b",
+    "shortName": "157",
+    "longName": "Tallinn - Loksa",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 6
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:86993a4065d24dc6b409510992d7018d",
+    "shortName": "327",
+    "longName": "Rakvere - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001045",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00023007",
+        "distanceMeters": 275
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 293
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d8f73a894064300b055bf9d98140d784",
+    "shortName": "138",
+    "longName": "Tallinn - Vaida - Kose-Uuemõisa - Kose",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 248
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 251
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2b652dbe3f7643ea403e6a2c959575d6",
+    "shortName": "214",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e6fe9dd8cd4df1a78e2568c81e5f0ca4",
+    "shortName": "57",
+    "longName": "Pärnu - Lõpe - Lihula - Virtsu",
+    "detectors": [
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 133
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:37e216f36adec3d385984efcb5f3b4a8",
+    "shortName": "156",
+    "longName": "Tallinn - Kuusalu - Kahala - Kolga - Loksa - Hara",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:f81a3ecebb14eb97e2637bd9dcef035c",
+    "shortName": "90C",
+    "longName": "Savala - Kiviõli - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 282
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 286
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:44e7534ad630623e6c52586e6650f5a5",
+    "shortName": "153",
+    "longName": "Tallinn - Laagna - Kuusalu - Kolga - Loksa - Pärispea - Loksa",
+    "detectors": [
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e7dfaa6ec651faf289d34b3d2dde9f14",
+    "shortName": "237",
+    "longName": "Pärnu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 195
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 216
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2c05c655703dde34640c77a4c91fa7a0",
+    "shortName": "470",
+    "longName": "Tartu- Nõo - Arbimäe - Elva - Rannu - Mäeotsa - Puhja -Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:15f6ea3a2258f102590d8d395ffbcb02",
+    "shortName": "110",
+    "longName": "Kobratu - Vedu - Lähte - Tabivere park - Laeva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 205
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:904783a8dd56f824e61c52c8d5f5d91a",
+    "shortName": "471",
+    "longName": "Tartu - Nõo - Arbimäe - Elva - Rannu - Kobilu - Puhja - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 210
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:a86d77bdfe4b1ec9c7e48bebf931f1d6",
+    "shortName": "452",
+    "longName": "Tartu - Nõo - Peedu - Elva - Karijärve - Puhja - Ulila - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8c0385517af740169603fe732a6d0889",
+    "shortName": "203",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 2
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 216
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:Kaugliin274",
+    "shortName": "274",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 2
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 216
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:3b4f523798bb0b596ed7b561e0028635",
+    "shortName": "217",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5069a32bb6b84f64ada956d6fe451752",
+    "shortName": "319",
+    "longName": "Valga - Tartu - Valga",
+    "detectors": [
+      {
+        "detectorId": "CA00003212",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003185",
+        "distanceMeters": 59
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 148
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:dcbafd898d25731e68cca079527e2e7e",
+    "shortName": "330",
+    "longName": "Rakvere - Rakke - Jõgeva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00022014",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00039037",
+        "distanceMeters": 95
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 218
+      },
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 290
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8783d7b0256dccc818b78c2ef300e4d5",
+    "shortName": "525",
+    "longName": "Tartu - Ulila - Puhja - Annikoru - Rannu - Elva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 131
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 205
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 244
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 289
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e1aaef76376d36f468a594e33b76884a",
+    "shortName": "74",
+    "longName": "Jõhvi - Vasknarva - Kauksi - Mäetaguse - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 260
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:ccb4b2e40ef9a8cb25fb02aabba7229a",
+    "shortName": "119",
+    "longName": "Tallinn - Harutee - Riisipere - Turba - Lehetu",
+    "detectors": [
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 90
+      },
+      {
+        "detectorId": "CA00009001",
+        "distanceMeters": 159
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 277
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:489c86238ec04b03582eb71bf978559c",
+    "shortName": "141",
+    "longName": "Tallinn - Jüri - Vaida - Kose-Uuemõisa - Kose",
+    "detectors": [
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 251
+      },
+      {
+        "detectorId": "CA00002034",
+        "distanceMeters": 271
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 287
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8c043269a1ba3d1173ce0ffe6ae1f6e8",
+    "shortName": "221",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:84efaf52277c148572b490ab21ee8fbd",
+    "shortName": "52",
+    "longName": "Tartu - Valga - Hargla",
+    "detectors": [
+      {
+        "detectorId": "CA00003212",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003185",
+        "distanceMeters": 234
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8defd5d0ad8f61747a11ba9bf11486fa",
+    "shortName": "530",
+    "longName": "Tartu - Puhja - Annikoru - Elva - Rõngu - Elva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 150
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 244
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 289
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8d9a110eb715a6c278224356607049e8",
+    "shortName": "337",
+    "longName": "Pärnu - Pärnu-Jaagupi tee - Märjamaa - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 261
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:228c9501bf666f72a41213c6c6286b01",
+    "shortName": "131",
+    "longName": "Tallinn - Vaida",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002025",
+        "distanceMeters": 219
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:44f91ef80be190391c4b070cddb75624",
+    "shortName": "235",
+    "longName": "Pärnu - Märjamaa - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d25b4425b4452a9236990addf8a9c284",
+    "shortName": "152",
+    "longName": "Tallinn - Kuusalu - Kolga - Loksa",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00001032",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:6c709ed5004b0bb9a57b1ae6b75207dd",
+    "shortName": "369",
+    "longName": "Tartu - Valga - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003185",
+        "distanceMeters": 59
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 148
+      },
+      {
+        "detectorId": "CA00003212",
+        "distanceMeters": 238
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:92351fb1d6b6dbeef0935c9419949ade",
+    "shortName": "336",
+    "longName": "Pärnu - Pärnu-Jaagupi - Märjamaa - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 195
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e68cd46cd255241141506eb115a6a49e",
+    "shortName": "383",
+    "longName": "Rakvere - Jõgeva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00022014",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00039037",
+        "distanceMeters": 95
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 218
+      },
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 290
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:REMkaugl157",
+    "shortName": "157",
+    "longName": "Võru - Otepää - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002238",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 113
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:tartumaa101-06-26",
+    "shortName": "101",
+    "longName": "Tartu - Laeva - Tabivere - Lähte - Tammistu - Vara - Koosa - (Kärgandi tee)",
+    "detectors": [
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003124",
+        "distanceMeters": 181
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 259
+      },
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 290
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:67023817b67c65b77eacdb45dc243b4d",
+    "shortName": "220",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 2
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 216
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:25a779163a07dff6f0fabfc143945535",
+    "shortName": "238",
+    "longName": "Pärnu - Pärnu-Jaagupi - Vigala - Märjamaa - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5e79123761aee1d0a1410d372811d86c",
+    "shortName": "273",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 15
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5bfcd19ea87527dc5a7214c01a8ef35f",
+    "shortName": "84",
+    "longName": "Keskhaigla - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 261
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 278
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 286
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 292
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d6673ce01ed7f6a66b35bbe6822baa9b",
+    "shortName": "51",
+    "longName": "Hargla - Valga - Sangaste - Otepää - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 113
+      },
+      {
+        "detectorId": "CA00003212",
+        "distanceMeters": 238
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:71f447f5113d2fa7220b7d4f6f9902d5",
+    "shortName": "271",
+    "longName": "Tallinn - Märjamaa - Pärnu-Jaagupi - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8430eec841b988beacb10d0011e9bc9f",
+    "shortName": "318",
+    "longName": "Tartu - Jõgeva - Rakvere",
+    "detectors": [
+      {
+        "detectorId": "CA00022014",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00039037",
+        "distanceMeters": 95
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 218
+      },
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 290
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5af40c63c544359924937db07cfa0a2b",
+    "shortName": "318",
+    "longName": "Tartu - Aarike - Pangodi - Otepää - Elva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 150
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 205
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:645d5f28944f98d4d4ec96de5f8f2509",
+    "shortName": "351",
+    "longName": "Märjamaa - Kernu - Harutee - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 247
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:tartumaa479-04-26",
+    "shortName": "479",
+    "longName": "Tartu - Nõo - Arbimäe - Elva - Erumäe - Annikoru - Puhja - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 120
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:0feec5dcb1a83b487c106d335de598f3",
+    "shortName": "91",
+    "longName": "Kiviõli - Jõhvi - Keskhaigla",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 234
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 260
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 260
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:67f9f700c807a38eca598969e31cb56c",
+    "shortName": "459",
+    "longName": "Tartu - Peedu - Elva - Rõngu - Rannu - Annikoru - Puhja - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8772707044cb05f4c45d958c5be3d046",
+    "shortName": "83",
+    "longName": "Narva - Sillamäe - Jõhvi - Keskhaigla",
+    "detectors": [
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 170
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 288
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 289
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2cfbcf4486de275495f883f24622663a",
+    "shortName": "91G",
+    "longName": "Kiviõli - Purtse - Jõhvi - Keskhaigla",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 260
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 282
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c1aff6415649952dddb2e3549fcd2c20",
+    "shortName": "270",
+    "longName": "Pärnu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:a5e5f27f2dbe797ecf3c85fc26beb4a6",
+    "shortName": "75",
+    "longName": "Jõhvi - Kauksi - Vasknarva",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00003021",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:ef2c5a7826d1bb87fd769429cc535205",
+    "shortName": "EL24",
+    "longName": "Tartu - Riia lennujaam",
+    "detectors": [
+      {
+        "detectorId": "CA00003212",
+        "distanceMeters": 3
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003185",
+        "distanceMeters": 234
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:a52dcdc65dea12bbdb4c9cb10130c2a3",
+    "shortName": "211",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:486721915202c4f5b8f606fb5604352c",
+    "shortName": "458",
+    "longName": "Tartu - Nõo - Peedu - Elva - Annikoru - Rannu - Puhja - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:4a740d8099cea7e52ea31902c7e67cea",
+    "shortName": "90",
+    "longName": "Kiviõli - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 282
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 286
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5c5f2d1ef3318bdd0163aa344212e2af",
+    "shortName": "209",
+    "longName": "Pärnu - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 157
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:kaugliin202",
+    "shortName": "202",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 42
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 258
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d3e91a0fed2522205fdc5b94b702e435",
+    "shortName": "216",
+    "longName": "Tallinn - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00004057",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 13
+      },
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 90
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 255
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:eb959c0aa158d517f4eb5bd9b6c565e6",
+    "shortName": "55",
+    "longName": "Pärnu - Paadremaa sild",
+    "detectors": [
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 133
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:8459efc1d54794f32cbbe66f89a4695b",
+    "shortName": "118",
+    "longName": "Põltsamaa - Puurmani - Laeva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d7eed88fabfdf8bbfb7ec26d85efc083",
+    "shortName": "187",
+    "longName": "Võru - Põlva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00064011",
+        "distanceMeters": 121
+      },
+      {
+        "detectorId": "CA00061018",
+        "distanceMeters": 208
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 256
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:48385ee9d7267c66f3930a67a9e52197",
+    "shortName": "193",
+    "longName": "Tartu - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002238",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 220
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:004c250e27450a4bd8c1d30ee6667259",
+    "shortName": "116",
+    "longName": "Tartu - Laeva - Puurmani - Põltsamaa",
+    "detectors": [
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 186
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 281
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:64328956816d7e4353a19f62e288dbd2",
+    "shortName": "605",
+    "longName": "Tartu - Lähte - Maarja-Magdaleena - Lähte - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 254
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 267
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:93a7edbc42e2597e87440d97fa3f74b2",
+    "shortName": "40B",
+    "longName": "Järva-Jaani - Aravete - Ahula - Aegviidu",
+    "detectors": [
+      {
+        "detectorId": "CA00005095",
+        "distanceMeters": 45
+      },
+      {
+        "detectorId": "CA00013042",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 217
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:40e1953421272282d9d13f8e43267b8d",
+    "shortName": "51",
+    "longName": "Pärnu - Koonga - Mihkli - Lihula",
+    "detectors": [
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 133
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:59ec4d06def1b67c2dcb14f203592979",
+    "shortName": "71K",
+    "longName": "Tartu-Pangodi-Päidla-Otepää",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 146
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c4d1cb032babcad583201f859d58a9ce",
+    "shortName": "80",
+    "longName": "Ahtme - Jõhvi - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 170
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 261
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:tartumaa540",
+    "shortName": "540",
+    "longName": "Tartu - Ulila - Puhja - Ristimäe - Leie - Viljandi",
+    "detectors": [
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 256
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 289
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:tartumaa541",
+    "shortName": "541",
+    "longName": "Viljandi - Leie - Ristimäe - Puhja - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      },
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 273
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:cd672a93bffc0c6e47421dc49eee4fe2",
+    "shortName": "59",
+    "longName": "Pärnu - Koonga - Pärnu-Jaagupi",
+    "detectors": [
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 105
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 137
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 137
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:4841d9013cdd768e4611f671611f758c",
+    "shortName": "163",
+    "longName": "Tallinn - Ääsmäe - Ruila - Kernu - Haiba",
+    "detectors": [
+      {
+        "detectorId": "CA00004021",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00004015",
+        "distanceMeters": 277
+      },
+      {
+        "detectorId": "CA00004012",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:aa1a13e5872ebfbcdadddcf86203a217",
+    "shortName": "134",
+    "longName": "Tallinn - Jüri - Vana mnt - Vaida",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 287
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:322fd2c1029fb7e208cafc95bc707165",
+    "shortName": "109",
+    "longName": "Põltsamaa - Puurmani - Laeva - Vorbuse - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 210
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:5f3496c56f83b5fc3e65ee14ff38687c",
+    "shortName": "L32",
+    "longName": "Virtsu - Lihula - Kullamaa kool - Risti",
+    "detectors": [
+      {
+        "detectorId": "CA00010005",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 155
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 175
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:95c1f4575b5c171e5621e33a22372aa2",
+    "shortName": "512",
+    "longName": "Rakvere - Vaeküla - Kiviõli - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 260
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:ad805d2c801694d81c1abdf3a7ed46d6",
+    "shortName": "617",
+    "longName": "Tartu - Lähte - Maarja-Magdaleena - Vedu - Luunja - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 226
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 254
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:22382b1dfd47b1051640ea8c4dfc8e65",
+    "shortName": "424",
+    "longName": "Tartu - Nõgiaru - Meeri - Luke - Aarike - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 234
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:86a5a981de37169b1156b2d5d41d6f25",
+    "shortName": "192",
+    "longName": "Tartu - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00061018",
+        "distanceMeters": 223
+      },
+      {
+        "detectorId": "CA00064011",
+        "distanceMeters": 239
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:0a6286c6cf93e7836c49b093890040e8",
+    "shortName": "70C",
+    "longName": "Antsla-Sangaste-Otepää-Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 0
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 264
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:57ec59eae9ce8a226f98559095478f0b",
+    "shortName": "194",
+    "longName": "Tartu - Tabivere - Kaarepere - Jõgeva",
+    "detectors": [
+      {
+        "detectorId": "CA00039037",
+        "distanceMeters": 113
+      },
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 216
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 281
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:9c188eac24875287d787861f6a1b9aa9",
+    "shortName": "326",
+    "longName": "Otepää - Lutike - Pangodi - Kambja - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 103
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:687652aa7ff8bc3c3bf0f53bbd8cf8ef",
+    "shortName": "62-1",
+    "longName": "Pärnu - Audru kool - Tõstamaa - Varbla - Lihula",
+    "detectors": [
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 137
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 137
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:4fc2a3ef8d93808cc6fd5ef8fd0999cc",
+    "shortName": "352",
+    "longName": "Pärnu - Suure-Jaani - Põltsamaa - Jõgeva",
+    "detectors": [
+      {
+        "detectorId": "CA00037013",
+        "distanceMeters": 86
+      },
+      {
+        "detectorId": "CA00059002",
+        "distanceMeters": 87
+      },
+      {
+        "detectorId": "CA00005022",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:922f190f61a0d9f433dc5a599b049f04",
+    "shortName": "70E",
+    "longName": "Tartu - Otepää - Kääriku - Sangaste - Antsla",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 146
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:99fa5b535855c9bd925ac9d2b5d6b481",
+    "shortName": "372",
+    "longName": "Viljandi - Abja-Paluoja - Mõisaküla - Kilingi-Nõmme - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00006077",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00049060",
+        "distanceMeters": 29
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e627d87dbddd263ca608ae4c89a30a16",
+    "shortName": "50-1",
+    "longName": "Pärnu - Koonga - Kalli - Lihula",
+    "detectors": [
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 133
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:bb08cbfa2fffb01e992306d2701a339e",
+    "shortName": "50",
+    "longName": "Tartu-Otepää-Sangaste-Valga",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00003212",
+        "distanceMeters": 173
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:52dac105d68033ac8e1c4823b2cf7b52",
+    "shortName": "56-1",
+    "longName": "Rogenese - Pärnu-Jaagupi - Koonga - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 105
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 137
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 137
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:b29fb6d73772a7cd3465291bfaf828a7",
+    "shortName": "76",
+    "longName": "Jõhvi - Gorodenko - Vasknarva - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:f0b59ee8b73a9668ecf19aa21c3c5af9",
+    "shortName": "193",
+    "longName": "Jõgeva - Kaarepere -Tabivere - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00039037",
+        "distanceMeters": 200
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 282
+      },
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:932b24c52133439b55be4a2e61c6304d",
+    "shortName": "293",
+    "longName": "Valga - Pärnu - Valga",
+    "detectors": [
+      {
+        "detectorId": "CA00006077",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00006034",
+        "distanceMeters": 29
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e801686b372025a2f6f5313b5b819459",
+    "shortName": "81",
+    "longName": "Narva - Sillamäe - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 170
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 288
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 289
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:de93a88b265658c4850b02f97cba4585",
+    "shortName": "107",
+    "longName": "Põltsamaa - Puurmani - Laeva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 4
+      },
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:431a2c4446b31aa5e633effbe1121d51",
+    "shortName": "333",
+    "longName": "Pärnu - Tootsi - Vändra - Lelle - Rapla",
+    "detectors": [
+      {
+        "detectorId": "CA00015059",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00059002",
+        "distanceMeters": 87
+      },
+      {
+        "detectorId": "CA00005022",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:61fd01b64c0e639cc4ddd2aa1beb0afd",
+    "shortName": "64",
+    "longName": "Jõhvi - Mäetaguse - Kohtla-Järve - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:3488b7e477afa179ccd8a885fd1385ee",
+    "shortName": "87",
+    "longName": "Narva - Sillamäe - Jõhvi - Ahtme",
+    "detectors": [
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 170
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 288
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 289
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:e6fd8061218d00f11ff66e116f4a50e4",
+    "shortName": "56-2",
+    "longName": "Rogenese - Pärnu-Jaagupi - Koonga - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 105
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 137
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 137
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2091cd6e58317f984853073aecc7ef64",
+    "shortName": "85",
+    "longName": "Narva - Sillamäe - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 170
+      },
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 261
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:7399a28f9274656339215ee700f5d95f",
+    "shortName": "105",
+    "longName": "Tallinn - Vaida - Pikavere - Alavere - Voose",
+    "detectors": [
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002017",
+        "distanceMeters": 16
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 75
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:f066f12c9b6ac225928852e25dfac278",
+    "shortName": "70A",
+    "longName": "Antsla - Sangaste - Kääriku - Otepää - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 113
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:valgamaa55",
+    "shortName": "55",
+    "longName": "Valga - Tartu - Valga",
+    "detectors": [
+      {
+        "detectorId": "CA00003212",
+        "distanceMeters": 6
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 149
+      },
+      {
+        "detectorId": "CA00003153",
+        "distanceMeters": 242
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:7b3b3c26d4ac109e6724437dd45f91bf",
+    "shortName": "152A",
+    "longName": "Tallinn - Jõelähtme - Kaberla - Kuusalu - Kolga - Loksa",
+    "detectors": [
+      {
+        "detectorId": "CA00001013",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00001017",
+        "distanceMeters": 11
+      },
+      {
+        "detectorId": "CA00085008",
+        "distanceMeters": 176
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:88d8af38274a490461e1db10169789b5",
+    "shortName": "93",
+    "longName": "Savala - Kiviõli - Jõhvi - Viru vangla",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 260
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:10eafe887fe1fc2029821141989dbd80",
+    "shortName": "427",
+    "longName": "Tartu - Elva - Annikoru - Rannu - Puhja - Ulila - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 12
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 184
+      },
+      {
+        "detectorId": "CA00003142",
+        "distanceMeters": 278
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:33ce7d9364608729e3f70e261d20a1e9",
+    "shortName": "92",
+    "longName": "Kiviõli - Purtse kindlus - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 217
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 260
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:Kaugliin136",
+    "shortName": "136",
+    "longName": "Viljandi - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00092069",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00092017",
+        "distanceMeters": 82
+      },
+      {
+        "detectorId": "CA00092000",
+        "distanceMeters": 102
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:b9f6a103d558c0d4e016c1025a7fbfbb",
+    "shortName": "712",
+    "longName": "Haapsalu - Keila - Tallinn",
+    "detectors": [
+      {
+        "detectorId": "CA00009064",
+        "distanceMeters": 201
+      },
+      {
+        "detectorId": "CA00017010",
+        "distanceMeters": 245
+      },
+      {
+        "detectorId": "CA00008017",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:a33f6f25f1c870c0335ac2f9eff753d9",
+    "shortName": "112",
+    "longName": "Tartu - Laeva - Puurmani - Põltsamaa",
+    "detectors": [
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 259
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 281
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:ed131bf60f130bb2e065da0bd3c34b29",
+    "shortName": "43",
+    "longName": "Jõhvi - Kohtla-Järve - Kohtla-Nõmme",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:79e4761d9409d395667563721cab147d",
+    "shortName": "50",
+    "longName": "Pärnu - Lõpe - Lihula",
+    "detectors": [
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 133
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:864bd398e1776b7d8c3f7148bed526b1",
+    "shortName": "324",
+    "longName": "Otepää - Pangodi - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 78
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 230
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:35935ddd0540e942f027485504897704",
+    "shortName": "L20",
+    "longName": "Haapsalu - Lihula - Virtsu",
+    "detectors": [
+      {
+        "detectorId": "CA00010046",
+        "distanceMeters": 80
+      },
+      {
+        "detectorId": "CA00010037",
+        "distanceMeters": 176
+      },
+      {
+        "detectorId": "CA00031028",
+        "distanceMeters": 199
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:0f67e433bc391bd471a4c469b8048853",
+    "shortName": "86",
+    "longName": "Jõhvi - Voka - Sillamäe - Narva",
+    "detectors": [
+      {
+        "detectorId": "CA00001194",
+        "distanceMeters": 261
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 278
+      },
+      {
+        "detectorId": "CA00001206",
+        "distanceMeters": 292
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:6fa70c7ee02af9f0e0cd42c9890ad31e",
+    "shortName": "608",
+    "longName": "Tartu - Lähte - Äksi keskus - Vedu keskus - (Kobratu)",
+    "detectors": [
+      {
+        "detectorId": "CA00039010",
+        "distanceMeters": 5
+      },
+      {
+        "detectorId": "CA00003109",
+        "distanceMeters": 161
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 254
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2d5fc2fee1b9642b4ac6ff7c6279f631",
+    "shortName": "62",
+    "longName": "Kohtla-Järve - Jõhvi - Raudi kalmistu - Kuremäe",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00003003",
+        "distanceMeters": 282
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:fb262b79bfc41db1b508240f7c783555",
+    "shortName": "40A",
+    "longName": "Paide - Albu - Jäneda - Aegviidu",
+    "detectors": [
+      {
+        "detectorId": "CA00005095",
+        "distanceMeters": 133
+      },
+      {
+        "detectorId": "CA00013042",
+        "distanceMeters": 163
+      },
+      {
+        "detectorId": "CA00005097",
+        "distanceMeters": 201
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:bb6bb5e0a6dbf064150417c8dff96918",
+    "shortName": "618",
+    "longName": "Põltsamaa - Puurmani - Laeva - Õvi - Kärkna - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 9
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 164
+      },
+      {
+        "detectorId": "CA00039003",
+        "distanceMeters": 268
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:40aaf25bb42c0d689ca980a93d3f752c",
+    "shortName": "200",
+    "longName": "Tallinn (Maleva) - Kurna",
+    "detectors": [
+      {
+        "detectorId": "CA00011012",
+        "distanceMeters": 7
+      },
+      {
+        "detectorId": "CA00002010",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00002007",
+        "distanceMeters": 10
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:2755cb011413f0247b94716e6c0974c2",
+    "shortName": "109",
+    "longName": "Võru - Kanepi - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002238",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 222
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:1f607904efa5f4076249918149265080",
+    "shortName": "190",
+    "longName": "Võru - Põlva - Tartu",
+    "detectors": [
+      {
+        "detectorId": "CA00064011",
+        "distanceMeters": 121
+      },
+      {
+        "detectorId": "CA00061018",
+        "distanceMeters": 208
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 256
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:03fb2d42307622b4b86de7789d689b1e",
+    "shortName": "255",
+    "longName": "Tartu - Kanepi - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00002238",
+        "distanceMeters": 14
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 222
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:38014ceb084a6d2509c34d610e4e4d02",
+    "shortName": "52",
+    "longName": "Sillamäe - Jõhvi - Kohtla-Järve - Jõhvi",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00001176",
+        "distanceMeters": 288
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c707e6b1b94d7f66145f3c2bbcd59d1a",
+    "shortName": "156",
+    "longName": "Tartu - Põlva - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 1
+      },
+      {
+        "detectorId": "CA00064011",
+        "distanceMeters": 121
+      },
+      {
+        "detectorId": "CA00061018",
+        "distanceMeters": 209
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:ff3f3da46de03277b6ed4ea205af8f42",
+    "shortName": "105",
+    "longName": "Tartu - Laeva - Puurmani - Põltsamaa",
+    "detectors": [
+      {
+        "detectorId": "CA00002165",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00040004",
+        "distanceMeters": 259
+      },
+      {
+        "detectorId": "CA00002144",
+        "distanceMeters": 281
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:c24da2001d5611706f0536aae084b4cd",
+    "shortName": "188",
+    "longName": "Tartu - Kanepi - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002238",
+        "distanceMeters": 121
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 214
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:85648621fb93aa6cbec04982cde2f87e",
+    "shortName": "53",
+    "longName": "Pärnu - Kalli - Koonga",
+    "detectors": [
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 127
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 127
+      },
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 133
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:d113dbde43acf43952be3c16d8dec188",
+    "shortName": "90G",
+    "longName": "Jõhvi - Kiviõli",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 285
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:4b55a2b7d0078a6fa9c365216259dd83",
+    "shortName": "71E",
+    "longName": "Tartu - Pangodi - Otepää",
+    "detectors": [
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 10
+      },
+      {
+        "detectorId": "CA00046000",
+        "distanceMeters": 86
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:920e2c7174ecba691a0296d477155f5b",
+    "shortName": "55-1",
+    "longName": "Pärnu - Paadremaa - Virtsu",
+    "detectors": [
+      {
+        "detectorId": "CA00060013",
+        "distanceMeters": 133
+      },
+      {
+        "detectorId": "CA00060003",
+        "distanceMeters": 166
+      },
+      {
+        "detectorId": "CA00060004",
+        "distanceMeters": 166
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:20ee437bb80b740877ed596ca9fbd8a4",
+    "shortName": "371",
+    "longName": "Viljandi - Halliste kool - Abja-Paluoja - Mõisaküla - Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00006077",
+        "distanceMeters": 8
+      },
+      {
+        "detectorId": "CA00049060",
+        "distanceMeters": 29
+      },
+      {
+        "detectorId": "CA00006107",
+        "distanceMeters": 36
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:97c6d1b6fedb354e9075bb3f45e6c014",
+    "shortName": "196",
+    "longName": "Tartu - Kanepi - Võru",
+    "detectors": [
+      {
+        "detectorId": "CA00002238",
+        "distanceMeters": 137
+      },
+      {
+        "detectorId": "CA00002197",
+        "distanceMeters": 228
+      },
+      {
+        "detectorId": "CA00002192",
+        "distanceMeters": 263
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:b2be38d2b754a80204a22acb7ad9c403-1",
+    "shortName": "600",
+    "longName": "Jõgeva-Põltsamaa-Suure-Jaani-Pärnu",
+    "detectors": [
+      {
+        "detectorId": "CA00059002",
+        "distanceMeters": 55
+      },
+      {
+        "detectorId": "CA00037013",
+        "distanceMeters": 179
+      },
+      {
+        "detectorId": "CA00005022",
+        "distanceMeters": 296
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:ce96d65fed3486842780637b4fe32b29",
+    "shortName": "90A",
+    "longName": "Jõhvi - Saka mõis - Purtse kindlus - Adru - Kiviõli",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 285
+      }
+    ]
+  },
+  {
+    "routeGtfsId": "1:642fa2859ea96b9c5dcc9b62b7724230",
+    "shortName": "90B",
+    "longName": "Jõhvi - Kiviõli - (Püssi)",
+    "detectors": [
+      {
+        "detectorId": "CA00001158",
+        "distanceMeters": 24
+      },
+      {
+        "detectorId": "CA00093009",
+        "distanceMeters": 257
+      },
+      {
+        "detectorId": "CA00001146",
+        "distanceMeters": 285
+      }
+    ]
+  }
+]

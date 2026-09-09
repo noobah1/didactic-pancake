@@ -2,13 +2,18 @@
 
 import { useState } from 'react'
 import { Footprints, Share2, Check } from 'lucide-react'
-import { RouteResult, RouteLeg } from '@/lib/types'
+import { RouteResult, RouteLeg, TransportMode } from '@/lib/types'
 import { MODE_COLORS, MODE_LABELS } from '@/lib/constants'
+import { ROUTE_PLAN_MATCH_WINDOW_SEC } from '@/lib/delay'
+import { DelayedVehicle } from '@/app/api/delays/route'
+
+const GPS_MODES = new Set<TransportMode>(['bus', 'tram', 'trolleybus', 'nightbus'])
 
 interface RouteCardProps {
   route: RouteResult
   selected: boolean
   onSelect: () => void
+  delayVehicles?: DelayedVehicle[]
 }
 
 function formatTime(iso: string): string {
@@ -74,14 +79,29 @@ function ExpandableLeg({ leg }: { leg: RouteLeg }) {
   )
 }
 
-export function RouteCard({ route, selected, onSelect }: RouteCardProps) {
+export function RouteCard({ route, selected, onSelect, delayVehicles }: RouteCardProps) {
   const transitLegs = route.legs.filter((l) => l.mode !== 'walk')
   const totalMinutes = Math.round(route.duration / 60)
   const startTime = formatTime(route.startTime)
   const endTime = formatTime(route.endTime)
-  const maxDelay = Math.max(...route.legs.map((l) => l.delay || 0))
-  const delayMinutes = Math.round(maxDelay / 60)
   const [copied, setCopied] = useState(false)
+
+  // Only attempt a live match for GPS-covered modes whose scheduled departure
+  // is near enough to "now" that a live vehicle could plausibly be running —
+  // a leg hours away, or on train/ferry/other-city bus, has no live vehicle to
+  // match against and must show a neutral "Scheduled" state, never a guessed
+  // "on time".
+  const nowMs = new Date().getTime()
+  const knownDelays = transitLegs
+    .filter((leg) =>
+      GPS_MODES.has(leg.mode as TransportMode) &&
+      leg.tripId &&
+      Math.abs(new Date(leg.startTime).getTime() - nowMs) <= ROUTE_PLAN_MATCH_WINDOW_SEC * 1000,
+    )
+    .map((leg) => delayVehicles?.find((v) => v.tripId === leg.tripId))
+    .filter((d): d is DelayedVehicle => d != null)
+  const maxDelaySeconds = knownDelays.length ? Math.max(...knownDelays.map((d) => d.delaySeconds)) : null
+  const delayMinutes = maxDelaySeconds !== null ? Math.round(maxDelaySeconds / 60) : null
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -144,7 +164,9 @@ export function RouteCard({ route, selected, onSelect }: RouteCardProps) {
       <div className="flex items-center justify-between mt-1">
         <span className="text-xs text-gray-500">{startTime} &rarr; {endTime}</span>
         {transitLegs.length > 0 && (
-          delayMinutes > 0 ? (
+          delayMinutes === null ? (
+            <span className="text-xs text-gray-400 font-medium">Scheduled</span>
+          ) : delayMinutes > 0 ? (
             <span className="text-xs text-amber-600 font-medium">{delayMinutes}min delay</span>
           ) : (
             <span className="text-xs text-green-600 font-medium">on time</span>
@@ -176,11 +198,6 @@ export function RouteCard({ route, selected, onSelect }: RouteCardProps) {
             <div key={i}>
               {leg.mode === 'walk' ? (
                 <div className="flex items-center gap-2 py-1.5 text-xs text-gray-400">
-
-
-
-
-
                   <Footprints size={14} />
                   <span>Walk {Math.round(leg.duration / 60)} min</span>
                 </div>

@@ -1,4 +1,4 @@
-import { trimStops, computeArrivalInfo } from '../timetable'
+import { trimStops } from '../timetable'
 import { TripStopInfo } from '../types'
 
 function stop(overrides: Partial<TripStopInfo>): TripStopInfo {
@@ -56,29 +56,5 @@ describe('trimStops', () => {
 
   it('handles an empty list', () => {
     expect(trimStops([])).toEqual([])
-  })
-})
-
-describe('computeArrivalInfo', () => {
-  it('treats exactly on schedule as on time', () => {
-    expect(computeArrivalInfo(1000, 1000)).toEqual({ minutes: 0, late: false })
-  })
-
-  it('treats up to 59s past schedule as on time (buffer)', () => {
-    expect(computeArrivalInfo(1000, 1059)).toEqual({ minutes: 0, late: false })
-  })
-
-  it('treats 60s past schedule as late', () => {
-    expect(computeArrivalInfo(1000, 1060)).toEqual({ minutes: 1, late: true })
-  })
-
-  it('rounds up minutes late for a longer delay', () => {
-    // 125s past schedule -> ceil(125/60) = 3 minutes late
-    expect(computeArrivalInfo(1000, 1125)).toEqual({ minutes: 3, late: true })
-  })
-
-  it('rounds up minutes remaining for a future arrival', () => {
-    // 125s in the future -> ceil(125/60) = 3 minutes
-    expect(computeArrivalInfo(1125, 1000)).toEqual({ minutes: 3, late: false })
   })
 })

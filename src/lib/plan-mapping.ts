@@ -2,7 +2,7 @@ import { LegPlace } from './types'
 
 export interface GqlTime {
   scheduledTime: string
-  estimated?: { time: string; delay?: number } | null
+  estimated?: { time: string } | null
 }
 
 export interface GqlPlace {

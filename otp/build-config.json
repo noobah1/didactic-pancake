@@ -9,12 +9,8 @@
     { "type": "gtfs", "source": "data/elron.zip" },
     { "type": "gtfs", "source": "data/tslaevad.zip" }
   ],
-<<<<<<< HEAD
   "transitModelTimeZone": "Europe/Tallinn",
   "fares": {
-    "type": "highest-fare-in-free-transfer-window"
+    "type": "off"
   }
-=======
-  "transitModelTimeZone": "Europe/Tallinn"
->>>>>>> origin/main
 }

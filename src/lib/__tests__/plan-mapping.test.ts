@@ -4,7 +4,7 @@ describe('resolveTime', () => {
   it('prefers estimated.time over scheduledTime when a realtime estimate exists', () => {
     const t: GqlTime = {
       scheduledTime: '2026-09-09T08:00:00.000Z',
-      estimated: { time: '2026-09-09T08:03:00.000Z', delay: 180 },
+      estimated: { time: '2026-09-09T08:03:00.000Z' },
     }
     expect(resolveTime(t)).toBe('2026-09-09T08:03:00.000Z')
   })

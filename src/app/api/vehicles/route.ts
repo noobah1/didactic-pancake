@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { GPS_FEED_URL, OTP_BASE_URL } from '@/lib/constants'
 import { parseGpsFeed } from '@/lib/parse-gps'
 import { decodePolyline } from '@/lib/decode-polyline'
+import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
 import { VehiclePosition, TransportMode } from '@/lib/types'
 
 let gpsCache: { data: VehiclePosition[]; timestamp: number } | null = null
@@ -68,16 +69,6 @@ interface GqlRoute {
   shortName: string
   mode: string
   patterns: GqlPattern[]
-}
-
-function getSecondsSinceMidnight(): number {
-  const now = new Date()
-  const parts = now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Tallinn', hour12: false }).split(':')
-  return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
-}
-
-function getTodayDate(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Tallinn' })
 }
 
 function distSq(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -247,6 +238,7 @@ function mapOtpMode(mode: string): TransportMode {
     case 'RAIL': return 'train'
     case 'FERRY': return 'ferry'
     case 'TRAM': return 'tram'
+    case 'TROLLEYBUS': return 'trolleybus'
     default: return 'bus'
   }
 }
@@ -258,8 +250,8 @@ async function fetchScheduledVehicles(includeBusTram: boolean): Promise<VehicleP
     return cached.data
   }
 
-  const date = getTodayDate()
-  const nowSec = getSecondsSinceMidnight()
+  const date = getServiceDate()
+  const nowSec = getServiceSeconds()
 
   const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
     method: 'POST',

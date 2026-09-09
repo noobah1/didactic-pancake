@@ -9,24 +9,24 @@ services:
       OTP_BASE_URL: http://otp:8080
     ports:
       - 3001:3000
+    restart: unless-stopped
 
   otp:
     image: opentripplanner/opentripplanner:2.6.0
     ports:
       - '8080:8080'
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx6g
+      # Serving a pre-built graph needs far less heap than building one.
+      - JAVA_TOOL_OPTIONS=-Xmx2g
     volumes:
       - ./otp:/var/opentripplanner
-    command: ['--build', '--save', '--serve']
+    # graph.obj is built by the "Build OTP graph" GitHub Actions workflow and
+    # published as a release asset — this container only ever loads it, never builds.
+    # Run scripts/refresh-graph.sh (e.g. via cron) to fetch a newer graph and reload.
+    command: ['--load', '--serve']
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8080/otp/actuators/health']
       interval: 30s
       timeout: 10s
       retries: 5
-
-  gtfs-updater:
-    image: curlimages/curl:latest
-    volumes:
-      - ./otp:/var/opentripplanner
-    
+    restart: unless-stopped

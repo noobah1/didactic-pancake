@@ -1,0 +1,786 @@
+[
+  {
+    "id": "CA00008017",
+    "name": "Hüüru",
+    "road": "Tallinna-Paldiski tee",
+    "lat": 59.366862,
+    "lon": 24.515295
+  },
+  {
+    "id": "CA00061018",
+    "name": "Vastse-Kuuste",
+    "road": "Põlva-Reola tee",
+    "lat": 58.178612,
+    "lon": 26.888583
+  },
+  {
+    "id": "CA00004151",
+    "name": "Võiste",
+    "road": "Tallinna-Pärnu-Ikla tee",
+    "lat": 58.229824,
+    "lon": 24.501083
+  },
+  {
+    "id": "CA00009038",
+    "name": "Risti",
+    "road": "Ääsmäe-Haapsalu-Rohuküla tee",
+    "lat": 58.998473,
+    "lon": 24.088943
+  },
+  {
+    "id": "CA00001013",
+    "name": "Loo",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.449653,
+    "lon": 24.9645
+  },
+  {
+    "id": "CA00002017",
+    "name": "Patika",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 59.317236,
+    "lon": 24.92976
+  },
+  {
+    "id": "CA00060013",
+    "name": "Audru",
+    "road": "Pärnu-Lihula tee",
+    "lat": 58.424764,
+    "lon": 24.295101
+  },
+  {
+    "id": "CA00003212",
+    "name": "Paju",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 57.825927,
+    "lon": 26.108004
+  },
+  {
+    "id": "CA00002034",
+    "name": "Kuivajõe",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 59.183411,
+    "lon": 25.079943
+  },
+  {
+    "id": "CA00002238",
+    "name": "Heimtali",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 57.915166,
+    "lon": 26.816645
+  },
+  {
+    "id": "CA00011016",
+    "name": "Vaela",
+    "road": "Tallinna ringtee",
+    "lat": 59.333271,
+    "lon": 24.801867
+  },
+  {
+    "id": "CA00039003",
+    "name": "Maramaa",
+    "road": "Tartu-Jõgeva-Aravete tee",
+    "lat": 58.437722,
+    "lon": 26.681072
+  },
+  {
+    "id": "CA00046000",
+    "name": "Tatra II",
+    "road": "Tatra-Otepää-Sangaste tee",
+    "lat": 58.243093,
+    "lon": 26.669001
+  },
+  {
+    "id": "CA00036014",
+    "name": "Laiuse",
+    "road": "Jõgeva-Mustvee tee",
+    "lat": 58.815586,
+    "lon": 26.552477
+  },
+  {
+    "id": "CA00002007",
+    "name": "Peetri",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 59.390745,
+    "lon": 24.827426
+  },
+  {
+    "id": "CA00028005",
+    "name": "Kuusiku",
+    "road": "Rapla-Märjamaa tee",
+    "lat": 58.970653,
+    "lon": 24.721575
+  },
+  {
+    "id": "CA00059002",
+    "name": "Paikuse",
+    "road": "Pärnu-Tori tee",
+    "lat": 58.370182,
+    "lon": 24.605991
+  },
+  {
+    "id": "CA00011022",
+    "name": "Tammemäe",
+    "road": "Tallinna ringtee",
+    "lat": 59.312607,
+    "lon": 24.693125
+  },
+  {
+    "id": "CA00026006",
+    "name": "Raukla",
+    "road": "Türi-Arkma tee",
+    "lat": 58.7704,
+    "lon": 25.52185
+  },
+  {
+    "id": "CA00060003",
+    "name": "Pappsaare 1",
+    "road": "Pärnu-Lihula tee",
+    "lat": 58.402263,
+    "lon": 24.421893
+  },
+  {
+    "id": "CA00004021",
+    "name": "Kanama",
+    "road": "Tallinna-Pärnu-Ikla tee",
+    "lat": 59.292778,
+    "lon": 24.545805
+  },
+  {
+    "id": "CA00001194",
+    "name": "Sinimäe",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.375131,
+    "lon": 27.938505
+  },
+  {
+    "id": "CA00001158",
+    "name": "Kukruse",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.395882,
+    "lon": 27.334423
+  },
+  {
+    "id": "CA00010118",
+    "name": "Valjala",
+    "road": "Risti-Virtsu-Kuivastu-Kuressaare tee",
+    "lat": 58.408844,
+    "lon": 22.776714
+  },
+  {
+    "id": "CA00001206",
+    "name": "Olgina",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.390006,
+    "lon": 28.102641
+  },
+  {
+    "id": "CA00003124",
+    "name": "Kõrveküla",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 58.426538,
+    "lon": 26.782502
+  },
+  {
+    "id": "CA00022014",
+    "name": "Assamalla",
+    "road": "Rakvere - Väike-Maarja - Vägeva tee",
+    "lat": 59.236058,
+    "lon": 26.264747
+  },
+  {
+    "id": "CA00013042",
+    "name": "Jäneda",
+    "road": "Jägala-Käravete tee",
+    "lat": 59.255146,
+    "lon": 25.669887
+  },
+  {
+    "id": "CA00003185",
+    "name": "Puka",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 58.051528,
+    "lon": 26.193277
+  },
+  {
+    "id": "CA00017010",
+    "name": "Maeru",
+    "road": "Keila-Haapsalu tee",
+    "lat": 59.265169,
+    "lon": 24.291767
+  },
+  {
+    "id": "CA00010037",
+    "name": "Lihula",
+    "road": "Risti-Virtsu-Kuivastu-Kuressaare tee",
+    "lat": 58.722756,
+    "lon": 23.911138
+  },
+  {
+    "id": "CA00009064",
+    "name": "Herjava",
+    "road": "Ääsmäe-Haapsalu-Rohuküla tee",
+    "lat": 58.952783,
+    "lon": 23.659395
+  },
+  {
+    "id": "CA00005087",
+    "name": "Reopalu",
+    "road": "Pärnu-Rakvere-Sõmeru tee",
+    "lat": 58.866783,
+    "lon": 25.49334
+  },
+  {
+    "id": "CA00011026",
+    "name": "Juuliku 1",
+    "road": "Tallinna ringtee",
+    "lat": 59.31632,
+    "lon": 24.653126
+  },
+  {
+    "id": "CA00009079",
+    "name": "Rohuküla",
+    "road": "Ääsmäe-Haapsalu-Rohuküla tee",
+    "lat": 58.91141,
+    "lon": 23.453547
+  },
+  {
+    "id": "CA00002025",
+    "name": "Aruvalla",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 59.251861,
+    "lon": 25.014369
+  },
+  {
+    "id": "CA00002010",
+    "name": "Lehmja 1",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 59.363358,
+    "lon": 24.866834
+  },
+  {
+    "id": "CA00002144",
+    "name": "Pikknurme",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 58.592434,
+    "lon": 26.251943
+  },
+  {
+    "id": "CA00060004",
+    "name": "Pappsaare 2",
+    "road": "Pärnu-Lihula tee",
+    "lat": 58.40201,
+    "lon": 24.421797
+  },
+  {
+    "id": "CA00001032",
+    "name": "Kodasoo",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.440651,
+    "lon": 25.290373
+  },
+  {
+    "id": "CA00002192",
+    "name": "Ülenurme",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 58.303414,
+    "lon": 26.718662
+  },
+  {
+    "id": "CA00006107",
+    "name": "Ristiküla",
+    "road": "Valga-Uulu tee",
+    "lat": 58.184998,
+    "lon": 24.789724
+  },
+  {
+    "id": "CA00010046",
+    "name": "Valuste",
+    "road": "Risti-Virtsu-Kuivastu-Kuressaare tee",
+    "lat": 58.674864,
+    "lon": 23.780874
+  },
+  {
+    "id": "CA00003062",
+    "name": "Tammispää",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 58.924536,
+    "lon": 27.015007
+  },
+  {
+    "id": "CA00001146",
+    "name": "Varja",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.416227,
+    "lon": 27.147076
+  },
+  {
+    "id": "CA00092000",
+    "name": "Märja",
+    "road": "Tartu - Viljandi - Kilingi-Nõmme tee",
+    "lat": 58.363969,
+    "lon": 26.666954
+  },
+  {
+    "id": "CA00004015",
+    "name": "Peoleo",
+    "road": "Tallinna-Pärnu-Ikla tee",
+    "lat": 59.3326,
+    "lon": 24.603188
+  },
+  {
+    "id": "CA00003153",
+    "name": "Tõravere",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 58.262142,
+    "lon": 26.480786
+  },
+  {
+    "id": "CA00005022",
+    "name": "Tori",
+    "road": "Pärnu-Rakvere-Sõmeru tee",
+    "lat": 58.511861,
+    "lon": 24.811544
+  },
+  {
+    "id": "CA11250006",
+    "name": "Randvere",
+    "road": "Tallinna-Viimsi-Randvere tee",
+    "lat": 59.503292,
+    "lon": 24.828126
+  },
+  {
+    "id": "CA00005095",
+    "name": "Mäo 2",
+    "road": "Pärnu-Rakvere-Sõmeru tee",
+    "lat": 58.925441,
+    "lon": 25.626986
+  },
+  {
+    "id": "CA00003142",
+    "name": "Külitse",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 58.323881,
+    "lon": 26.635353
+  },
+  {
+    "id": "CA00004189",
+    "name": "Ikla",
+    "road": "Tallinna-Pärnu-Ikla tee",
+    "lat": 57.901749,
+    "lon": 24.412223
+  },
+  {
+    "id": "CA00045012",
+    "name": "Vana-Kastre",
+    "road": "Tartu-Räpina-Värska tee",
+    "lat": 58.353543,
+    "lon": 26.915284
+  },
+  {
+    "id": "CA00011012",
+    "name": "Kurna 1",
+    "road": "Tallinna ringtee",
+    "lat": 59.345124,
+    "lon": 24.856233
+  },
+  {
+    "id": "CA00008039",
+    "name": "Kloogaranna",
+    "road": "Tallinna-Paldiski tee",
+    "lat": 59.339374,
+    "lon": 24.210337
+  },
+  {
+    "id": "CA00009001",
+    "name": "Harutee",
+    "road": "Ääsmäe-Haapsalu-Rohuküla tee",
+    "lat": 59.239434,
+    "lon": 24.479919
+  },
+  {
+    "id": "CA00010070",
+    "name": "Kuivastu",
+    "road": "Risti-Virtsu-Kuivastu-Kuressaare tee",
+    "lat": 58.57964,
+    "lon": 23.361178
+  },
+  {
+    "id": "CA00003021",
+    "name": "Mäetaguse",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 59.196567,
+    "lon": 27.346069
+  },
+  {
+    "id": "CA00006077",
+    "name": "Mõisaküla",
+    "road": "Valga-Uulu tee",
+    "lat": 58.11777,
+    "lon": 25.246158
+  },
+  {
+    "id": "CA00015023",
+    "name": "Urge",
+    "road": "Tallinna-Rapla-Türi tee",
+    "lat": 59.199849,
+    "lon": 24.783788
+  },
+  {
+    "id": "CA00064011",
+    "name": "Joosu",
+    "road": "Võru-Põlva tee",
+    "lat": 57.938056,
+    "lon": 27.047589
+  },
+  {
+    "id": "CA00049060",
+    "name": "Loodi",
+    "road": "Imavere - Viljandi - Karksi-Nuia tee",
+    "lat": 58.268613,
+    "lon": 25.584864
+  },
+  {
+    "id": "CA00001017",
+    "name": "Prügila rist",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.451377,
+    "lon": 25.044455
+  },
+  {
+    "id": "CA00001045",
+    "name": "Kupu",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.45605,
+    "lon": 25.516836
+  },
+  {
+    "id": "CA00001176",
+    "name": "Konju",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.393642,
+    "lon": 27.626333
+  },
+  {
+    "id": "CA00093009",
+    "name": "Järve",
+    "road": "Kohtla-Järve - Kukruse - Tammiku tee",
+    "lat": 59.40312,
+    "lon": 27.321857
+  },
+  {
+    "id": "CA00001074",
+    "name": "Viitna",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.463078,
+    "lon": 26.008366
+  },
+  {
+    "id": "CA00002093",
+    "name": "Mäeküla",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 58.886876,
+    "lon": 25.680915
+  },
+  {
+    "id": "CA11390037",
+    "name": "Kakumäe",
+    "road": "Tallinna-Rannamõisa-Kloogaranna tee",
+    "lat": 59.43507,
+    "lon": 24.585313
+  },
+  {
+    "id": "CA00005097",
+    "name": "Mäo 1",
+    "road": "Pärnu-Rakvere-Sõmeru tee",
+    "lat": 58.914237,
+    "lon": 25.604062
+  },
+  {
+    "id": "CA00050000",
+    "name": "Jämejala",
+    "road": "Viljandi tee",
+    "lat": 58.397522,
+    "lon": 25.591703
+  },
+  {
+    "id": "CA00002045",
+    "name": "Kose-Risti",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 59.151207,
+    "lon": 25.22033
+  },
+  {
+    "id": "CA00003003",
+    "name": "Ahtme",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 59.346024,
+    "lon": 27.405842
+  },
+  {
+    "id": "CA00010005",
+    "name": "Koluvere",
+    "road": "Risti-Virtsu-Kuivastu-Kuressaare tee",
+    "lat": 58.945553,
+    "lon": 24.085281
+  },
+  {
+    "id": "CA00002197",
+    "name": "Tatra I",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 58.261247,
+    "lon": 26.68761
+  },
+  {
+    "id": "CA11420003",
+    "name": "Juuliku 2",
+    "road": "Saku-Laagri tee",
+    "lat": 59.319071,
+    "lon": 24.641323
+  },
+  {
+    "id": "CA00011007",
+    "name": "Karla 1",
+    "road": "Tallinna ringtee",
+    "lat": 59.376409,
+    "lon": 24.91408
+  },
+  {
+    "id": "CA00092101",
+    "name": "Kanaküla",
+    "road": "Tartu - Viljandi - Kilingi-Nõmme tee",
+    "lat": 58.264207,
+    "lon": 25.249822
+  },
+  {
+    "id": "CA00002165",
+    "name": "Kärevere",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 58.447678,
+    "lon": 26.431894
+  },
+  {
+    "id": "CA00004012",
+    "name": "Laagri",
+    "road": "Tallinna-Pärnu-Ikla tee",
+    "lat": 59.351793,
+    "lon": 24.628472
+  },
+  {
+    "id": "CA00005155",
+    "name": "Kadrina",
+    "road": "Pärnu-Rakvere-Sõmeru tee",
+    "lat": 59.323292,
+    "lon": 26.092637
+  },
+  {
+    "id": "CA00049033",
+    "name": "Sürgavere",
+    "road": "Imavere - Viljandi - Karksi-Nuia tee",
+    "lat": 58.498661,
+    "lon": 25.592675
+  },
+  {
+    "id": "CA00067033",
+    "name": "Varstu",
+    "road": "Võru-Mõniste-Valga tee",
+    "lat": 57.642961,
+    "lon": 26.649481
+  },
+  {
+    "id": "CA00080019",
+    "name": "Partsi",
+    "road": "Heltermaa-Kärdla-Luidja tee",
+    "lat": 58.972145,
+    "lon": 22.823834
+  },
+  {
+    "id": "CA00004057",
+    "name": "Vaimõisa",
+    "road": "Tallinna-Pärnu-Ikla tee",
+    "lat": 58.98316,
+    "lon": 24.47101
+  },
+  {
+    "id": "CA00037013",
+    "name": "Kaavere",
+    "road": "Jõgeva-Põltsamaa tee",
+    "lat": 58.703027,
+    "lon": 26.154168
+  },
+  {
+    "id": "CA00020003",
+    "name": "Essu",
+    "road": "Põdruse-Kunda-Pada tee",
+    "lat": 59.439368,
+    "lon": 26.38823
+  },
+  {
+    "id": "CA00078005",
+    "name": "Parila",
+    "road": "Kuressaare-Kihelkonna-Veere tee",
+    "lat": 58.279488,
+    "lon": 22.433949
+  },
+  {
+    "id": "CA00052000",
+    "name": "Viiratsi",
+    "road": "Viljandi-Rõngu tee",
+    "lat": 58.357253,
+    "lon": 25.628526
+  },
+  {
+    "id": "CA00040004",
+    "name": "Tähtvere",
+    "road": "Tartu-Tiksoja tee",
+    "lat": 58.398391,
+    "lon": 26.686118
+  },
+  {
+    "id": "CA11251011",
+    "name": "Rohuneeme",
+    "road": "Viimsi-Rohuneeme tee",
+    "lat": 59.511329,
+    "lon": 24.820585
+  },
+  {
+    "id": "CA00021006",
+    "name": "Karkuse",
+    "road": "Rakvere-Luige tee",
+    "lat": 59.309071,
+    "lon": 26.394243
+  },
+  {
+    "id": "CA00091008",
+    "name": "Tõrvajõe",
+    "road": "Narva - Narva-Jõesuu - Hiiemetsa tee",
+    "lat": 59.437466,
+    "lon": 28.117775
+  },
+  {
+    "id": "CA00011009",
+    "name": "Karla 2",
+    "road": "Tallinna ringtee",
+    "lat": 59.366135,
+    "lon": 24.903076
+  },
+  {
+    "id": "CA00001109",
+    "name": "Sämi",
+    "road": "Tallinna-Narva tee",
+    "lat": 59.374181,
+    "lon": 26.582634
+  },
+  {
+    "id": "CA00023007",
+    "name": "Haljala",
+    "road": "Rakvere-Haljala tee",
+    "lat": 59.419476,
+    "lon": 26.282771
+  },
+  {
+    "id": "CA00092017",
+    "name": "Kaimi",
+    "road": "Tartu - Viljandi - Kilingi-Nõmme tee",
+    "lat": 58.344781,
+    "lon": 26.385255
+  },
+  {
+    "id": "CA00002182",
+    "name": "Kandiküla",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 58.383569,
+    "lon": 26.671745
+  },
+  {
+    "id": "CA00003109",
+    "name": "Pataste",
+    "road": "Jõhvi-Tartu-Valga tee",
+    "lat": 58.550861,
+    "lon": 26.753745
+  },
+  {
+    "id": "CA00013002",
+    "name": "Jägala",
+    "road": "Jägala-Käravete tee",
+    "lat": 59.420337,
+    "lon": 25.215563
+  },
+  {
+    "id": "CA00002261",
+    "name": "Tootsi",
+    "road": "Tallinna-Tartu-Võru-Luhamaa tee",
+    "lat": 57.804471,
+    "lon": 27.080777
+  },
+  {
+    "id": "CA00069015",
+    "name": "Linnamäe",
+    "road": "Võru-Kuigatsi-Tõrva tee",
+    "lat": 57.879839,
+    "lon": 26.712834
+  },
+  {
+    "id": "CA00039010",
+    "name": "Lähte",
+    "road": "Tartu-Jõgeva-Aravete tee",
+    "lat": 58.491491,
+    "lon": 26.683066
+  },
+  {
+    "id": "CA00085008",
+    "name": "Kolgaküla",
+    "road": "Liiapeksi-Loksa tee",
+    "lat": 59.525975,
+    "lon": 25.699527
+  },
+  {
+    "id": "CA00006034",
+    "name": "Helme",
+    "road": "Valga-Uulu tee",
+    "lat": 58.026733,
+    "lon": 25.82796
+  },
+  {
+    "id": "CA00007182",
+    "name": "Murati",
+    "road": "Riia-Pihkva tee",
+    "lat": 57.583937,
+    "lon": 27.060818
+  },
+  {
+    "id": "CA00092069",
+    "name": "Teemeistri",
+    "road": "Tartu - Viljandi - Kilingi-Nõmme tee",
+    "lat": 58.368649,
+    "lon": 25.646795
+  },
+  {
+    "id": "CA00031028",
+    "name": "Laiküla",
+    "road": "Haapsalu-Laiküla tee",
+    "lat": 58.786819,
+    "lon": 23.883634
+  },
+  {
+    "id": "CA00015034",
+    "name": "Kohila",
+    "road": "Tallinna-Rapla-Türi tee",
+    "lat": 59.107755,
+    "lon": 24.797196
+  },
+  {
+    "id": "CA00039037",
+    "name": "Kassinurme",
+    "road": "Tartu-Jõgeva-Aravete tee",
+    "lat": 58.692783,
+    "lon": 26.448505
+  },
+  {
+    "id": "CA00015059",
+    "name": "Kehtna",
+    "road": "Tallinna-Rapla-Türi tee",
+    "lat": 58.915917,
+    "lon": 24.878245
+  }
+]

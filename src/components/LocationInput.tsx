@@ -97,7 +97,7 @@ export function LocationInput({
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => setShowDropdown(true)}
           placeholder={`${label}: ${placeholder}`}
-          className="flex-1 min-w-0 px-3 py-3 text-sm focus:outline-none"
+          className="flex-1 min-w-0 px-3 py-3 text-base sm:text-sm focus:outline-none"
         />
         {showLocate && (
           <button
