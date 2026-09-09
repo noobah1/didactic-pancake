@@ -67,3 +67,26 @@ export interface SearchFilters {
   modes: TransportMode[]
   departureTime: 'now' | string // ISO timestamp
 }
+
+export interface StopDeparture {
+  tripId: string
+  line: string
+  mode: TransportMode
+  headsign: string
+  /** epoch ms — already resolved from serviceDay + realtime/scheduled offset */
+  departure: number
+  scheduledDeparture: number
+  realtime: boolean
+  delaySeconds: number
+}
+
+export interface StopInfo {
+  stopId: string
+  name: string
+  lat: number
+  lng: number
+  wheelchairBoarding?: 'POSSIBLE' | 'NOT_POSSIBLE' | 'NO_INFORMATION'
+  mode?: TransportMode
+  /** metres, only set by the nearby endpoint */
+  distance?: number
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
 import { TransportMode, RouteResult, RouteLeg, LegPlace } from '@/lib/types'
+import { otpModeToLocal } from '@/lib/otp'
 
 const MODE_TO_OTP: Record<TransportMode, string> = {
   bus: 'BUS',
@@ -197,16 +198,6 @@ export async function GET(request: Request) {
     console.error('Failed to fetch route plan:', error)
     return NextResponse.json({ error: 'Route planning service unavailable' }, { status: 502 })
   }
-}
-
-function otpModeToLocal(otpMode: string): TransportMode {
-  const map: Record<string, TransportMode> = {
-    BUS: 'bus',
-    TRAM: 'tram',
-    RAIL: 'train',
-    FERRY: 'ferry',
-  }
-  return map[otpMode] || 'bus'
 }
 
 function resolveTime(t: GqlTime): string {
