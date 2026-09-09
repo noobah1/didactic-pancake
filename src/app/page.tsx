@@ -1,7 +1,7 @@
 'use client'
 import { useJourneyMonitor } from '@/hooks/use-journey-monitor'
 import { DelayBanner } from '@/components/DelayBanner'
-import { useState, useCallback, useMemo, Suspense } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 const logo3 = '/logo3.png'
@@ -21,6 +21,19 @@ import { ALL_MODES, CITIES, CityDef } from '@/lib/constants'
 import { useVehicles } from '@/hooks/use-vehicles'
 import { useRoutePlan } from '@/hooks/use-route-plan'
 import { useAlerts } from '@/hooks/use-alerts'
+
+// Same Estonia bounding box already used to filter geocoder results server-side
+// (src/app/api/geocode/route.ts) — a URL's from/to params are untrusted input.
+function parseSharedPlace(coordParam: string | null, nameParam: string | null): { name: string; lat: number; lng: number } | null {
+  if (!coordParam) return null
+  const [latStr, lngStr] = coordParam.split(',')
+  const lat = parseFloat(latStr)
+  const lng = parseFloat(lngStr)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  if (lat < 57.5 || lat > 60 || lng < 21 || lng > 28) return null
+  const name = (nameParam || `${lat.toFixed(5)}, ${lng.toFixed(5)}`).slice(0, 120)
+  return { name, lat, lng }
+}
 
 function HomeContent() {
   const searchParams = useSearchParams()
@@ -45,11 +58,37 @@ function HomeContent() {
   const [showIncidents, setShowIncidents] = useState(false)
   const [showNearby, setShowNearby] = useState(false)
 
+  // Captured once on first render — searchParams changes on every filter
+  // toggle afterward, and re-parsing then would re-trigger the restore effect.
+  const [initialJourney] = useState(() => ({
+    from: parseSharedPlace(searchParams.get('from'), searchParams.get('fromName')),
+    to: parseSharedPlace(searchParams.get('to'), searchParams.get('toName')),
+    dateTime: searchParams.get('t') || undefined,
+    arriveBy: searchParams.get('arriveBy') === 'true',
+  }))
+  const restoredRef = useRef(false)
+
   const testAlerts = searchParams.get('test_alerts') === '1'
 
   const vehicleData = useVehicles(activeModes, activeCities)
   const { routes, loading, error, search, clear } = useRoutePlan()
   const alertData = useAlerts(testAlerts)
+
+  // Restore a shared journey exactly once on mount
+  useEffect(() => {
+    if (restoredRef.current) return
+    restoredRef.current = true
+    if (initialJourney.from && initialJourney.to) {
+      search(
+        `${initialJourney.from.lat},${initialJourney.from.lng}`,
+        `${initialJourney.to.lat},${initialJourney.to.lng}`,
+        activeModes,
+        initialJourney.dateTime,
+        initialJourney.arriveBy || undefined,
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleCityToggle = (city: CityDef) => {
     const isActive = activeCities.some((c) => c.id === city.id)
@@ -111,13 +150,40 @@ function HomeContent() {
     [activeModes, searchParams, router],
   )
 
-  const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => {
+  const handleSearch = (
+    fromPlace: string,
+    toPlace: string,
+    modes: TransportMode[],
+    dateTime?: string,
+    arriveBy?: boolean,
+    fromName?: string,
+    toName?: string,
+  ) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('from', fromPlace)
+    params.set('to', toPlace)
+    if (fromName) params.set('fromName', fromName.slice(0, 120))
+    if (toName) params.set('toName', toName.slice(0, 120))
+    if (dateTime) params.set('t', dateTime)
+    else params.delete('t')
+    if (arriveBy) params.set('arriveBy', 'true')
+    else params.delete('arriveBy')
+    router.replace(`?${params.toString()}`, { scroll: false })
+
     search(fromPlace, toPlace, modes, dateTime, arriveBy)
   }
 
   const handleClear = () => {
     clear()
     setSelectedRouteId(null)
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('from')
+    params.delete('to')
+    params.delete('fromName')
+    params.delete('toName')
+    params.delete('t')
+    params.delete('arriveBy')
+    router.replace(`?${params.toString()}`, { scroll: false })
   }
 
   const handleVehicleClick = useCallback((vehicle: VehiclePosition | null) => {
@@ -208,7 +274,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute)
       {/* Floating UI column - top center */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-3 sm:px-0 pointer-events-none">
         <div className="pointer-events-auto">
-          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} />
+          <SearchPanel onSearch={handleSearch} onClear={handleClear} modes={activeModes} activeCities={activeCities} onCityToggle={handleCityToggle} onCountyToggle={handleCountyToggle} onSetAllCities={handleSetAllCities} initialFrom={initialJourney.from ?? undefined} initialTo={initialJourney.to ?? undefined} />
         </div>
         <div className="pointer-events-auto">
           <ErrorBoundary

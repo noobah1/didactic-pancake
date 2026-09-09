@@ -7,21 +7,42 @@ import { TransportMode } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
 import { useSavedPlaces } from '@/hooks/use-saved-places'
 
+interface NamedPlace {
+  name: string
+  lat: number
+  lng: number
+}
+
 interface SearchPanelProps {
-  onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => void
+  onSearch?: (
+    fromPlace: string,
+    toPlace: string,
+    modes: TransportMode[],
+    dateTime?: string,
+    arriveBy?: boolean,
+    fromName?: string,
+    toName?: string,
+  ) => void
   onClear?: () => void
   modes?: TransportMode[]
   activeCities?: CityDef[]
   onCityToggle?: (city: CityDef) => void
   onCountyToggle?: (countyCities: CityDef[]) => void
   onSetAllCities?: (cities: CityDef[]) => void
+  /** Seed the fields from a restored/shared journey URL — read once on mount */
+  initialFrom?: NamedPlace
+  initialTo?: NamedPlace
 }
 
-export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities }: SearchPanelProps) {
-  const [fromText, setFromText] = useState('')
-  const [toText, setToText] = useState('')
-  const [fromCoords, setFromCoords] = useState<{ lat: number; lng: number } | null>(null)
-  const [toCoords, setToCoords] = useState<{ lat: number; lng: number } | null>(null)
+export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCityToggle, onCountyToggle, onSetAllCities, initialFrom, initialTo }: SearchPanelProps) {
+  const [fromText, setFromText] = useState(initialFrom?.name ?? '')
+  const [toText, setToText] = useState(initialTo?.name ?? '')
+  const [fromCoords, setFromCoords] = useState<{ lat: number; lng: number } | null>(
+    initialFrom ? { lat: initialFrom.lat, lng: initialFrom.lng } : null,
+  )
+  const [toCoords, setToCoords] = useState<{ lat: number; lng: number } | null>(
+    initialTo ? { lat: initialTo.lat, lng: initialTo.lng } : null,
+  )
   const [timeMode, setTimeMode] = useState<'now' | 'depart' | 'arrive'>('now')
   const [dateTime, setDateTime] = useState('')
   const [pickerVisible, setPickerVisible] = useState(false)
@@ -76,7 +97,7 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
     )
     const fromPlace = `${fromCoords.lat},${fromCoords.lng}`
     const toPlace = `${toCoords.lat},${toCoords.lng}`
-    onSearch?.(fromPlace, toPlace, modes, dateTime || undefined, timeMode === 'arrive' ? true : undefined)
+    onSearch?.(fromPlace, toPlace, modes, dateTime || undefined, timeMode === 'arrive' ? true : undefined, fromText, toText)
   }
 
   const handleClear = () => {
