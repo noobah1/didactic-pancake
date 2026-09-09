@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { LocationInput } from './LocationInput'
 import { CitySelector } from './CitySelector'
 import { TransportMode } from '@/lib/types'
 import { CityDef } from '@/lib/constants'
+import { useSavedPlaces } from '@/hooks/use-saved-places'
 
 interface SearchPanelProps {
   onSearch?: (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean) => void
@@ -25,8 +26,54 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
   const [dateTime, setDateTime] = useState('')
   const [pickerVisible, setPickerVisible] = useState(false)
 
+  const { saved, recents, save, recordSearch } = useSavedPlaces()
+
+  const fromSuggestions = useMemo(
+    () => [
+      ...saved.map((p) => ({
+        name: p.kind === 'pin' ? p.name : p.kind === 'home' ? `Home — ${p.name}` : `Work — ${p.name}`,
+        lat: p.lat,
+        lng: p.lng,
+        group: 'saved' as const,
+        id: p.id,
+      })),
+      ...recents.map((r) => ({
+        name: r.from.name,
+        lat: r.from.lat,
+        lng: r.from.lng,
+        group: 'recent' as const,
+        id: r.id,
+      })),
+    ],
+    [saved, recents],
+  )
+
+  const toSuggestions = useMemo(
+    () => [
+      ...saved.map((p) => ({
+        name: p.kind === 'pin' ? p.name : p.kind === 'home' ? `Home — ${p.name}` : `Work — ${p.name}`,
+        lat: p.lat,
+        lng: p.lng,
+        group: 'saved' as const,
+        id: p.id,
+      })),
+      ...recents.map((r) => ({
+        name: r.to.name,
+        lat: r.to.lat,
+        lng: r.to.lng,
+        group: 'recent' as const,
+        id: r.id,
+      })),
+    ],
+    [saved, recents],
+  )
+
   const handleSearch = () => {
     if (!fromCoords || !toCoords) return
+    recordSearch(
+      { name: fromText, lat: fromCoords.lat, lng: fromCoords.lng },
+      { name: toText, lat: toCoords.lat, lng: toCoords.lng },
+    )
     const fromPlace = `${fromCoords.lat},${fromCoords.lng}`
     const toPlace = `${toCoords.lat},${toCoords.lng}`
     onSearch?.(fromPlace, toPlace, modes, dateTime || undefined, timeMode === 'arrive' ? true : undefined)
@@ -54,6 +101,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               value={fromText}
               onChange={setFromText}
               showLocate
+              suggestions={fromSuggestions}
+              onSaveResult={(place) => save(place)}
               onSelect={(name, lat, lng) => {
                 setFromText(name)
                 setFromCoords({ lat, lng })
@@ -66,6 +115,8 @@ export function SearchPanel({ onSearch, onClear, modes = [], activeCities, onCit
               placeholder="Where to?"
               value={toText}
               onChange={setToText}
+              suggestions={toSuggestions}
+              onSaveResult={(place) => save(place)}
               onSelect={(name, lat, lng) => {
                 setToText(name)
                 setToCoords({ lat, lng })
