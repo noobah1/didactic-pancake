@@ -11,6 +11,8 @@ import { RouteResults } from '@/components/RouteResults'
 import { AlertBanner } from '@/components/AlertBanner'
 import { MapView } from '@/components/MapView'
 import { IncidentButton } from '@/components/IncidentButton'
+import { NearbyButton } from '@/components/NearbyButton'
+import { NearbyPanel } from '@/components/NearbyPanel'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { TimetablePanel } from '@/components/TimetablePanel'
 import { StopPanel } from '@/components/StopPanel'
@@ -41,6 +43,7 @@ function HomeContent() {
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null)
   const [selectedStop, setSelectedStop] = useState<StopInfo | null>(null)
   const [showIncidents, setShowIncidents] = useState(false)
+  const [showNearby, setShowNearby] = useState(false)
 
   const testAlerts = searchParams.get('test_alerts') === '1'
 
@@ -125,6 +128,12 @@ function HomeContent() {
   const handleStopClick = useCallback((stop: StopInfo) => {
     setSelectedStop(stop)
     setSelectedVehicle(null)
+  }, [])
+
+  const handleSelectNearbyStop = useCallback((stop: StopInfo) => {
+    setSelectedStop(stop)
+    setSelectedVehicle(null)
+    setShowNearby(false)
   }, [])
 
   const handleSelectDeparture = useCallback((departure: StopDeparture, stop: StopInfo) => {
@@ -233,14 +242,25 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute)
         </div>
       </div>
 
-      {/* Incident button - bottom right */}
-      <div className="absolute bottom-6 right-4 z-30 pointer-events-auto">
+      {/* Incident / nearby buttons - bottom right, stacked */}
+      <div className="absolute bottom-6 right-4 z-30 pointer-events-auto flex flex-col gap-2">
+        <NearbyButton
+          active={showNearby}
+          onClick={() => setShowNearby((prev) => !prev)}
+        />
         <IncidentButton
           active={showIncidents}
           alertCount={activeAlerts.length}
           onClick={() => setShowIncidents((prev) => !prev)}
         />
       </div>
+
+      {showNearby && (
+        <NearbyPanel
+          onClose={() => setShowNearby(false)}
+          onSelectStop={handleSelectNearbyStop}
+        />
+      )}
 
       {/* Logo - bottom center */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-60">
