@@ -34,6 +34,10 @@ const MAX_BBOX_DEGREES = 0.5
 // click always hits whichever feed happened to be listed last — which is
 // frequently the one with no vehicleMode and no real schedule data. Collapse
 // stops at the same coordinate, preferring the record OTP tagged with a mode.
+// Tradeoff: two genuinely distinct stops that round to the same coordinate
+// (e.g. a bus and tram stop sharing a corner) would also collapse to one —
+// coordinate-identical distinct stops are rare enough in practice that this
+// isn't worth real distinct-stop detection, but it is a real limitation.
 function dedupeCoincidentStops(stops: StopInfo[]): StopInfo[] {
   const byLocation = new Map<string, StopInfo>()
   for (const stop of stops) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { OTP_BASE_URL } from '@/lib/constants'
-import { otpModeToLocal } from '@/lib/otp'
+import { mapDeparture, mapWheelchairBoarding, GqlStoptime } from '@/lib/stop-departures'
 import { StopDeparture, StopInfo } from '@/lib/types'
 
 const DEPARTURES_QUERY = `
@@ -26,18 +26,6 @@ query StopDepartures($id: String!, $n: Int!) {
 }
 `
 
-interface GqlStoptime {
-  serviceDay: number
-  scheduledDeparture: number
-  realtimeDeparture: number
-  realtime: boolean
-  headsign?: string | null
-  trip?: {
-    gtfsId: string
-    route?: { shortName?: string | null; mode?: string | null } | null
-  } | null
-}
-
 interface GqlStop {
   gtfsId: string
   name: string
@@ -55,31 +43,6 @@ interface DeparturesPayload {
 
 const cache = new Map<string, { data: DeparturesPayload; timestamp: number }>()
 const CACHE_TTL = 20_000
-
-function mapDeparture(st: GqlStoptime): StopDeparture | null {
-  if (!st.trip) return null
-  // serviceDay is epoch seconds at the *service day's* midnight; scheduledDeparture/
-  // realtimeDeparture are seconds-since-that-midnight offsets (>= 86400 past midnight).
-  // The absolute time is always serviceDay + offset — never treat the offset alone as a clock.
-  const departure = (st.serviceDay + (st.realtime ? st.realtimeDeparture : st.scheduledDeparture)) * 1000
-  const delaySeconds = st.realtime ? st.realtimeDeparture - st.scheduledDeparture : 0
-
-  return {
-    tripId: st.trip.gtfsId,
-    line: st.trip.route?.shortName || '',
-    mode: otpModeToLocal(st.trip.route?.mode || ''),
-    headsign: st.headsign || '',
-    departure,
-    scheduledDeparture: (st.serviceDay + st.scheduledDeparture) * 1000,
-    realtime: st.realtime,
-    delaySeconds,
-  }
-}
-
-function mapWheelchairBoarding(v?: string | null): StopInfo['wheelchairBoarding'] {
-  if (v === 'POSSIBLE' || v === 'NOT_POSSIBLE') return v
-  return 'NO_INFORMATION'
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
