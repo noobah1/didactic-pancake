@@ -19,6 +19,42 @@ import { placeCategoryBySlug, categoryLabel, ACCOMMODATION_CATEGORIES } from '@/
 // simultaneous cache-miss requests don't all re-fetch from OTP
 let isCacheWarming = false
 
+// searchEstonianAddresses below calls Maa-amet's public gazetteer on every
+// uncached request — a low-traffic-tolerance third-party service with no
+// rate limit of its own on this app's side. The transit-stop/place/line
+// search paths are all served from an in-process cache or local SQLite and
+// need no protection, but a single client hammering this endpoint (bug,
+// bot, or just a fast typist without debounce) could get this server's IP
+// banned from the gazetteer entirely — bound it here as cheap insurance.
+const RATE_LIMIT_WINDOW_MS = 10_000
+const RATE_LIMIT_MAX = 20
+const RATE_LIMIT_MAX_BUCKETS = 10_000
+const rateLimitBuckets = new Map<string, { count: number; windowStart: number }>()
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now()
+  const bucket = rateLimitBuckets.get(key)
+  if (!bucket || now - bucket.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    // Sweep expired buckets only when the map has grown large enough to be
+    // worth the pass, rather than on every request.
+    if (rateLimitBuckets.size >= RATE_LIMIT_MAX_BUCKETS) {
+      for (const [k, b] of rateLimitBuckets) {
+        if (now - b.windowStart >= RATE_LIMIT_WINDOW_MS) rateLimitBuckets.delete(k)
+      }
+    }
+    rateLimitBuckets.set(key, { count: 1, windowStart: now })
+    return false
+  }
+  bucket.count++
+  return bucket.count > RATE_LIMIT_MAX
+}
+
+function getClientKey(request: Request): string {
+  const forwardedFor = request.headers.get('x-forwarded-for')
+  if (forwardedFor) return forwardedFor.split(',')[0].trim()
+  return request.headers.get('x-real-ip') || 'unknown'
+}
+
 const TRANSIT_STOPS_QUERY = `
 query {
   rail: routes(transportModes: [RAIL]) {
@@ -592,6 +628,10 @@ async function warmCache() {
 warmCache()
 
 export async function GET(request: Request) {
+  if (isRateLimited(getClientKey(request))) {
+    return Response.json({ error: 'rate limited' }, { status: 429 })
+  }
+
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')
   const isStopSearch = searchParams.get('type') === 'stop'
