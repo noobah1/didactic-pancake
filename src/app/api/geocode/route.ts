@@ -1,4 +1,35 @@
 import { NOMINATIM_URL, OTP_BASE_URL } from '@/lib/constants'
+
+// Both branches below call third-party services (Nominatim, Maa-amet) that
+// expect low request rates — rate-limit per client IP as a safety net beyond
+// the 300ms client-side debounce, so a runaway client can't get this server
+// banned from those services.
+const RATE_LIMIT_WINDOW_MS = 10_000
+const RATE_LIMIT_MAX = 20
+const RATE_LIMIT_MAX_BUCKETS = 10_000
+const rateLimitBuckets = new Map<string, { count: number; windowStart: number }>()
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now()
+  const bucket = rateLimitBuckets.get(key)
+  if (!bucket || now - bucket.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    if (rateLimitBuckets.size >= RATE_LIMIT_MAX_BUCKETS) {
+      for (const [k, b] of rateLimitBuckets) {
+        if (now - b.windowStart >= RATE_LIMIT_WINDOW_MS) rateLimitBuckets.delete(k)
+      }
+    }
+    rateLimitBuckets.set(key, { count: 1, windowStart: now })
+    return false
+  }
+  bucket.count++
+  return bucket.count > RATE_LIMIT_MAX
+}
+
+function getClientKey(request: Request): string {
+  const forwardedFor = request.headers.get('x-forwarded-for')
+  if (forwardedFor) return forwardedFor.split(',')[0].trim()
+  return request.headers.get('x-real-ip') || 'unknown'
+}
 const TRANSIT_STOPS_QUERY = `
 query {
   rail: routes(transportModes: [RAIL]) {
@@ -155,6 +186,10 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
+
+  if (isRateLimited(getClientKey(request))) {
+    return Response.json({ error: 'rate limited' }, { status: 429 })
+  }
 
   // Reverse mode: coordinates -> place name
   const lat = searchParams.get('lat')
