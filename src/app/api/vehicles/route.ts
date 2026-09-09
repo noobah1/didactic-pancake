@@ -5,13 +5,16 @@ import { decodePolyline } from '@/lib/decode-polyline'
 import { VehiclePosition, TransportMode } from '@/lib/types'
 
 let gpsCache: { data: VehiclePosition[]; timestamp: number } | null = null
-let scheduledCache: { data: VehiclePosition[]; timestamp: number } | null = null
+// Scheduled data is cached separately per query shape (full vs. rail/ferry-only)
+// since the two are not interchangeable — see fetchScheduledVehicles.
+let scheduledCacheFull: { data: VehiclePosition[]; timestamp: number } | null = null
+let scheduledCacheRailFerry: { data: VehiclePosition[]; timestamp: number } | null = null
 const GPS_CACHE_TTL = 5_000 // 5 seconds
 const SCHEDULED_CACHE_TTL = 30_000 // 30 seconds
 
-const SCHEDULED_QUERY = `
-query ActiveTrips($date: String!) {
-  rail: routes(transportModes: [RAIL]) {
+function routesQueryBlock(alias: string, mode: string): string {
+  return `
+  ${alias}: routes(transportModes: [${mode}]) {
     shortName
     mode
     patterns {
@@ -26,57 +29,23 @@ query ActiveTrips($date: String!) {
         }
       }
     }
-  }
-  ferry: routes(transportModes: [FERRY]) {
-    shortName
-    mode
-    patterns {
-      directionId
-      patternGeometry { points }
-      tripsForDate(serviceDate: $date) {
-        gtfsId
-        stoptimes {
-          scheduledDeparture
-          scheduledArrival
-          stop { name lat lon }
-        }
-      }
-    }
-  }
-  bus: routes(transportModes: [BUS]) {
-    shortName
-    mode
-    patterns {
-      directionId
-      patternGeometry { points }
-      tripsForDate(serviceDate: $date) {
-        gtfsId
-        stoptimes {
-          scheduledDeparture
-          scheduledArrival
-          stop { name lat lon }
-        }
-      }
-    }
-  }
-  tram: routes(transportModes: [TRAM]) {
-    shortName
-    mode
-    patterns {
-      directionId
-      patternGeometry { points }
-      tripsForDate(serviceDate: $date) {
-        gtfsId
-        stoptimes {
-          scheduledDeparture
-          scheduledArrival
-          stop { name lat lon }
-        }
-      }
-    }
-  }
+  }`
 }
-`
+
+// OTP's `routes` field has no geographic filter, so we can't bound this query
+// by a bbox directly. Bus/tram routes are nationwide-heavy (~37MB unfiltered),
+// but when only Tallinn is selected, Tallinn's bus/tram vehicles always come
+// from the live GPS feed instead (see isTallinnArea filtering below), so the
+// nationwide bus/tram schedule is guaranteed to be discarded anyway — skip
+// fetching it in that case. Rail/ferry are always fetched since they bypass
+// city filtering entirely (treated as intercity).
+function buildScheduledQuery(includeBusTram: boolean): string {
+  const blocks = [routesQueryBlock('rail', 'RAIL'), routesQueryBlock('ferry', 'FERRY')]
+  if (includeBusTram) {
+    blocks.push(routesQueryBlock('bus', 'BUS'), routesQueryBlock('tram', 'TRAM'))
+  }
+  return `query ActiveTrips($date: String!) {${blocks.join('')}\n}`
+}
 
 interface GqlStoptime {
   scheduledDeparture: number
@@ -282,10 +251,11 @@ function mapOtpMode(mode: string): TransportMode {
   }
 }
 
-async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
+async function fetchScheduledVehicles(includeBusTram: boolean): Promise<VehiclePosition[]> {
+  const cached = includeBusTram ? scheduledCacheFull : scheduledCacheRailFerry
   const now = Date.now()
-  if (scheduledCache && now - scheduledCache.timestamp < SCHEDULED_CACHE_TTL) {
-    return scheduledCache.data
+  if (cached && now - cached.timestamp < SCHEDULED_CACHE_TTL) {
+    return cached.data
   }
 
   const date = getTodayDate()
@@ -294,20 +264,20 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
   const response = await fetch(`${OTP_BASE_URL}/otp/gtfs/v1`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: SCHEDULED_QUERY, variables: { date } }),
+    body: JSON.stringify({ query: buildScheduledQuery(includeBusTram), variables: { date } }),
     cache: 'no-store',
   })
 
-  if (!response.ok) return scheduledCache?.data || []
+  if (!response.ok) return cached?.data || []
 
   const data = await response.json()
-  if (data.errors?.length) return scheduledCache?.data || []
+  if (data.errors?.length) return cached?.data || []
 
   const allRoutes: GqlRoute[] = [
     ...(data.data?.rail || []),
     ...(data.data?.ferry || []),
-    ...(data.data?.bus || []),
-    ...(data.data?.tram || []),
+    ...(includeBusTram ? data.data?.bus || [] : []),
+    ...(includeBusTram ? data.data?.tram || [] : []),
   ]
   const vehicles: VehiclePosition[] = []
   const seenTrips = new Set<string>()
@@ -338,7 +308,12 @@ async function fetchScheduledVehicles(): Promise<VehiclePosition[]> {
     }
   }
 
-  scheduledCache = { data: vehicles, timestamp: now }
+  const result = { data: vehicles, timestamp: now }
+  if (includeBusTram) {
+    scheduledCacheFull = result
+  } else {
+    scheduledCacheRailFerry = result
+  }
   return vehicles
 }
 
@@ -372,6 +347,12 @@ export async function GET(request: Request) {
   const includesTallinn = cityCoords.length === 0 || cityCoords.some(
     (c) => Math.abs(c.lat - 59.437) < 0.1 && Math.abs(c.lng - 24.754) < 0.1,
   )
+  // Only Tallinn selected (not "no filter"): nationwide bus/tram schedule data
+  // would be discarded downstream anyway, so skip fetching it — see
+  // buildScheduledQuery.
+  const onlyTallinnSelected = cityCoords.length > 0 && cityCoords.every(
+    (c) => Math.abs(c.lat - 59.437) < 0.1 && Math.abs(c.lng - 24.754) < 0.1,
+  )
 
   try {
     const now = Date.now()
@@ -391,7 +372,7 @@ export async function GET(request: Request) {
     // Fetch scheduled vehicles (all modes, nationwide)
     let scheduled: VehiclePosition[] = []
     try {
-      scheduled = await fetchScheduledVehicles()
+      scheduled = await fetchScheduledVehicles(!onlyTallinnSelected)
     } catch {
       // Non-critical: continue with GPS-only vehicles
     }
