@@ -230,6 +230,8 @@ const et: Dictionary = {
   mapPopup: {
     yourVehicle: 'Sinu {mode}',
     estimatedNotLive: 'Hinnatud sõiduplaani põhjal — ei jälgita reaalajas',
+    estimatedTrainNoSignal: 'Sõiduplaani põhjal hinnatud — rong ei edasta praegu GPS-asukohta',
+    liveGps: 'Reaalajas GPS',
     riderReported: 'Teatatud pardal olevate reisijate poolt — operaator pole kinnitanud',
     riderInferred: 'Asukoht kohandatud hiljutise reisijateate põhjal — enam mitte reaalajas',
     liveGpsNoSchedule: 'Reaalajas GPS — sõiduplaan pole saadaval',

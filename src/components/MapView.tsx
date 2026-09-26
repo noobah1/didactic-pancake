@@ -22,7 +22,8 @@ function escapeHtml(s: string): string {
 // A vehicle marker's evidence tier, in one place so the pill, its arrow, and
 // its tooltip/popup can never drift apart into inconsistent readings of the
 // same VehiclePosition. Four states, most to least trusted:
-//  - agency GPS (both flags absent): solid ring, full opacity, no caveat.
+//  - agency GPS (both flags absent): solid ring, full opacity, labelled as
+//    live so its absence on the others reads as a difference, not a default.
 //  - rider-reported, observed (types.ts's own discipline: only ever set
 //    alongside `estimated`): dotted ring — deliberately not solid (that
 //    would read as agency-confirmed) and not the same dashed style as a
@@ -33,13 +34,26 @@ function escapeHtml(s: string): string {
 //    a dash-dot ring between "observed" and "pure guess," since it's
 //    evidence-derived but no longer current.
 //  - schedule-interpolated only: dashed ring, the most muted — a pure guess.
-function vehicleEvidenceStyle(vehicle: VehiclePosition): { opacity: string; borderStyle: string; caveatKey: string | null } {
+//
+// `statusKey` is always set — the tooltip/popup names every tier, live
+// included. `live` only drives the popup line's colour. A schedule-only
+// train gets its own wording: unlike a regional bus (no operator publishes
+// positions at all), Elron trains DO have a live feed, so "not live tracked"
+// would misdescribe one that is merely missing from it right now.
+function vehicleEvidenceStyle(vehicle: VehiclePosition): { opacity: string; borderStyle: string; statusKey: string; live: boolean } {
   if (vehicle.riderReported && vehicle.riderConfidence === 'inferred') {
-    return { opacity: '0.7', borderStyle: 'dashed', caveatKey: 'mapPopup.riderInferred' }
+    return { opacity: '0.7', borderStyle: 'dashed', statusKey: 'mapPopup.riderInferred', live: false }
   }
-  if (vehicle.riderReported) return { opacity: '0.8', borderStyle: 'dotted', caveatKey: 'mapPopup.riderReported' }
-  if (vehicle.estimated) return { opacity: '0.55', borderStyle: 'dashed', caveatKey: 'mapPopup.estimatedNotLive' }
-  return { opacity: '1', borderStyle: 'solid', caveatKey: null }
+  if (vehicle.riderReported) return { opacity: '0.8', borderStyle: 'dotted', statusKey: 'mapPopup.riderReported', live: false }
+  if (vehicle.estimated) {
+    return {
+      opacity: '0.55',
+      borderStyle: 'dashed',
+      statusKey: vehicle.mode === 'train' ? 'mapPopup.estimatedTrainNoSignal' : 'mapPopup.estimatedNotLive',
+      live: false,
+    }
+  }
+  return { opacity: '1', borderStyle: 'solid', statusKey: 'mapPopup.liveGps', live: true }
 }
 
 // One row per resolveTravellerPosition tier — a real GPS fix gets a solid
@@ -922,6 +936,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
 
     const currentIds = new Set<string>()
 
+    const vehiclePopupHtml = (vehicle: VehiclePosition, evidence: ReturnType<typeof vehicleEvidenceStyle>) =>
+      `<strong>${escapeHtml(vehicle.line)}</strong><br/>${escapeHtml(vehicle.destination)}<br/><span style="color:${evidence.live ? '#059669' : '#9CA3AF'};font-size:11px">${tRef.current(evidence.statusKey)}</span>`
+
     vehicles
       .filter((v) => activeModes.includes(v.mode) && (!routeTripIds || routeTripIds.has(v.id)))
       .forEach((vehicle) => {
@@ -942,9 +959,11 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.opacity = evidence.opacity
           el.style.borderStyle = evidence.borderStyle
           el.style.borderColor = markerOutlineColor
-          el.title = evidence.caveatKey
-            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current(evidence.caveatKey)})`
-            : `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination}`
+          el.title = `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current(evidence.statusKey)})`
+          // A train can flip between estimated and live while its marker stays
+          // put — the popup was built once, so refresh it or it keeps saying
+          // whatever the marker's first sighting did.
+          existing.getPopup()?.setHTML(vehiclePopupHtml(vehicle, evidence))
 
           const arrowEntry = arrowMarkersRef.current.get(vehicle.id)
           if (arrowEntry) {
@@ -980,9 +999,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           el.style.lineHeight = '1'
           el.style.whiteSpace = 'nowrap'
           el.textContent = vehicle.line
-          el.title = evidence.caveatKey
-            ? `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current(evidence.caveatKey)})`
-            : `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination}`
+          el.title = `${modeLabelRef.current(vehicle.mode)} ${vehicle.line} → ${vehicle.destination} (${tRef.current(evidence.statusKey)})`
 
           el.addEventListener('click', (e) => {
             e.stopPropagation()
@@ -996,13 +1013,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
           const marker = new maplibregl.Marker({ element: el })
             .setLngLat([vehicle.lng, vehicle.lat])
             .setPopup(
-              new maplibregl.Popup({ offset: 10 }).setHTML(
-                `<strong>${escapeHtml(vehicle.line)}</strong><br/>${escapeHtml(vehicle.destination)}${
-                  evidence.caveatKey
-                    ? `<br/><span style="color:#9CA3AF;font-size:11px">${tRef.current(evidence.caveatKey)}</span>`
-                    : ''
-                }`,
-              ),
+              new maplibregl.Popup({ offset: 10 }).setHTML(vehiclePopupHtml(vehicle, evidence)),
             )
             .addTo(map)
 

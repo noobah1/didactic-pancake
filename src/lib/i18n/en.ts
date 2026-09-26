@@ -229,6 +229,8 @@ const en = {
   mapPopup: {
     yourVehicle: 'Your {mode}',
     estimatedNotLive: 'Estimated from schedule — not live tracked',
+    estimatedTrainNoSignal: 'Schedule estimate — this train is not reporting a GPS position right now',
+    liveGps: 'Live GPS',
     riderReported: 'Reported by riders on board — not confirmed by the operator',
     riderInferred: 'Position adjusted from a recent rider report — no longer live',
     liveGpsNoSchedule: 'Live GPS — schedule not available',

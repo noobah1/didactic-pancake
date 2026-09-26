@@ -8,6 +8,7 @@ import {
 } from '@/lib/constants'
 import { parseGpsFeed } from '@/lib/parse-gps'
 import { fetchElronVehicles } from '@/lib/elron'
+import { resolveElronTrip } from '@/lib/elron-trip-match'
 import { decodePolyline } from '@/lib/decode-polyline'
 import { getServiceDate, getServiceSeconds } from '@/lib/service-date'
 import { VehiclePosition, TransportMode } from '@/lib/types'
@@ -571,20 +572,39 @@ function headingFromShape(shapeCoords: [number, number][], lat: number, lng: num
 // unlike Tallinn's feed — whose vehicles carry only a line number and have to
 // be scored against every candidate trip by position and heading — a train's
 // trip is known outright, with no matching and no chance of a wrong guess.
+//
+// When the exact id misses — Elron republished its timetable and the graph
+// hasn't caught up — resolveElronTrip falls back to a version-independent key
+// (see elron-trip-match.ts) before giving up on the train.
+interface TrainFeedStats {
+  reported: number
+  exact: number
+  fuzzy: number
+  unmatched: number
+}
+
 function buildLiveTrains(
   elron: { tripId: string; lat: number; lng: number }[],
   railTrips: Map<string, RailTripInfo>,
-): VehiclePosition[] {
+): { trains: VehiclePosition[]; stats: TrainFeedStats } {
   const trains: VehiclePosition[] = []
+  const stats: TrainFeedStats = { reported: elron.length, exact: 0, fuzzy: 0, unmatched: 0 }
   for (const v of elron) {
-    const info = railTrips.get(v.tripId)
+    const resolved = resolveElronTrip(v.tripId, v.lat, v.lng, railTrips)
     // A trip the graph doesn't know about (feed drift, or a train running a
     // trip from a service date the graph hasn't got) can't be labelled with a
     // line or destination — showing it as an unnamed dot is worse than
     // leaving the scheduled estimate in place.
-    if (!info) continue
+    if (!resolved) {
+      stats.unmatched++
+      continue
+    }
+    stats[resolved.via]++
+    const info = resolved.info
     trains.push({
-      id: v.tripId,
+      // The graph's id, not the feed's: trip-stops lookups and the dedupe
+      // against the schedule estimate both key off what OTP calls the trip.
+      id: resolved.tripId,
       mode: 'train',
       line: info.line,
       lat: v.lat,
@@ -595,7 +615,39 @@ function buildLiveTrains(
       destination: info.destination,
     })
   }
-  return trains
+  return { trains, stats }
+}
+
+// Most of the live feed failing to resolve, with a healthy graph to resolve it
+// against, means the graph is older than Elron's current timetable (see
+// elron-trip-match.ts) — not that those trains are unknowable. There's nothing
+// this endpoint can do about it itself: the graph is rebuilt by CI from an
+// upstream GTFS mirror and pulled onto the server by otp/sync-graph.sh, and a
+// rebuild triggered from here would rebuild the same stale upstream data if the
+// mirror hasn't caught up either. So surface it loudly instead, where whoever
+// runs this can see it — throttled, since every client polls this every 7s.
+const STALE_GRAPH_MIN_TRAINS = 4
+const STALE_GRAPH_MISS_RATIO = 0.5
+const STALE_GRAPH_WARN_INTERVAL_MS = 10 * 60_000
+let lastStaleWarnAt = 0
+
+function isGraphStale(stats: TrainFeedStats, graphTripCount: number): boolean {
+  return (
+    graphTripCount > 0 &&
+    stats.reported >= STALE_GRAPH_MIN_TRAINS &&
+    stats.unmatched / stats.reported >= STALE_GRAPH_MISS_RATIO
+  )
+}
+
+function warnIfGraphStale(stats: TrainFeedStats, graphTripCount: number, nowMs: number): void {
+  if (!isGraphStale(stats, graphTripCount)) return
+  if (nowMs - lastStaleWarnAt < STALE_GRAPH_WARN_INTERVAL_MS) return
+  lastStaleWarnAt = nowMs
+  console.warn(
+    `Elron live feed: ${stats.unmatched}/${stats.reported} trains have no matching trip in the OTP graph ` +
+      `(${stats.fuzzy} rescued by fuzzy match) — the graph is probably older than Elron's current timetable. ` +
+      `Check otp/sync-graph.sh and the "Build OTP graph" workflow.`,
+  )
 }
 
 // ~30km radius for city filtering (in degrees, rough approximation)
@@ -665,7 +717,8 @@ export async function GET(request: Request) {
       refreshRiderOffsets(now, nowSec, serviceDate).catch(() => undefined),
     ])
 
-    const liveTrains = buildLiveTrains(elron, scheduled.railTrips)
+    const { trains: liveTrains, stats: trainFeed } = buildLiveTrains(elron, scheduled.railTrips)
+    warnIfGraphStale(trainFeed, scheduled.railTrips.size, now)
     // A train with a live position must not also appear as its own
     // schedule-interpolated ghost — same trip, same id, two markers, one of
     // them wrong. The live one wins; the estimate only covers trains the feed
@@ -715,7 +768,15 @@ export async function GET(request: Request) {
       vehicles = vehicles.filter((v) => modes.includes(v.mode))
     }
 
-    return NextResponse.json({ vehicles, timestamp: now, availability: 'live' })
+    return NextResponse.json({
+      vehicles,
+      timestamp: now,
+      availability: 'live',
+      // How Elron's live feed joined onto the graph this request — lets a
+      // client (or whoever's debugging "why is this train estimated") tell a
+      // train the feed isn't reporting from a graph that's out of date.
+      trainFeed: { ...trainFeed, graphStale: isGraphStale(trainFeed, scheduled.railTrips.size) },
+    })
   } catch (error) {
     console.error('Failed to fetch vehicle positions:', error)
     if (gpsCache && includesTallinn) {
