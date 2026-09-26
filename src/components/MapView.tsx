@@ -753,6 +753,19 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         // vehicle currently fed into the source — otherwise this is a
         // partial read, so keep the current visibility and let the next
         // sourcedata event (once more tiles land) try again.
+        //
+        // "Every vehicle" means every vehicle inside the viewport, though —
+        // querySourceFeatures only ever covers the tiles on screen. Comparing
+        // against the whole feed meant that with all cities active, zooming
+        // into Tartu or Pärnu (whose markers had been hidden inside a
+        // country-level cluster) could never account for Tallinn's hundreds
+        // of off-screen vehicles, so the check bailed forever and those
+        // markers stayed hidden once the cluster broke apart.
+        const viewBounds = map.getBounds()
+        let inViewCount = 0
+        markersRef.current.forEach((marker) => {
+          if (viewBounds.contains(marker.getLngLat())) inViewCount += 1
+        })
         let coveredCount = 0
         for (const f of features) {
           if (f.properties?.cluster && typeof f.properties.point_count === 'number') {
@@ -762,7 +775,7 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
             coveredCount += 1
           }
         }
-        if (coveredCount < clusterFeedCountRef.current) return
+        if (coveredCount < Math.min(inViewCount, clusterFeedCountRef.current)) return
         markersRef.current.forEach((marker, id) => {
           const show = unclusteredIds.has(id)
           marker.getElement().style.display = show ? '' : 'none'
@@ -789,6 +802,9 @@ export function MapView({ vehicles, activeModes = [], selectedRoute, journeyVehi
         visFrame = requestAnimationFrame(updateVisibility)
       }
       map.on('zoom', scheduleVisUpdate)
+      // A pan changes which vehicles are in view without necessarily
+      // loading new tiles, so re-check once it settles too.
+      map.on('moveend', scheduleVisUpdate)
       map.on('sourcedata', (e) => {
         if (e.sourceId === VEHICLE_CLUSTER_SOURCE) {
           scheduleVisUpdate()
