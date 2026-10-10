@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Public transport route planner for Estonia',
     start_url: '/',
     display: 'standalone',
-    background_color: '#ffffff',
+    background_color: '#051650',
     theme_color: '#1D4ED8',
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
