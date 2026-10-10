@@ -615,6 +615,31 @@ function HomeContent() {
   // tripId doesn't turn up a match, findVehicleForLeg (shared with RouteCard's
   // delay badge) falls back to a position+heading match instead.
   const nowMs = new Date().getTime()
+  // Where each not-yet-started trip of the picked journey begins (its first
+  // stop), by tripId. A trip that hasn't left yet has no live or interpolated
+  // position, so without this the picked route showed no vehicle at all.
+  const [tripOrigins, setTripOrigins] = useState<Record<string, { lat: number; lng: number }>>({})
+  useEffect(() => {
+    if (!selectedRoute) return
+    const now = Date.now()
+    const wanted = selectedRoute.legs
+      .filter((leg) => leg.mode !== 'walk' && leg.tripId && new Date(leg.startTime).getTime() > now)
+      .map((leg) => leg.tripId as string)
+      .filter((id) => !(id in tripOriginsRef.current))
+    for (const tripId of new Set(wanted)) {
+      fetch(`/api/trip-stops?tripId=${encodeURIComponent(tripId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { stops?: { lat: number; lng: number }[] } | null) => {
+          const first = data?.stops?.[0]
+          if (first) setTripOrigins((cur) => ({ ...cur, [tripId]: { lat: first.lat, lng: first.lng } }))
+        })
+        .catch(() => {})
+    }
+  }, [selectedRoute])
+  const tripOriginsRef = useRef(tripOrigins)
+  useEffect(() => {
+    tripOriginsRef.current = tripOrigins
+  }, [tripOrigins])
   const journeyVehicles = useMemo(() => {
     if (!selectedRoute) return []
     const found: VehiclePosition[] = []
@@ -643,10 +668,27 @@ function HomeContent() {
       }
 
       const best = findVehicleForLeg(leg, vehicleData.data?.vehicles || [], nowMs)
-      if (best) found.push(best)
+      if (best) {
+        found.push(best)
+        continue
+      }
+      // Not started yet: show it where the trip begins.
+      const origin = leg.tripId ? tripOrigins[leg.tripId] : undefined
+      if (origin && leg.tripId) {
+        found.push({
+          id: leg.tripId,
+          mode: leg.mode,
+          line: leg.route ?? '',
+          lat: origin.lat,
+          lng: origin.lng,
+          heading: 0,
+          destination: leg.to.name,
+          estimated: true,
+        })
+      }
     }
     return found
-  }, [selectedRoute, delayData.data?.vehicles, vehicleData.data?.vehicles, nowMs])
+  }, [selectedRoute, delayData.data?.vehicles, vehicleData.data?.vehicles, nowMs, tripOrigins])
 
   // Resolves the shared journey's traveller marker (see MapView's own
   // TRAVELLER_MARKER_STYLE) from whatever's freshest: a real GPS fix, the
