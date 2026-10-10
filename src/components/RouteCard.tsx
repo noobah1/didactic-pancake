@@ -7,7 +7,7 @@ import { MODE_COLORS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
 import { DelayedVehicle } from '@/app/api/delays/route'
 import { useTranslation } from '@/lib/i18n/context'
-import { formatMinutesLocalized, formatEuroLocalized } from '@/lib/i18n/format'
+import { formatMinutesLocalized, formatEuroLocalized, localeTag } from '@/lib/i18n/format'
 import { Locale } from '@/lib/i18n/types'
 import { useRiderProfile } from '@/hooks/use-rider-profile'
 import { priceItinerary } from '@/lib/fares/price'
@@ -33,6 +33,16 @@ interface RouteCardProps {
   // this" on the right one, even across different RouteCards.
   ridingTripId?: string | null
   onToggleRiding?: (leg: RouteLeg) => void
+}
+
+// Tallinn calendar day of a timestamp, "YYYY-MM-DD" (en-CA sorts that way).
+function tallinnDay(ms: number): string {
+  return new Date(ms).toLocaleDateString('en-CA', { timeZone: 'Europe/Tallinn' })
+}
+
+// "Sat, 12 Oct" -- shown in front of a time only when it is not today.
+function formatDayLabel(iso: string, locale: Locale): string {
+  return new Date(iso).toLocaleDateString(localeTag(locale), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Tallinn' })
 }
 
 function formatTime(iso: string): string {
@@ -343,8 +353,13 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
     route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0) / 60,
   )
   const totalMinutes = Math.round(route.duration / 60)
-  const startTime = formatTime(route.startTime)
-  const endTime = formatTime(route.endTime)
+  // A journey on another day (searched for tomorrow, or a late-night trip
+  // that runs past midnight) says which day; one that is today stays bare.
+  const todayKey = tallinnDay(new Date().getTime())
+  const startDayKey = tallinnDay(new Date(route.startTime).getTime())
+  const endDayKey = tallinnDay(new Date(route.endTime).getTime())
+  const startTime = (startDayKey !== todayKey ? `${formatDayLabel(route.startTime, locale)}, ` : '') + formatTime(route.startTime)
+  const endTime = (endDayKey !== startDayKey ? `${formatDayLabel(route.endTime, locale)}, ` : '') + formatTime(route.endTime)
 
   // Only attempt a live match for GPS-covered modes whose scheduled departure
   // is near enough to "now" that a live vehicle could plausibly be running —
