@@ -316,6 +316,8 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
   const planMarkerRef = useRef<maplibregl.Marker[]>([])
   const pickedMarkersRef = useRef<{ from?: maplibregl.Marker; to?: maplibregl.Marker }>({})
   const journeyMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
+  // Creates a journey-vehicle marker (set by the route draw effect, which owns the styling).
+  const addJourneyMarkerRef = useRef<((jv: VehiclePosition) => void) | null>(null)
   const journeyVehiclesRef = useRef(journeyVehicles)
   useEffect(() => {
     journeyVehiclesRef.current = journeyVehicles
@@ -1306,6 +1308,40 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
     const isDark = document.documentElement.classList.contains('dark')
     const markerOutlineColor = isDark ? '#1E2732' : 'white'
 
+    const addJourneyMarker = (jv: VehiclePosition) => {
+      const el = document.createElement('div')
+      el.style.minWidth = '28px'
+      el.style.height = '28px'
+      el.style.padding = '0 6px'
+      el.style.borderRadius = '14px'
+      el.style.backgroundColor = MODE_COLORS[jv.mode]
+      el.style.border = `3px solid ${markerOutlineColor}`
+      el.style.display = 'flex'
+      el.style.alignItems = 'center'
+      el.style.justifyContent = 'center'
+      el.style.color = 'white'
+      el.style.fontSize = '12px'
+      el.style.fontWeight = '800'
+      el.style.fontFamily = 'system-ui, sans-serif'
+      el.style.whiteSpace = 'nowrap'
+      el.textContent = jv.line
+      el.title = `${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })} ${jv.line} → ${jv.destination}`
+
+      // A hover-only tooltip is easy to miss entirely — this marker can
+      // legitimately sit well off the drawn route line (the vehicle is
+      // still approaching from before your boarding stop), so without an
+      // always-visible label it reads as an unrelated, unlabeled dot
+      // rather than "here's your bus, right now". Open immediately
+      // instead of waiting for a hover/click that may never happen.
+      const popup = new maplibregl.Popup({ offset: 20, closeButton: false, closeOnClick: false }).setHTML(
+        `<strong>${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })}</strong><br/>${jv.line} → ${escapeHtml(jv.destination)}`,
+      )
+      const marker = new maplibregl.Marker({ element: el }).setLngLat([jv.lng, jv.lat]).setPopup(popup).addTo(map)
+      marker.togglePopup()
+      journeyMarkersRef.current.set(jv.id, marker)
+    }
+    addJourneyMarkerRef.current = addJourneyMarker
+
     const cleanup = () => {
       // Remove stop layers/source
       if (map.getLayer(PLAN_STOPS_LABEL_LAYER)) map.removeLayer(PLAN_STOPS_LABEL_LAYER)
@@ -1509,36 +1545,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
       // pulsing marker so "where's my bus" is answered at a glance instead of
       // hunting for it among every other vehicle on the map.
       for (const jv of journeyVehiclesRef.current || []) {
-        const el = document.createElement('div')
-        el.style.minWidth = '28px'
-        el.style.height = '28px'
-        el.style.padding = '0 6px'
-        el.style.borderRadius = '14px'
-        el.style.backgroundColor = MODE_COLORS[jv.mode]
-        el.style.border = `3px solid ${markerOutlineColor}`
-        el.style.display = 'flex'
-        el.style.alignItems = 'center'
-        el.style.justifyContent = 'center'
-        el.style.color = 'white'
-        el.style.fontSize = '12px'
-        el.style.fontWeight = '800'
-        el.style.fontFamily = 'system-ui, sans-serif'
-        el.style.whiteSpace = 'nowrap'
-        el.textContent = jv.line
-        el.title = `${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })} ${jv.line} → ${jv.destination}`
-
-        // A hover-only tooltip is easy to miss entirely — this marker can
-        // legitimately sit well off the drawn route line (the vehicle is
-        // still approaching from before your boarding stop), so without an
-        // always-visible label it reads as an unrelated, unlabeled dot
-        // rather than "here's your bus, right now". Open immediately
-        // instead of waiting for a hover/click that may never happen.
-        const popup = new maplibregl.Popup({ offset: 20, closeButton: false, closeOnClick: false }).setHTML(
-          `<strong>${tRef.current('mapPopup.yourVehicle', { mode: modeLabelRef.current(jv.mode) })}</strong><br/>${jv.line} → ${escapeHtml(jv.destination)}`,
-        )
-        const marker = new maplibregl.Marker({ element: el }).setLngLat([jv.lng, jv.lat]).setPopup(popup).addTo(map)
-        marker.togglePopup()
-        journeyMarkersRef.current.set(jv.id, marker)
+        addJourneyMarker(jv)
       }
 
       // Fit map to show the entire route (and the live vehicle(s) on it) —
@@ -1579,8 +1586,22 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
   // routine position update doesn't also re-fit/re-center the camera.
   useEffect(() => {
     for (const jv of journeyVehicles || []) {
-      journeyMarkersRef.current.get(jv.id)?.setLngLat([jv.lng, jv.lat])
+      const existing = journeyMarkersRef.current.get(jv.id)
+      if (existing) existing.setLngLat([jv.lng, jv.lat])
+      // A vehicle that only turns up after the route was drawn (a trip that
+      // hasn't started yet, whose first position loads a moment later) still
+      // gets its marker -- but only while a route is actually drawn.
+      else if (planMarkerRef.current.length > 0) addJourneyMarkerRef.current?.(jv)
     }
+    // Drop a marker whose vehicle is gone from the list -- e.g. the start-of-trip
+    // placeholder once the real vehicle has appeared under its own id.
+    const liveIds = new Set((journeyVehicles || []).map((v) => v.id))
+    journeyMarkersRef.current.forEach((marker, id) => {
+      if (!liveIds.has(id)) {
+        marker.remove()
+        journeyMarkersRef.current.delete(id)
+      }
+    })
   }, [journeyVehicles])
 
   // Draws (or removes) the journey sharer's own live-location marker — a
