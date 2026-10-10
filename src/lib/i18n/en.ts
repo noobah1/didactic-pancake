@@ -81,6 +81,7 @@ const en = {
     walk: 'Walk',
     walkMin: 'Walk {n} min',
     includesWalking: 'Includes walking',
+    waitAtStop: 'Wait {duration} at {stop}',
     removeJourney: 'Remove journey',
     scheduled: 'Scheduled',
     delaySlower: '~{range} min slower',
