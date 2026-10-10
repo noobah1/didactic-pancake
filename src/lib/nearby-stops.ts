@@ -1,5 +1,6 @@
 import { StopDeparture, NearbyStop, TransportMode } from './types'
 import { NEARBY_WIDEN_THRESHOLD } from './constants'
+import { dedupeDepartures } from './feed-dedupe'
 
 export interface GqlNearbyStoptime {
   scheduledDeparture: number
@@ -77,8 +78,7 @@ export function buildNearbyStops(edges: GqlNearbyEdge[], maxStops: number, maxPe
     .filter((e) => e.node.stop.stoptimesWithoutPatterns.length > 0)
     .map((e): NearbyStop => {
       const { stop, distance } = e.node
-      const departures = stop.stoptimesWithoutPatterns
-        .map(mapDeparture)
+      const departures = dedupeDepartures(stop.stoptimesWithoutPatterns.map(mapDeparture))
         .sort((a, b) => a.departureEpochSec - b.departureEpochSec)
       return {
         stopId: stop.gtfsId,

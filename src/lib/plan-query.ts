@@ -3,6 +3,7 @@ import { TransportMode, RouteResult, RouteLeg, LegPlace, LegAlert } from '@/lib/
 import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
 import { mapAlertSeverity } from '@/lib/alert-severity'
 import { attachLegFares } from '@/lib/fares/attach'
+import { dedupeItineraries } from '@/lib/feed-dedupe'
 
 // Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
 // TROLLEYBUS route_type in the data), so trip planning requests BUS for it too.
@@ -281,7 +282,9 @@ async function fetchItineraries(
 // the one path both the primary and widened-search branches of planTrip go
 // through, so a train leg never appears without a platform lookup attempt
 // regardless of which OTP search actually produced it.
-async function buildRoutes(itineraries: GqlItinerary[]): Promise<RouteResult[]> {
+async function buildRoutes(rawItineraries: GqlItinerary[]): Promise<RouteResult[]> {
+  // See feed-dedupe.ts: stale/duplicate train and ferry feeds.
+  const itineraries = dedupeItineraries(rawItineraries)
   const routes = mapItineraries(itineraries)
   await enrichTrainPlatforms(itineraries, routes)
   attachLegFares(routes)

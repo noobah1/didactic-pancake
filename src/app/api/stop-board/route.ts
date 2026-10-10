@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { OTP_BASE_URL, OTP_FETCH_TIMEOUT_MS } from '@/lib/constants'
 import { StopBoardData, StopDeparture, TransportMode } from '@/lib/types'
 import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform'
+import { dedupeDepartures } from '@/lib/feed-dedupe'
 import { fetchSiriDepartures, getSiriId, siriDelayFor, SiriDeparture } from '@/lib/tallinn-siri'
 
 const STOP_FIELDS = `
@@ -157,7 +158,7 @@ export async function GET(request: Request) {
         if (siriId) siriByStop.set(stop.gtfsId, await fetchSiriDepartures(siriId))
       }),
     )
-    const departures = stops
+    const allDepartures = stops
       .flatMap((stop) =>
         stop.stoptimesWithoutPatterns.map((st) => {
           // Live delay for this exact departure: Tallinn's per-stop feed
@@ -205,7 +206,9 @@ export async function GET(request: Request) {
         return true
       })
       .sort((a, b) => a.departureEpochSec - b.departureEpochSec)
-      .slice(0, 12)
+    // Stale/duplicate train and ferry feeds (feed-dedupe.ts) -- after sorting
+    // but before the cut to 12, so duplicates don't eat the visible slots.
+    const departures = dedupeDepartures(allDepartures).slice(0, 12)
 
     // Only bother calling elron.ee when this board actually has a train on
     // it — the common case (bus/tram stops) never needs it.
