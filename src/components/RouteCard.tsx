@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Footprints, X, Accessibility } from 'lucide-react'
+import { Footprints, X, Accessibility, Hourglass } from 'lucide-react'
 import { RouteResult, RouteLeg, LegPlace, TransportMode, ItineraryConditions, LegTrafficEstimate, ItineraryFare } from '@/lib/types'
 import { MODE_COLORS } from '@/lib/constants'
 import { ROUTE_PLAN_MATCH_WINDOW_SEC, findVehicleForLeg } from '@/lib/delay'
@@ -353,6 +353,26 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
     route.legs.filter((l) => l.mode === 'walk').reduce((sum, l) => sum + l.duration, 0) / 60,
   )
   const totalMinutes = Math.round(route.duration / 60)
+  // Time spent standing at a stop between two vehicles: the gap from one
+  // transit leg's arrival to the next one's departure, minus any walking
+  // between them (that's already shown as its own walk row). Keyed by the
+  // index of the leg being waited for; the first transit leg has no wait
+  // row since the journey itself starts at its own departure time.
+  const waitMinutesByLeg = new Map<number, number>()
+  let prevTransitEnd: number | null = null
+  let walkedSeconds = 0
+  route.legs.forEach((leg, i) => {
+    if (leg.mode === 'walk') {
+      walkedSeconds += leg.duration
+      return
+    }
+    if (prevTransitEnd !== null) {
+      const waitMin = Math.round((new Date(leg.startTime).getTime() - prevTransitEnd) / 60000 - walkedSeconds / 60)
+      if (waitMin >= 1) waitMinutesByLeg.set(i, waitMin)
+    }
+    prevTransitEnd = new Date(leg.endTime).getTime()
+    walkedSeconds = 0
+  })
   // A journey on another day (searched for tomorrow, or a late-night trip
   // that runs past midnight) says which day; one that is today stays bare.
   const todayKey = tallinnDay(new Date().getTime())
@@ -534,6 +554,12 @@ export function RouteCard({ route, selected, onSelect, delayVehicles, conditions
         <div className="mt-2 flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
           {route.legs.map((leg, i) => (
             <div key={i}>
+              {waitMinutesByLeg.has(i) && (
+                <div className="flex items-center gap-2 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  <Hourglass size={14} />
+                  <span>{t('route.waitAtStop', { duration: formatMinutesLocalized(waitMinutesByLeg.get(i)!, t), stop: leg.from.name })}</span>
+                </div>
+              )}
               {leg.mode === 'walk' ? (
                 <div className="flex items-center gap-2 py-1.5 text-xs text-gray-400 dark:text-gray-500">
                   <span className="font-medium text-gray-500 dark:text-gray-400">{formatTime(leg.startTime)}</span>

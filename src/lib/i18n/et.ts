@@ -82,6 +82,7 @@ const et: Dictionary = {
     walk: 'Jalgsi',
     walkMin: 'Jalgsi {n} min',
     includesWalking: 'Sisaldab jalgsikäiku',
+    waitAtStop: 'Ootad {duration} peatuses {stop}',
     removeJourney: 'Eemalda teekond',
     scheduled: 'Sõiduplaani järgi',
     delaySlower: '~{range} min aeglasem',

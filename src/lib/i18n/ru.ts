@@ -82,6 +82,7 @@ const ru: Dictionary = {
     walk: 'Пешком',
     walkMin: 'Пешком {n} мин',
     includesWalking: 'Включает пешую часть',
+    waitAtStop: 'Ожидание {duration} на остановке {stop}',
     removeJourney: 'Удалить маршрут',
     scheduled: 'По расписанию',
     delaySlower: '~{range} мин медленнее',
