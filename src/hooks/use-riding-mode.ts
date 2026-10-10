@@ -19,6 +19,10 @@ const MIN_SEND_INTERVAL_MS = 15_000
 // (and holding the wake lock) for the rest of the day. Mirrors
 // traveller-position.ts's JOURNEY_END_GRACE_MS for the same reason.
 const LEG_END_AUTO_STOP_GRACE_MS = 30 * 60 * 1000
+// With location off there is no position to follow, so the leg's scheduled
+// arrival at the stop is all there is: the button goes back to "I'm on this"
+// shortly after it, with a little room for a late vehicle.
+const NO_LOCATION_END_GRACE_MS = 5 * 60 * 1000
 
 function randomSessionId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
@@ -68,6 +72,30 @@ export function useRidingMode(leg: RouteLeg | null, onAutoStop: () => void) {
   // re-search — doesn't restart the session and lose alarmedRef's
   // once-only guard.
   const tripId = leg?.tripId
+  const legEndTime = leg?.endTime
+
+  // Ends the session once the leg is long over, whatever else is happening.
+  // The check inside the position callback below only runs when a fix
+  // arrives -- with the screen locked, the app in the background, or
+  // location off/denied there are none, so a session started yesterday sat
+  // on "Stop" for the same trip today (trip ids repeat every day). A timer
+  // plus a check when the app comes back to the foreground covers those.
+  useEffect(() => {
+    if (!legEndTime) return
+    const endMs = new Date(legEndTime).getTime()
+    const check = () => {
+      // Re-read each time: the rider can switch location on or off mid-ride.
+      const graceMs = isLocationEnabled() ? LEG_END_AUTO_STOP_GRACE_MS : NO_LOCATION_END_GRACE_MS
+      if (Date.now() > endMs + graceMs) onAutoStopRef.current()
+    }
+    check()
+    const timer = setInterval(check, 60_000)
+    document.addEventListener('visibilitychange', check)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', check)
+    }
+  }, [tripId, legEndTime])
 
   useEffect(() => {
     if (!leg || leg.mode === 'walk' || !leg.tripId) {

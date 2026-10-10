@@ -336,6 +336,9 @@ function HomeContent() {
   }
 
   const handleSearch = (fromPlace: string, toPlace: string, modes: TransportMode[], dateTime?: string, arriveBy?: boolean, wc?: boolean) => {
+    // A new search starts over: results are always numbered route-0, route-1..., so the
+    // selected-route change below can't be relied on to end an old ride.
+    setRidingLeg(null)
     setLineShape(null)
     setStopBoard(null)
     search(fromPlace, toPlace, modes, dateTime, arriveBy, undefined, wc)
@@ -901,7 +904,7 @@ const { warnings, dismissWarning } = useJourneyMonitor(selectedRoute, delayData.
               delayVehicles={delayData.data?.vehicles}
               conditions={routeConditionsData.data?.conditions}
               ridingTripId={ridingLeg?.tripId ?? null}
-              onToggleRiding={(leg) => setRidingLeg((cur) => (cur?.tripId === leg.tripId ? null : leg))}
+              onToggleRiding={(leg) => setRidingLeg((cur) => (cur && cur.tripId === leg.tripId && cur.startTime === leg.startTime ? null : leg))}
             />
           </ErrorBoundary>
         </div>
