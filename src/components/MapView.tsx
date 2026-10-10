@@ -731,8 +731,8 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
     markers.from = undefined
     markers.to = undefined
     if (selectedRoute || !pickedPoints) return
-    if (pickedPoints.from) markers.from = makeMarker('A', '#2563EB', pickedPoints.from)
-    if (pickedPoints.to) markers.to = makeMarker('B', '#DC2626', pickedPoints.to)
+    if (pickedPoints.from) markers.from = makeMarker('A', '#051650', pickedPoints.from)
+    if (pickedPoints.to) markers.to = makeMarker('B', '#DC6601', pickedPoints.to)
   }, [pickedPoints, selectedRoute])
 
   // Bring a newly picked point into view (both points together when both set).
@@ -1498,7 +1498,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
         aEl.style.width = '24px'
         aEl.style.height = '24px'
         aEl.style.borderRadius = '50%'
-        aEl.style.backgroundColor = '#2563EB'
+        aEl.style.backgroundColor = '#051650'
         aEl.style.border = '3px solid white'
         aEl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.35)'
         aEl.style.display = 'flex'
@@ -1523,7 +1523,7 @@ export function MapView({ pickedPoints, vehicles, activeModes = [], selectedRout
         bEl.style.width = '24px'
         bEl.style.height = '24px'
         bEl.style.borderRadius = '50%'
-        bEl.style.backgroundColor = '#DC2626'
+        bEl.style.backgroundColor = '#DC6601'
         bEl.style.border = '3px solid white'
         bEl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.35)'
         bEl.style.display = 'flex'
