@@ -4,6 +4,7 @@ import { fetchStationPlatformIndex, resolvePlatform } from '@/lib/elron-platform
 import { mapAlertSeverity } from '@/lib/alert-severity'
 import { attachLegFares } from '@/lib/fares/attach'
 import { dedupeItineraries } from '@/lib/feed-dedupe'
+import { mergeSplitLegs } from '@/lib/merge-split-legs'
 
 // Tallinn's unified GTFS feed tags trolleybus routes with GTFS mode BUS (no
 // TROLLEYBUS route_type in the data), so trip planning requests BUS for it too.
@@ -397,7 +398,7 @@ function mapItineraries(itineraries: GqlItinerary[]): RouteResult[] {
     startTime: new Date(it.startTime).toISOString(),
     endTime: new Date(it.endTime).toISOString(),
     walkDistance: it.walkDistance,
-    legs: it.legs.map(
+    legs: mergeSplitLegs(it.legs.map(
       (leg): RouteLeg => ({
         mode: leg.mode === 'WALK' ? 'walk' : otpModeToLocal(leg.mode),
         from: mapPlace(leg.from),
@@ -414,7 +415,7 @@ function mapItineraries(itineraries: GqlItinerary[]): RouteResult[] {
         intermediateStops: leg.intermediatePlaces?.map(mapPlace) || undefined,
         legGeometry: leg.legGeometry || undefined,
       }),
-    ),
+    )),
   }))
 }
 
